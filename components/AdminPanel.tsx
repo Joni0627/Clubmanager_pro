@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Staff, Fixture, InventoryItem } from '../types.ts';
+import { Staff, Fixture } from '../types.ts';
 import { Plus, Trash2, Edit2, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface AdminPanelProps {
-  activeTab: 'fixtures' | 'staff' | 'inventory';
+  activeTab: 'fixtures' | 'staff';
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
@@ -20,62 +20,45 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
     { id: '3', name: 'Dr. House', role: 'Jefe Médico', phone: '+34 600 000 002' },
   ]);
 
-  const [inventory] = useState<InventoryItem[]>([
-    { id: '1', name: 'Balones Oficiales', category: 'Entrenamiento', quantity: 50, status: 'Good' },
-    { id: '2', name: 'Petos Entrenamiento', category: 'Ropa', quantity: 12, status: 'Low' },
-    { id: '3', name: 'Conos Tácticos', category: 'Entrenamiento', quantity: 100, status: 'Good' },
-    { id: '4', name: 'Vendas Kinésicas', category: 'Médico', quantity: 5, status: 'Critical' },
-  ]);
-
-  const getStatusColor = (status: string) => {
-      switch(status) {
-          case 'Good': return 'bg-emerald-100 text-emerald-800';
-          case 'Low': return 'bg-yellow-100 text-yellow-800';
-          case 'Critical': return 'bg-red-100 text-red-800';
-          default: return 'bg-slate-100 text-slate-800';
-      }
-  };
-
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 capitalize">
-            {activeTab === 'fixtures' ? 'Calendario de Temporada' : 
-             activeTab === 'staff' ? 'Gestión de Personal' : 'Control de Inventario'}
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white capitalize">
+            {activeTab === 'fixtures' ? 'Calendario de Temporada' : 'Gestión de Personal'}
         </h2>
-        <button className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+        <button className="flex items-center gap-2 bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
             <Plus size={18} />
             <span>Nuevo Registro</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         {activeTab === 'fixtures' && (
           <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-4 font-semibold text-slate-600">Fecha</th>
-                <th className="p-4 font-semibold text-slate-600">Oponente</th>
-                <th className="p-4 font-semibold text-slate-600">Competición</th>
-                <th className="p-4 font-semibold text-slate-600">Estadio</th>
-                <th className="p-4 font-semibold text-slate-600">Resultado</th>
-                <th className="p-4 font-semibold text-slate-600">Acciones</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Fecha</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Oponente</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Competición</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Estadio</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Resultado</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {fixtures.map((match) => (
-                <tr key={match.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-slate-700">{match.date}</td>
-                  <td className="p-4 font-medium text-slate-900">{match.opponent}</td>
-                  <td className="p-4 text-slate-500">{match.competition}</td>
+                <tr key={match.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                  <td className="p-4 text-slate-700 dark:text-slate-300">{match.date}</td>
+                  <td className="p-4 font-medium text-slate-900 dark:text-white">{match.opponent}</td>
+                  <td className="p-4 text-slate-500 dark:text-slate-400">{match.competition}</td>
                   <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${match.venue === 'Home' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${match.venue === 'Home' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'}`}>
                           {match.venue === 'Home' ? 'Local' : 'Visitante'}
                       </span>
                   </td>
-                  <td className="p-4 font-mono font-bold">{match.result}</td>
+                  <td className="p-4 font-mono font-bold dark:text-white">{match.result}</td>
                   <td className="p-4 flex gap-2">
-                    <button className="p-1 text-slate-400 hover:text-blue-600"><Edit2 size={16}/></button>
+                    <button className="p-1 text-slate-400 hover:text-primary-600"><Edit2 size={16}/></button>
                   </td>
                 </tr>
               ))}
@@ -86,52 +69,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
         {activeTab === 'staff' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {staff.map(member => (
-                    <div key={member.id} className="border border-slate-200 rounded-lg p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-lg">
+                    <div key={member.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 flex items-center gap-4 hover:shadow-md transition-shadow bg-slate-50 dark:bg-slate-700/30">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-lg">
                             {member.name.charAt(0)}
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-900">{member.name}</h3>
-                            <p className="text-sm text-slate-500">{member.role}</p>
-                            <p className="text-xs text-slate-400 mt-1">{member.phone}</p>
+                            <h3 className="font-bold text-slate-900 dark:text-white">{member.name}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{member.role}</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{member.phone}</p>
                         </div>
                     </div>
                 ))}
             </div>
-        )}
-
-        {activeTab === 'inventory' && (
-            <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-4 font-semibold text-slate-600">Ítem</th>
-                <th className="p-4 font-semibold text-slate-600">Categoría</th>
-                <th className="p-4 font-semibold text-slate-600">Cantidad</th>
-                <th className="p-4 font-semibold text-slate-600">Estado</th>
-                <th className="p-4 font-semibold text-slate-600">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {inventory.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50">
-                  <td className="p-4 font-medium text-slate-900">{item.name}</td>
-                  <td className="p-4 text-slate-500">{item.category}</td>
-                  <td className="p-4 font-mono">{item.quantity}</td>
-                  <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex w-fit items-center gap-1 ${getStatusColor(item.status)}`}>
-                          {item.status === 'Critical' && <AlertCircle size={12}/>}
-                          {item.status === 'Good' && <CheckCircle size={12}/>}
-                          {item.status === 'Low' ? 'Bajo Stock' : item.status === 'Critical' ? 'Crítico' : 'Óptimo'}
-                      </span>
-                  </td>
-                  <td className="p-4 flex gap-2">
-                    <button className="p-1 text-slate-400 hover:text-blue-600"><Edit2 size={16}/></button>
-                    <button className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16}/></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         )}
       </div>
     </div>

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar.tsx';
 import Dashboard from './components/Dashboard.tsx';
 import PlayerCard from './components/PlayerCard.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
+import MasterData from './components/MasterData.tsx';
+import AttendanceTracker from './components/AttendanceTracker.tsx';
 import { Player, Position } from './types.ts';
 import { Filter, Search } from 'lucide-react';
 
@@ -89,6 +91,26 @@ const MOCK_PLAYERS: Player[] = [
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check system preference on load
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+       setIsDarkMode(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const html = document.querySelector('html');
+    if (isDarkMode) {
+      html?.classList.add('dark');
+    } else {
+      html?.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   const renderContent = () => {
     switch (currentView) {
@@ -99,8 +121,8 @@ function App() {
           <div className="p-6">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Plantilla del Primer Equipo</h2>
-                  <p className="text-slate-500">Gestión de fichas técnicas y rendimiento</p>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Plantilla del Primer Equipo</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Gestión de fichas técnicas y rendimiento</p>
                </div>
                
                <div className="flex items-center gap-3 w-full md:w-auto">
@@ -109,10 +131,10 @@ function App() {
                     <input 
                       type="text" 
                       placeholder="Buscar jugador..." 
-                      className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
                     />
                   </div>
-                  <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+                  <button className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                     <Filter size={20} />
                   </button>
                </div>
@@ -123,11 +145,11 @@ function App() {
                 <div 
                   key={player.id} 
                   onClick={() => setSelectedPlayer(player)}
-                  className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                  className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
                 >
                   <div className="h-48 overflow-hidden relative">
                     <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+                    <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm dark:text-white">
                       {player.position}
                     </div>
                     {player.status === 'Injured' && (
@@ -139,26 +161,26 @@ function App() {
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-bold text-slate-800 truncate">{player.name}</h3>
-                        <p className="text-xs text-slate-500">{player.nationality}</p>
+                        <h3 className="font-bold text-slate-800 dark:text-white truncate">{player.name}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{player.nationality}</p>
                       </div>
-                      <div className="text-2xl font-bold text-slate-200 group-hover:text-emerald-500 transition-colors">
+                      <div className="text-2xl font-bold text-slate-200 dark:text-slate-700 group-hover:text-primary-500 transition-colors">
                         #{player.number}
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-2 mt-4">
-                       <div className="text-center bg-slate-50 rounded p-1">
+                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
                           <div className="text-[10px] text-slate-400 font-bold">PAC</div>
-                          <div className={`text-sm font-bold ${player.stats.pace > 85 ? 'text-emerald-500' : 'text-slate-700'}`}>{player.stats.pace}</div>
+                          <div className={`text-sm font-bold ${player.stats.pace > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.pace}</div>
                        </div>
-                       <div className="text-center bg-slate-50 rounded p-1">
+                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
                           <div className="text-[10px] text-slate-400 font-bold">SHO</div>
-                          <div className={`text-sm font-bold ${player.stats.shooting > 85 ? 'text-emerald-500' : 'text-slate-700'}`}>{player.stats.shooting}</div>
+                          <div className={`text-sm font-bold ${player.stats.shooting > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.shooting}</div>
                        </div>
-                       <div className="text-center bg-slate-50 rounded p-1">
+                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
                           <div className="text-[10px] text-slate-400 font-bold">PAS</div>
-                          <div className={`text-sm font-bold ${player.stats.passing > 85 ? 'text-emerald-500' : 'text-slate-700'}`}>{player.stats.passing}</div>
+                          <div className={`text-sm font-bold ${player.stats.passing > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.passing}</div>
                        </div>
                     </div>
                   </div>
@@ -171,18 +193,27 @@ function App() {
         return <AdminPanel activeTab="fixtures" />;
       case 'staff':
         return <AdminPanel activeTab="staff" />;
-      case 'inventory':
-        return <AdminPanel activeTab="inventory" />;
+      case 'master-data':
+        return <MasterData />;
+      case 'attendance':
+        return <AttendanceTracker players={MOCK_PLAYERS} />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex transition-colors duration-300">
+      <Sidebar 
+        currentView={currentView} 
+        setCurrentView={setCurrentView} 
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+      />
       
-      <main className="ml-64 flex-1 transition-all duration-300">
+      <main className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {renderContent()}
       </main>
 

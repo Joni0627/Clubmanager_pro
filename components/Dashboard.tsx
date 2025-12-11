@@ -12,17 +12,17 @@ const Dashboard: React.FC = () => {
   ];
 
   const stats = [
-    { label: 'Ranking Liga', value: '2º', icon: Trophy, color: 'text-yellow-600', bg: 'bg-yellow-100' },
-    { label: 'Plantilla Activa', value: '24', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Valor Plantilla', value: '€145M', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { label: 'Rendimiento', value: '+12%', icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-100' },
+    { label: 'Ranking Liga', value: '2º', icon: Trophy, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/20' },
+    { label: 'Plantilla Activa', value: '24', icon: Users, color: 'text-primary-600 dark:text-primary-400', bg: 'bg-primary-100 dark:bg-primary-900/20' },
+    { label: 'Valor Plantilla', value: '€145M', icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/20' },
+    { label: 'Rendimiento', value: '+12%', icon: TrendingUp, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-100 dark:bg-violet-900/20' },
   ];
 
   return (
     <div className="p-6 space-y-6">
       <div className="mb-2">
-        <h2 className="text-2xl font-bold text-slate-800">Panel General</h2>
-        <p className="text-slate-500">Resumen de actividad del club</p>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Panel General</h2>
+        <p className="text-slate-500 dark:text-slate-400">Resumen de actividad del club</p>
       </div>
 
       {/* KPI Cards */}
@@ -30,11 +30,11 @@ const Dashboard: React.FC = () => {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+            <div key={index} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 mb-1">{stat.label}</p>
-                  <h3 className="text-2xl font-bold text-slate-800">{stat.value}</h3>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
+                  <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{stat.value}</h3>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.bg} ${stat.color}`}>
                   <Icon size={24} />
@@ -48,31 +48,31 @@ const Dashboard: React.FC = () => {
       {/* Main Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Performance Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Goles Marcados vs Recibidos</h3>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Goles Marcados vs Recibidos</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={performanceData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="match" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                <XAxis dataKey="match" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff' }}
                   cursor={{fill: '#f1f5f9'}}
                 />
-                <Bar dataKey="goals" name="Goles a Favor" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="conceded" name="Goles en Contra" fill="#f87171" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="goals" name="Goles a Favor" fill="#db2777" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="conceded" name="Goles en Contra" fill="#94a3b8" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Upcoming Match Card */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-xl shadow-lg text-white flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-black dark:to-slate-900 p-6 rounded-xl shadow-lg text-white flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold text-slate-200">Próximo Partido</h3>
-              <span className="px-3 py-1 bg-emerald-500 text-xs font-bold rounded-full">EN 3 DÍAS</span>
+              <span className="px-3 py-1 bg-primary-600 text-xs font-bold rounded-full">EN 3 DÍAS</span>
             </div>
             
             <div className="flex items-center justify-between text-center mb-8">
@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
-          <button className="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition-colors">
+          <button className="w-full mt-6 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-lg transition-colors">
             Gestionar Convocatoria
           </button>
         </div>

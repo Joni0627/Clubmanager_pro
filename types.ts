@@ -25,6 +25,7 @@ export interface Player {
   stats: PlayerStats;
   status: 'Active' | 'Injured' | 'Suspended';
   marketValue: string;
+  attendanceRate?: number; // Nueva propiedad
 }
 
 export interface Staff {
@@ -49,4 +50,18 @@ export interface InventoryItem {
   category: string;
   quantity: number;
   status: 'Good' | 'Low' | 'Critical';
+}
+
+export interface SystemUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Coach' | 'Assistant';
+  avatar: string;
+}
+
+export interface AttendanceRecord {
+  playerId: string;
+  date: string;
+  status: 'Present' | 'Absent' | 'Late' | 'Excused';
 }
