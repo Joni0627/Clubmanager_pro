@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Player } from '../types';
-import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Filter } from 'lucide-react';
 
 interface AttendanceTrackerProps {
   players: Player[];
@@ -9,6 +9,9 @@ interface AttendanceTrackerProps {
 const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, string>>({});
+  const [selectedSquad, setSelectedSquad] = useState<string>('Primera');
+
+  const filteredPlayers = players.filter(p => p.squad === selectedSquad);
 
   const handleStatusChange = (playerId: string, status: string) => {
     setAttendance(prev => ({
@@ -43,64 +46,87 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
           <p className="text-slate-500 dark:text-slate-400">Registro diario de actividad del plantel</p>
         </div>
         
-        <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-           <CalendarIcon className="text-primary-500" size={20} />
-           <input 
-             type="date" 
-             value={date} 
-             onChange={(e) => setDate(e.target.value)}
-             className="bg-transparent text-slate-800 dark:text-white font-medium focus:outline-none"
-           />
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+             {/* Squad Filter */}
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+                <Filter className="text-slate-400" size={18} />
+                <select 
+                    value={selectedSquad}
+                    onChange={(e) => setSelectedSquad(e.target.value)}
+                    className="bg-transparent text-slate-800 dark:text-white font-medium focus:outline-none text-sm pr-2"
+                >
+                    <option value="Primera">Primera División</option>
+                    <option value="Reserva">Reserva</option>
+                    <option value="Sub-20">Sub-20</option>
+                </select>
+            </div>
+
+            {/* Date Picker */}
+            <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+                <CalendarIcon className="text-primary-500" size={20} />
+                <input 
+                    type="date" 
+                    value={date} 
+                    onChange={(e) => setDate(e.target.value)}
+                    className="bg-transparent text-slate-800 dark:text-white font-medium focus:outline-none"
+                />
+            </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div className="grid grid-cols-12 gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-500 dark:text-slate-400">
-           <div className="col-span-4 md:col-span-3">JUGADOR</div>
+           <div className="col-span-4 md:col-span-3">JUGADOR ({filteredPlayers.length})</div>
            <div className="col-span-8 md:col-span-9">ESTADO</div>
         </div>
         
         <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-[60vh] overflow-y-auto">
-          {players.map(player => (
-            <div key={player.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-               <div className="col-span-4 md:col-span-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200">
-                     <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                     <p className="font-bold text-slate-800 dark:text-white text-sm">{player.name}</p>
-                     <p className="text-xs text-slate-500">#{player.number}</p>
-                  </div>
-               </div>
-               
-               <div className="col-span-8 md:col-span-9 grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <button 
-                    onClick={() => handleStatusChange(player.id, 'Present')}
-                    className={getStatusButtonClass(player.id, 'Present')}
-                  >
-                    <Check size={16} /> <span className="hidden md:inline">Presente</span>
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(player.id, 'Late')}
-                    className={getStatusButtonClass(player.id, 'Late')}
-                  >
-                    <Clock size={16} /> <span className="hidden md:inline">Tarde</span>
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(player.id, 'Absent')}
-                    className={getStatusButtonClass(player.id, 'Absent')}
-                  >
-                    <X size={16} /> <span className="hidden md:inline">Ausente</span>
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(player.id, 'Excused')}
-                    className={getStatusButtonClass(player.id, 'Excused')}
-                  >
-                    <AlertCircle size={16} /> <span className="hidden md:inline">Justificado</span>
-                  </button>
-               </div>
+          {filteredPlayers.length > 0 ? (
+             filteredPlayers.map(player => (
+                <div key={player.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                   <div className="col-span-4 md:col-span-3 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200">
+                         <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                         <p className="font-bold text-slate-800 dark:text-white text-sm">{player.name}</p>
+                         <p className="text-xs text-slate-500">#{player.number} • {player.position}</p>
+                      </div>
+                   </div>
+                   
+                   <div className="col-span-8 md:col-span-9 grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <button 
+                        onClick={() => handleStatusChange(player.id, 'Present')}
+                        className={getStatusButtonClass(player.id, 'Present')}
+                      >
+                        <Check size={16} /> <span className="hidden md:inline">Presente</span>
+                      </button>
+                      <button 
+                        onClick={() => handleStatusChange(player.id, 'Late')}
+                        className={getStatusButtonClass(player.id, 'Late')}
+                      >
+                        <Clock size={16} /> <span className="hidden md:inline">Tarde</span>
+                      </button>
+                      <button 
+                        onClick={() => handleStatusChange(player.id, 'Absent')}
+                        className={getStatusButtonClass(player.id, 'Absent')}
+                      >
+                        <X size={16} /> <span className="hidden md:inline">Ausente</span>
+                      </button>
+                      <button 
+                        onClick={() => handleStatusChange(player.id, 'Excused')}
+                        className={getStatusButtonClass(player.id, 'Excused')}
+                      >
+                        <AlertCircle size={16} /> <span className="hidden md:inline">Justificado</span>
+                      </button>
+                   </div>
+                </div>
+              ))
+          ) : (
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                No hay jugadores asignados a la categoría <strong>{selectedSquad}</strong>.
             </div>
-          ))}
+          )}
         </div>
         
         <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">

@@ -14,6 +14,13 @@ export interface PlayerStats {
   physical: number;
 }
 
+export interface MedicalRecord {
+  isFit: boolean; // Apto médico
+  lastCheckup: string;
+  expiryDate: string;
+  notes: string;
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -23,9 +30,11 @@ export interface Player {
   nationality: string;
   photoUrl: string;
   stats: PlayerStats;
-  status: 'Active' | 'Injured' | 'Suspended';
+  status: 'Active' | 'Injured' | 'Suspended' | 'Reserve';
+  squad: 'Primera' | 'Reserva' | 'Sub-20'; // Nuevo: Categoría/Plantel
   marketValue: string;
-  attendanceRate?: number; // Nueva propiedad
+  medical?: MedicalRecord; // Nuevo: Ficha médica
+  attendanceRate?: number;
 }
 
 export interface Staff {

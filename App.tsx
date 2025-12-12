@@ -20,7 +20,14 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'Argentina',
     photoUrl: 'https://picsum.photos/400/400?random=1',
     status: 'Active',
+    squad: 'Primera',
     marketValue: '€35M',
+    medical: {
+        isFit: true,
+        lastCheckup: '2023-10-01',
+        expiryDate: '2024-10-01',
+        notes: 'Sin lesiones recientes. Estado físico óptimo.'
+    },
     stats: {
       pace: 80,
       shooting: 92,
@@ -39,7 +46,14 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'France',
     photoUrl: 'https://picsum.photos/400/400?random=2',
     status: 'Active',
+    squad: 'Primera',
     marketValue: '€180M',
+    medical: {
+        isFit: true,
+        lastCheckup: '2023-09-15',
+        expiryDate: '2024-09-15',
+        notes: 'Control rutinario aprobado.'
+    },
     stats: {
       pace: 98,
       shooting: 89,
@@ -58,7 +72,14 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'Netherlands',
     photoUrl: 'https://picsum.photos/400/400?random=3',
     status: 'Injured',
+    squad: 'Primera',
     marketValue: '€30M',
+    medical: {
+        isFit: false,
+        lastCheckup: '2023-11-01',
+        expiryDate: '2024-01-01',
+        notes: 'Esguince de tobillo grado 2. Rehabilitación estimada: 3 semanas.'
+    },
     stats: {
       pace: 76,
       shooting: 60,
@@ -77,7 +98,14 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'Belgium',
     photoUrl: 'https://picsum.photos/400/400?random=4',
     status: 'Active',
+    squad: 'Primera',
     marketValue: '€70M',
+    medical: {
+        isFit: true,
+        lastCheckup: '2023-08-20',
+        expiryDate: '2024-08-20',
+        notes: 'Fatiga muscular leve, seguimiento preventivo.'
+    },
     stats: {
       pace: 74,
       shooting: 86,
@@ -85,6 +113,32 @@ const MOCK_PLAYERS: Player[] = [
       dribbling: 87,
       defending: 64,
       physical: 74
+    }
+  },
+  {
+    id: '5',
+    name: 'Joven Promesa',
+    number: 22,
+    position: Position.MID,
+    age: 18,
+    nationality: 'Spain',
+    photoUrl: 'https://picsum.photos/400/400?random=5',
+    status: 'Active',
+    squad: 'Reserva',
+    marketValue: '€5M',
+    medical: {
+        isFit: true,
+        lastCheckup: '2023-11-10',
+        expiryDate: '2024-11-10',
+        notes: 'Todo en orden.'
+    },
+    stats: {
+      pace: 82,
+      shooting: 70,
+      passing: 75,
+      dribbling: 78,
+      defending: 50,
+      physical: 60
     }
   }
 ];
