@@ -6,10 +6,10 @@ import AdminPanel from './components/AdminPanel.tsx';
 import MasterData from './components/MasterData.tsx';
 import AttendanceTracker from './components/AttendanceTracker.tsx';
 import MedicalDashboard from './components/MedicalDashboard.tsx';
-import FeesManagement from './components/FeesManagement.tsx'; // Nuevo
+import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { Player, Position } from './types.ts';
-import { Filter, Search, Grid, List as ListIcon } from 'lucide-react';
+import { Player, Position, ClubConfig } from './types.ts';
+import { Filter, Search, Grid, List as ListIcon, Plus } from 'lucide-react';
 
 // Enhanced Mock Players Data with Divisions/Categories
 const MOCK_PLAYERS: Player[] = [
@@ -110,6 +110,12 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   
+  // App-Wide States
+  const [clubConfig, setClubConfig] = useState<ClubConfig>({
+      name: 'PLEGMA FC',
+      logoUrl: '' // Empty means default shield icon
+  });
+
   // Player View Filters
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterDiscipline, setFilterDiscipline] = useState('Todas');
@@ -135,6 +141,28 @@ function App() {
   }, [isDarkMode]);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  const handleNewPlayer = () => {
+      // Create a blank player template
+      const newPlayer: Player = {
+          id: `new-${Date.now()}`,
+          name: '',
+          number: 0,
+          position: Position.PLAYER,
+          age: 0,
+          nationality: '',
+          photoUrl: 'https://via.placeholder.com/400',
+          stats: { pace: 0, shooting: 0, passing: 0, dribbling: 0, defending: 0, physical: 0 },
+          status: 'Active',
+          discipline: 'Fútbol', // Default
+          division: 'Masculino',
+          category: 'Primera',
+          marketValue: '-',
+          medical: { isFit: true, lastCheckup: '', expiryDate: '', notes: '' }
+      };
+      setSelectedPlayer(newPlayer);
+      // Logic inside PlayerCard will handle editing mode
+  };
 
   // Filtering & Grouping Logic
   const getGroupedPlayers = () => {
@@ -199,6 +227,13 @@ function App() {
                        <option value="Primera">Primera</option>
                        <option value="Reserva">Reserva</option>
                    </select>
+
+                   <button 
+                    onClick={handleNewPlayer}
+                    className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-colors"
+                   >
+                        <Plus size={18} /> Nuevo Jugador
+                   </button>
                   
                   {/* View Toggles */}
                   <div className="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
@@ -304,7 +339,7 @@ function App() {
       case 'staff':
         return <AdminPanel activeTab="staff" />;
       case 'master-data':
-        return <MasterData />;
+        return <MasterData clubConfig={clubConfig} setClubConfig={setClubConfig} />;
       case 'attendance':
         return <AttendanceTracker players={MOCK_PLAYERS} />;
       default:
@@ -325,6 +360,7 @@ function App() {
         setIsCollapsed={setIsSidebarCollapsed}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
+        clubConfig={clubConfig}
       />
       
       <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>

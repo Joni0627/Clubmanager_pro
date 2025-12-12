@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Fixture, Discipline } from '../types.ts';
-import { Plus, Trash2, Edit2, Users, Activity, ChevronRight, X, Save, Trophy, AlertTriangle } from 'lucide-react';
+import { Fixture, Discipline, TeamStructure } from '../types.ts';
+import { Plus, Trash2, Edit2, Users, Activity, ChevronRight, X, Save, Trophy, AlertTriangle, Stethoscope } from 'lucide-react';
 
 interface AdminPanelProps {
   activeTab: 'fixtures' | 'staff';
@@ -19,15 +19,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   ]);
 
   // --- STATES FOR STAFF/TEAMS ---
-  const [selectedTeam, setSelectedTeam] = useState<any | null>(null); // Viewing specific team details
+  const [selectedTeam, setSelectedTeam] = useState<TeamStructure | null>(null); // Viewing specific team details
   const [showTeamModal, setShowTeamModal] = useState(false); // Creating/Editing
-  const [editingTeam, setEditingTeam] = useState<any | null>(null); // Creating/Editing
+  const [editingTeam, setEditingTeam] = useState<TeamStructure | null>(null); // Creating/Editing
 
   // Mock Structure Data
-  const [teams, setTeams] = useState([
-      { id: 't1', discipline: 'Fútbol', category: 'Primera', coach: 'Carlo Ancelotti', playersCount: 24 },
-      { id: 't2', discipline: 'Fútbol', category: 'Reserva', coach: 'Marcelo Gallardo', playersCount: 18 },
-      { id: 't3', discipline: 'Básquet', category: 'Primera', coach: 'Steve Kerr', playersCount: 12 },
+  const [teams, setTeams] = useState<TeamStructure[]>([
+      { id: 't1', discipline: 'Fútbol', category: 'Primera', coach: 'Carlo Ancelotti', physicalTrainer: 'Antonio Pintus', medicalStaff: 'Dr. House', playersCount: 24 },
+      { id: 't2', discipline: 'Fútbol', category: 'Reserva', coach: 'Marcelo Gallardo', physicalTrainer: 'Pablo Dolce', medicalStaff: 'Dr. Rossi', playersCount: 18 },
+      { id: 't3', discipline: 'Básquet', category: 'Primera', coach: 'Steve Kerr', physicalTrainer: 'Ron Adams', medicalStaff: 'Dr. Smith', playersCount: 12 },
   ]);
 
   const handleFixtureEdit = (fixture: Fixture) => {
@@ -46,7 +46,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
       setShowTeamModal(true);
   }
 
-  const handleEditTeam = (team: any, e: React.MouseEvent) => {
+  const handleEditTeam = (team: TeamStructure, e: React.MouseEvent) => {
       e.stopPropagation();
       setEditingTeam(team);
       setShowTeamModal(true);
@@ -60,7 +60,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   }
 
   // --- COMPONENT: TEAM HIERARCHY (Flowchart View) ---
-  const TeamHierarchy = ({ team, onBack }: { team: any, onBack: () => void }) => (
+  const TeamHierarchy = ({ team, onBack }: { team: TeamStructure, onBack: () => void }) => (
     <div className="animate-fade-in">
         <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-primary-600 mb-6 font-medium transition-colors">
             <ChevronRight className="rotate-180" size={18} /> Volver a Equipos
@@ -91,12 +91,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
             {/* Level 2: Staff */}
             <div className="z-10 w-full flex justify-center gap-8 flex-wrap">
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 w-56 text-center">
+                    <div className="flex justify-center mb-2 text-blue-500"><Activity /></div>
                     <h4 className="font-bold text-slate-700 dark:text-slate-200">Prep. Físico</h4>
-                    <p className="text-sm text-slate-500">Antonio Pintus</p>
+                    <p className="text-sm text-slate-500">{team.physicalTrainer || 'No asignado'}</p>
                  </div>
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border-l-4 border-emerald-500 w-56 text-center">
+                    <div className="flex justify-center mb-2 text-emerald-500"><Stethoscope /></div>
                     <h4 className="font-bold text-slate-700 dark:text-slate-200">Cuerpo Médico</h4>
-                    <p className="text-sm text-slate-500">Dr. House</p>
+                    <p className="text-sm text-slate-500">{team.medicalStaff || 'No asignado'}</p>
                  </div>
             </div>
 
@@ -284,7 +286,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
           </div>
       )}
 
-      {/* --- MODAL: TEAM ABM --- */}
+      {/* --- MODAL: TEAM ABM (UPDATED WITH STAFF FIELDS) --- */}
       {showTeamModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 animate-fade-in">
@@ -296,7 +298,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                           <X size={20} />
                       </button>
                   </div>
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-2 text-sm text-yellow-700 dark:text-yellow-400">
                           <AlertTriangle size={16} className="mt-0.5" />
                           <p>El sistema validará automáticamente que los jugadores asignados no estén inscritos en otra disciplina activa.</p>
@@ -319,11 +321,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                               </select>
                           </div>
                       </div>
-                      <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">Director Técnico</label>
-                          <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.coach} placeholder="Nombre del DT" />
+                      
+                      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
+                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Staff Técnico</label>
+                        <div className="space-y-3">
+                             <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Director Técnico</label>
+                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.coach} placeholder="Nombre del DT" />
+                            </div>
+                             <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Preparador Físico</label>
+                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.physicalTrainer} placeholder="Nombre del PF" />
+                            </div>
+                             <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Cuerpo Médico</label>
+                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.medicalStaff} placeholder="Nombre del Médico" />
+                            </div>
+                        </div>
                       </div>
-                       <div className="space-y-1">
+
+                       <div className="space-y-1 border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
                           <label className="text-xs font-bold text-slate-500 uppercase">Jugadores</label>
                           <div className="h-32 border border-slate-200 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 p-2 overflow-y-auto">
                               {/* Mock selector */}

@@ -43,7 +43,7 @@ export interface Player {
   // Jerarquía
   discipline: Discipline;
   division: 'Masculino' | 'Femenino' | 'Mixto' | 'Escuela Infantil'; 
-  category: string; // Changed to string to support Master Data
+  category: string; 
   squad?: string;
   
   marketValue: string;
@@ -66,6 +66,16 @@ export interface TrainingGroup {
   discipline: Discipline;
   playerIds: string[];
   schedule: string;
+}
+
+export interface TeamStructure {
+    id: string;
+    discipline: Discipline;
+    category: string;
+    coach: string;
+    physicalTrainer: string; // Nuevo
+    medicalStaff: string; // Nuevo
+    playersCount: number;
 }
 
 export interface Fixture {
@@ -101,21 +111,27 @@ export interface AttendanceRecord {
   status: 'Present' | 'Absent' | 'Late' | 'Excused';
 }
 
-// NUEVO: Gestión de Cuotas
+// Gestión de Cuotas Actualizada
 export interface MemberFee {
   id: string;
-  memberId: string; // Puede ser ID de jugador o externo
+  memberId: string; 
   memberName: string;
   type: 'Jugador' | 'Socio' | 'Staff';
   lastPaymentDate: string;
   status: 'UpToDate' | 'Pending' | 'Late';
   amount: number;
   dueDate: string;
+  paymentMethod?: 'Efectivo' | 'Transferencia' | 'Tarjeta'; // Nuevo
+  reference?: string; // Nuevo (Comprobante)
 }
 
-// NUEVO: Configuración de Disciplinas
 export interface DisciplineConfig {
   id: string;
   name: string;
   categories: string[];
+}
+
+export interface ClubConfig {
+    name: string;
+    logoUrl: string;
 }

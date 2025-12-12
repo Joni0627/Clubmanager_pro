@@ -1,5 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, Users, Calendar, Briefcase, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield, HeartPulse, CreditCard } from 'lucide-react';
+import { ClubConfig } from '../types';
 
 interface SidebarProps {
   currentView: string;
@@ -8,6 +9,7 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  clubConfig: ClubConfig; // Nueva prop
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -16,14 +18,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed, 
   setIsCollapsed,
   isDarkMode,
-  toggleTheme
+  toggleTheme,
+  clubConfig
 }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Panel General', icon: LayoutDashboard },
     { id: 'players', label: 'Gestión Planteles', icon: Users },
     { id: 'medical', label: 'Central Médica', icon: HeartPulse },
     { id: 'attendance', label: 'Asistencia', icon: ClipboardCheck },
-    { id: 'fees', label: 'Gestión Cuotas', icon: CreditCard }, // Nuevo
+    { id: 'fees', label: 'Gestión Cuotas', icon: CreditCard },
     { id: 'fixtures', label: 'Temporada', icon: Calendar },
     { id: 'staff', label: 'Cuerpo Técnico', icon: Briefcase },
     { id: 'master-data', label: 'Datos Maestros', icon: Database },
@@ -35,19 +38,27 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 h-16">
         {!isCollapsed && (
           <div className="flex items-center gap-2 animate-fade-in overflow-hidden">
-             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center shrink-0">
-                <Shield size={18} className="text-white" />
+             <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-primary-600">
+                {clubConfig.logoUrl ? (
+                    <img src={clubConfig.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                    <Shield size={18} className="text-white" />
+                )}
              </div>
-             <div className="leading-tight whitespace-nowrap">
-                <h1 className="font-bold text-sm tracking-tight text-slate-800 dark:text-white">Club Manager</h1>
-                <h2 className="font-bold text-xs text-primary-600">PLEGMA</h2>
+             <div className="leading-tight whitespace-nowrap overflow-hidden">
+                <h1 className="font-bold text-sm tracking-tight text-slate-800 dark:text-white truncate max-w-[140px]">{clubConfig.name}</h1>
+                <h2 className="font-bold text-[10px] text-primary-600 uppercase">Club Manager</h2>
              </div>
           </div>
         )}
         {isCollapsed && (
            <div className="w-full flex justify-center">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                 <Shield size={18} className="text-white" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-primary-600">
+                {clubConfig.logoUrl ? (
+                    <img src={clubConfig.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                    <Shield size={18} className="text-white" />
+                )}
               </div>
            </div>
         )}
@@ -116,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">Admin</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">admin@plegma.com</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">admin@club.com</p>
             </div>
           )}
         </div>

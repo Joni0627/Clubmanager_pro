@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { SystemUser, InventoryItem, DisciplineConfig } from '../types';
-import { Search, Plus, Trash2, Edit2, Shield, Box, Coins, Settings, Trophy, ChevronRight, ChevronDown } from 'lucide-react';
+import { SystemUser, InventoryItem, DisciplineConfig, ClubConfig } from '../types';
+import { Search, Plus, Trash2, Edit2, Shield, Box, Settings, Trophy, ChevronRight, ChevronDown, Link } from 'lucide-react';
 
-const MasterData: React.FC = () => {
+interface MasterDataProps {
+    clubConfig: ClubConfig;
+    setClubConfig: (config: ClubConfig) => void;
+}
+
+const MasterData: React.FC<MasterDataProps> = ({ clubConfig, setClubConfig }) => {
   const [activeTab, setActiveTab] = useState<'users' | 'inventory' | 'disciplines' | 'settings'>('users');
 
   const [users] = useState<SystemUser[]>([
@@ -16,7 +21,7 @@ const MasterData: React.FC = () => {
   ]);
 
   // Mock Disciplines Data
-  const [disciplines, setDisciplines] = useState<DisciplineConfig[]>([
+  const [disciplines] = useState<DisciplineConfig[]>([
       { id: 'd1', name: 'Fútbol', categories: ['Primera', 'Reserva', 'Sub-20', 'Infantil'] },
       { id: 'd2', name: 'Básquet', categories: ['Primera', 'Sub-23', 'Sub-19', 'Mini'] },
       { id: 'd3', name: 'Vóley', categories: ['Primera Fem', 'Primera Masc', 'Sub-18'] },
@@ -30,7 +35,7 @@ const MasterData: React.FC = () => {
 
   const tabs = [
     { id: 'users', label: 'Usuarios y Perfiles', icon: Shield },
-    { id: 'disciplines', label: 'Disciplinas y Categorías', icon: Trophy }, // Nuevo
+    { id: 'disciplines', label: 'Disciplinas y Categorías', icon: Trophy },
     { id: 'inventory', label: 'Catálogo de Insumos', icon: Box },
     { id: 'settings', label: 'Configuración General', icon: Settings },
   ];
@@ -200,22 +205,45 @@ const MasterData: React.FC = () => {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
            <div className="p-6">
-              <h3 className="font-semibold text-lg text-slate-800 dark:text-white mb-6">Preferencias del Club</h3>
+              <h3 className="font-semibold text-lg text-slate-800 dark:text-white mb-6">Identidad del Club</h3>
               
               <div className="space-y-6 max-w-2xl">
-                 <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
-                    <div className="flex items-center gap-3">
-                       <Coins className="text-slate-500" />
-                       <div>
-                          <p className="font-medium text-slate-800 dark:text-slate-200">Moneda Principal</p>
-                          <p className="text-sm text-slate-500">Moneda utilizada para valoraciones y finanzas</p>
-                       </div>
-                    </div>
-                    <select className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-1 text-sm dark:text-white">
-                       <option>EUR (€)</option>
-                       <option>USD ($)</option>
-                       <option>ARS ($)</option>
-                    </select>
+                 <div className="grid grid-cols-1 gap-6">
+                     <div className="space-y-2">
+                         <label className="text-sm font-medium text-slate-600 dark:text-slate-300">Nombre del Club</label>
+                         <div className="flex items-center gap-3">
+                            <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                                <Shield size={24} className="text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <input 
+                                type="text" 
+                                value={clubConfig.name}
+                                onChange={(e) => setClubConfig({...clubConfig, name: e.target.value})}
+                                className="flex-1 p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none dark:text-white font-bold"
+                            />
+                         </div>
+                         <p className="text-xs text-slate-400 ml-1">Este nombre se mostrará en el menú lateral y encabezados.</p>
+                     </div>
+
+                     <div className="space-y-2">
+                         <label className="text-sm font-medium text-slate-600 dark:text-slate-300">URL del Escudo (Logo)</label>
+                         <div className="flex items-center gap-3">
+                            <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                                <Link size={24} className="text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <input 
+                                type="text" 
+                                value={clubConfig.logoUrl}
+                                onChange={(e) => setClubConfig({...clubConfig, logoUrl: e.target.value})}
+                                placeholder="https://..."
+                                className="flex-1 p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none dark:text-white"
+                            />
+                         </div>
+                         <div className="mt-2 flex items-center gap-2">
+                             <span className="text-xs text-slate-400">Vista previa:</span>
+                             {clubConfig.logoUrl && <img src={clubConfig.logoUrl} alt="Preview" className="w-8 h-8 object-contain bg-slate-200 rounded-md" />}
+                         </div>
+                     </div>
                  </div>
               </div>
            </div>
