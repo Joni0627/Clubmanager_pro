@@ -5,12 +5,14 @@ import PlayerCard from './components/PlayerCard.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import MasterData from './components/MasterData.tsx';
 import AttendanceTracker from './components/AttendanceTracker.tsx';
+import MedicalDashboard from './components/MedicalDashboard.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
 import { Player, Position } from './types.ts';
-import { Filter, Search } from 'lucide-react';
+import { Filter, Search, Grid, List as ListIcon } from 'lucide-react';
 
-// Mock Players Data
+// Enhanced Mock Players Data with Divisions/Categories
 const MOCK_PLAYERS: Player[] = [
+  // PRIMERA DIVISIÓN
   {
     id: '1',
     name: 'Lionel Andrés',
@@ -20,22 +22,12 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'Argentina',
     photoUrl: 'https://picsum.photos/400/400?random=1',
     status: 'Active',
+    division: 'Masculino',
+    category: 'Primera',
     squad: 'Primera',
     marketValue: '€35M',
-    medical: {
-        isFit: true,
-        lastCheckup: '2023-10-01',
-        expiryDate: '2024-10-01',
-        notes: 'Sin lesiones recientes. Estado físico óptimo.'
-    },
-    stats: {
-      pace: 80,
-      shooting: 92,
-      passing: 94,
-      dribbling: 96,
-      defending: 32,
-      physical: 65
-    }
+    medical: { isFit: true, lastCheckup: '2023-10-01', expiryDate: '2024-10-01', notes: 'Óptimo.' },
+    stats: { pace: 80, shooting: 92, passing: 94, dribbling: 96, defending: 32, physical: 65 }
   },
   {
     id: '2',
@@ -46,22 +38,12 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'France',
     photoUrl: 'https://picsum.photos/400/400?random=2',
     status: 'Active',
+    division: 'Masculino',
+    category: 'Primera',
     squad: 'Primera',
     marketValue: '€180M',
-    medical: {
-        isFit: true,
-        lastCheckup: '2023-09-15',
-        expiryDate: '2024-09-15',
-        notes: 'Control rutinario aprobado.'
-    },
-    stats: {
-      pace: 98,
-      shooting: 89,
-      passing: 80,
-      dribbling: 92,
-      defending: 36,
-      physical: 78
-    }
+    medical: { isFit: true, lastCheckup: '2023-09-15', expiryDate: '2024-09-15', notes: 'Control ok.' },
+    stats: { pace: 98, shooting: 89, passing: 80, dribbling: 92, defending: 36, physical: 78 }
   },
   {
     id: '3',
@@ -72,74 +54,63 @@ const MOCK_PLAYERS: Player[] = [
     nationality: 'Netherlands',
     photoUrl: 'https://picsum.photos/400/400?random=3',
     status: 'Injured',
+    division: 'Masculino',
+    category: 'Primera',
     squad: 'Primera',
     marketValue: '€30M',
-    medical: {
-        isFit: false,
-        lastCheckup: '2023-11-01',
-        expiryDate: '2024-01-01',
-        notes: 'Esguince de tobillo grado 2. Rehabilitación estimada: 3 semanas.'
-    },
-    stats: {
-      pace: 76,
-      shooting: 60,
-      passing: 71,
-      dribbling: 68,
-      defending: 91,
-      physical: 86
-    }
+    medical: { isFit: false, lastCheckup: '2023-11-01', expiryDate: '2024-01-01', notes: 'Esguince tobillo.' },
+    stats: { pace: 76, shooting: 60, passing: 71, dribbling: 68, defending: 91, physical: 86 }
   },
-    {
-    id: '4',
-    name: 'Kevin D.B.',
-    number: 17,
-    position: Position.MID,
-    age: 32,
-    nationality: 'Belgium',
-    photoUrl: 'https://picsum.photos/400/400?random=4',
-    status: 'Active',
-    squad: 'Primera',
-    marketValue: '€70M',
-    medical: {
-        isFit: true,
-        lastCheckup: '2023-08-20',
-        expiryDate: '2024-08-20',
-        notes: 'Fatiga muscular leve, seguimiento preventivo.'
-    },
-    stats: {
-      pace: 74,
-      shooting: 86,
-      passing: 96,
-      dribbling: 87,
-      defending: 64,
-      physical: 74
-    }
-  },
+  // RESERVA
   {
     id: '5',
     name: 'Joven Promesa',
     number: 22,
     position: Position.MID,
-    age: 18,
+    age: 19,
     nationality: 'Spain',
     photoUrl: 'https://picsum.photos/400/400?random=5',
     status: 'Active',
+    division: 'Masculino',
+    category: 'Reserva',
     squad: 'Reserva',
     marketValue: '€5M',
-    medical: {
-        isFit: true,
-        lastCheckup: '2023-11-10',
-        expiryDate: '2024-11-10',
-        notes: 'Todo en orden.'
-    },
-    stats: {
-      pace: 82,
-      shooting: 70,
-      passing: 75,
-      dribbling: 78,
-      defending: 50,
-      physical: 60
-    }
+    medical: { isFit: true, lastCheckup: '2023-11-10', expiryDate: '2024-11-10', notes: 'Apto.' },
+    stats: { pace: 82, shooting: 70, passing: 75, dribbling: 78, defending: 50, physical: 60 }
+  },
+  // FEMENINO
+  {
+    id: '6',
+    name: 'Alexia P.',
+    number: 11,
+    position: Position.MID,
+    age: 29,
+    nationality: 'Spain',
+    photoUrl: 'https://picsum.photos/400/400?random=6',
+    status: 'Active',
+    division: 'Femenino',
+    category: 'Primera',
+    squad: 'Primera',
+    marketValue: '€1M',
+    medical: { isFit: true, lastCheckup: '2023-08-10', expiryDate: '2024-08-10', notes: 'Apto.' },
+    stats: { pace: 85, shooting: 90, passing: 95, dribbling: 92, defending: 60, physical: 70 }
+  },
+  // ESCUELA
+  {
+    id: '7',
+    name: 'Mateo Messi',
+    number: 10,
+    position: Position.FWD,
+    age: 8,
+    nationality: 'Argentina',
+    photoUrl: 'https://picsum.photos/400/400?random=7',
+    status: 'Active',
+    division: 'Escuela Infantil',
+    category: 'Cat. 2013',
+    squad: 'Cat. 2013',
+    marketValue: '-',
+    medical: { isFit: false, lastCheckup: '2023-01-01', expiryDate: '2023-12-31', notes: 'Apto vencido.' },
+    stats: { pace: 60, shooting: 60, passing: 60, dribbling: 60, defending: 60, physical: 60 }
   }
 ];
 
@@ -149,18 +120,19 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  
+  // Player View Filters
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterDivision, setFilterDivision] = useState('Todas');
+  const [filterCategory, setFilterCategory] = useState('Todas');
 
   useEffect(() => {
-    // Check system preference on load
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
        setIsDarkMode(true);
     }
-    
-    // Simulate loading time for splash screen
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 2500);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -175,81 +147,153 @@ function App() {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  // Filtering Logic for Players View
+  const getFilteredPlayers = () => {
+    return MOCK_PLAYERS.filter(player => {
+        const matchesDivision = filterDivision === 'Todas' || player.division === filterDivision;
+        const matchesCategory = filterCategory === 'Todas' || player.category === filterCategory;
+        return matchesDivision && matchesCategory;
+    });
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
+      case 'medical':
+        return <MedicalDashboard players={MOCK_PLAYERS} />;
       case 'players':
+        const filteredPlayers = getFilteredPlayers();
         return (
-          <div className="p-6">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <div className="p-6 h-full flex flex-col">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Plantilla del Primer Equipo</h2>
-                  <p className="text-slate-500 dark:text-slate-400">Gestión de fichas técnicas y rendimiento</p>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Planteles</h2>
+                  <p className="text-slate-500 dark:text-slate-400">Administración de jugadores ({filteredPlayers.length} encontrados)</p>
                </div>
                
-               <div className="flex items-center gap-3 w-full md:w-auto">
+               <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+                   {/* Filters */}
+                   <select 
+                        value={filterDivision} 
+                        onChange={(e) => setFilterDivision(e.target.value)}
+                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none dark:text-white"
+                   >
+                       <option value="Todas">Todas las Divisiones</option>
+                       <option value="Masculino">Masculino</option>
+                       <option value="Femenino">Femenino</option>
+                       <option value="Escuela Infantil">Escuela Infantil</option>
+                   </select>
+
+                   <select 
+                        value={filterCategory} 
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none dark:text-white"
+                   >
+                       <option value="Todas">Todas las Categorías</option>
+                       <option value="Primera">Primera</option>
+                       <option value="Reserva">Reserva</option>
+                       <option value="Sub-20">Sub-20</option>
+                       <option value="Cat. 2013">Cat. 2013</option>
+                   </select>
+
                   <div className="relative flex-1 md:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                       type="text" 
-                      placeholder="Buscar jugador..." 
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                      placeholder="Buscar por nombre..." 
+                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-sm"
                     />
                   </div>
-                  <button className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    <Filter size={20} />
-                  </button>
+                  
+                  {/* View Toggles */}
+                  <div className="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
+                      <button 
+                        onClick={() => setViewMode('grid')}
+                        className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400'}`}
+                      >
+                          <Grid size={18} />
+                      </button>
+                      <button 
+                        onClick={() => setViewMode('list')}
+                        className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400'}`}
+                      >
+                          <ListIcon size={18} />
+                      </button>
+                  </div>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {MOCK_PLAYERS.map((player) => (
-                <div 
-                  key={player.id} 
-                  onClick={() => setSelectedPlayer(player)}
-                  className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-                >
-                  <div className="h-48 overflow-hidden relative">
-                    <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm dark:text-white">
-                      {player.position}
+            {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto">
+                {filteredPlayers.map((player) => (
+                    <div 
+                    key={player.id} 
+                    onClick={() => setSelectedPlayer(player)}
+                    className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                    >
+                    <div className="h-40 overflow-hidden relative">
+                        <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                            <span className="bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase">{player.category}</span>
+                        </div>
+                        <div className="absolute bottom-2 left-2">
+                             <span className="bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-slate-800 dark:text-white">{player.position}</span>
+                        </div>
                     </div>
-                    {player.status === 'Injured' && (
-                       <div className="absolute bottom-0 w-full bg-red-500/90 text-white text-center text-xs py-1 font-bold">
-                         LESIONADO
-                       </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-bold text-slate-800 dark:text-white truncate">{player.name}</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{player.nationality}</p>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-200 dark:text-slate-700 group-hover:text-primary-500 transition-colors">
-                        #{player.number}
-                      </div>
+                    <div className="p-4">
+                        <div className="flex justify-between items-start mb-1">
+                            <h3 className="font-bold text-slate-800 dark:text-white truncate">{player.name}</h3>
+                            <span className="text-slate-400 font-mono">#{player.number}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{player.division}</p>
+                        
+                        {/* Status Bar */}
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex">
+                            <div className={`h-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'} w-1/2`} title="Apto Médico"></div>
+                            <div className={`h-full ${player.status === 'Active' ? 'bg-primary-500' : 'bg-slate-400'} w-1/2`} title="Estado Deportivo"></div>
+                        </div>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-2 mt-4">
-                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
-                          <div className="text-[10px] text-slate-400 font-bold">PAC</div>
-                          <div className={`text-sm font-bold ${player.stats.pace > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.pace}</div>
-                       </div>
-                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
-                          <div className="text-[10px] text-slate-400 font-bold">SHO</div>
-                          <div className={`text-sm font-bold ${player.stats.shooting > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.shooting}</div>
-                       </div>
-                       <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded p-1">
-                          <div className="text-[10px] text-slate-400 font-bold">PAS</div>
-                          <div className={`text-sm font-bold ${player.stats.passing > 85 ? 'text-primary-500' : 'text-slate-700 dark:text-slate-300'}`}>{player.stats.passing}</div>
-                       </div>
                     </div>
-                  </div>
+                ))}
                 </div>
-              ))}
-            </div>
+            ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                            <tr>
+                                <th className="p-4 font-medium">Jugador</th>
+                                <th className="p-4 font-medium">División / Categoría</th>
+                                <th className="p-4 font-medium">Posición</th>
+                                <th className="p-4 font-medium">Estado</th>
+                                <th className="p-4 font-medium text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                            {filteredPlayers.map(player => (
+                                <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer" onClick={() => setSelectedPlayer(player)}>
+                                    <td className="p-4 flex items-center gap-3">
+                                        <img src={player.photoUrl} className="w-8 h-8 rounded-full bg-slate-200 object-cover" alt="" />
+                                        <span className="font-bold text-slate-800 dark:text-white">{player.name}</span>
+                                    </td>
+                                    <td className="p-4 text-slate-500 dark:text-slate-400">
+                                        {player.division} - <span className="text-slate-800 dark:text-slate-200 font-medium">{player.category}</span>
+                                    </td>
+                                    <td className="p-4 text-slate-500 dark:text-slate-400">{player.position}</td>
+                                    <td className="p-4">
+                                         <span className={`px-2 py-0.5 rounded text-xs ${player.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                            {player.status === 'Active' ? 'Activo' : 'Inactivo'}
+                                         </span>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <button className="text-primary-600 font-medium hover:underline">Ver Ficha</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
           </div>
         );
       case 'fixtures':
@@ -281,13 +325,13 @@ function App() {
       />
       
       <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           {renderContent()}
         </div>
         
         {/* Copyright Footer */}
-        <div className="py-6 text-center border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 mt-auto">
-          <p className="text-sm text-slate-400 font-medium">
+        <div className="py-4 text-center border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 mt-auto">
+          <p className="text-xs text-slate-400 font-medium">
             &copy; {new Date().getFullYear()} Club Manager <span className="text-primary-500">Plegma</span>. Todos los derechos reservados.
           </p>
         </div>

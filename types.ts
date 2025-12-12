@@ -31,9 +31,14 @@ export interface Player {
   photoUrl: string;
   stats: PlayerStats;
   status: 'Active' | 'Injured' | 'Suspended' | 'Reserve';
-  squad: 'Primera' | 'Reserva' | 'Sub-20'; // Nuevo: Categoría/Plantel
+  
+  // Nueva Estructura Jerárquica
+  division: 'Masculino' | 'Femenino' | 'Escuela Infantil'; 
+  category: 'Primera' | 'Reserva' | 'Sub-20' | 'Sub-17' | 'Cat. 2012' | 'Cat. 2013'; 
+  squad?: string;
+  
   marketValue: string;
-  medical?: MedicalRecord; // Nuevo: Ficha médica
+  medical?: MedicalRecord;
   attendanceRate?: number;
 }
 
