@@ -22,7 +22,7 @@ export interface PlayerStats {
 }
 
 export interface MedicalRecord {
-  id?: string; // Added ID for management
+  id?: string;
   isFit: boolean; // Apto médico
   lastCheckup: string;
   expiryDate: string;
@@ -41,9 +41,9 @@ export interface Player {
   status: 'Active' | 'Injured' | 'Suspended' | 'Reserve';
   
   // Jerarquía
-  discipline: Discipline; // Nueva
+  discipline: Discipline;
   division: 'Masculino' | 'Femenino' | 'Mixto' | 'Escuela Infantil'; 
-  category: 'Primera' | 'Reserva' | 'Sub-20' | 'Sub-17' | 'Cat. 2012' | 'Cat. 2013' | 'Senior'; 
+  category: string; // Changed to string to support Master Data
   squad?: string;
   
   marketValue: string;
@@ -61,7 +61,7 @@ export interface Staff {
 
 export interface TrainingGroup {
   id: string;
-  name: string; // ej: "Defensores Primera" o "Grupo A - Martes/Jueves"
+  name: string;
   coachId: string;
   discipline: Discipline;
   playerIds: string[];
@@ -70,8 +70,8 @@ export interface TrainingGroup {
 
 export interface Fixture {
   id: string;
-  discipline: Discipline; // Nueva
-  category: string; // Nueva
+  discipline: Discipline;
+  category: string;
   opponent: string;
   date: string;
   venue: 'Home' | 'Away';
@@ -99,4 +99,23 @@ export interface AttendanceRecord {
   playerId: string;
   date: string;
   status: 'Present' | 'Absent' | 'Late' | 'Excused';
+}
+
+// NUEVO: Gestión de Cuotas
+export interface MemberFee {
+  id: string;
+  memberId: string; // Puede ser ID de jugador o externo
+  memberName: string;
+  type: 'Jugador' | 'Socio' | 'Staff';
+  lastPaymentDate: string;
+  status: 'UpToDate' | 'Pending' | 'Late';
+  amount: number;
+  dueDate: string;
+}
+
+// NUEVO: Configuración de Disciplinas
+export interface DisciplineConfig {
+  id: string;
+  name: string;
+  categories: string[];
 }

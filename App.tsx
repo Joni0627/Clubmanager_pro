@@ -6,6 +6,7 @@ import AdminPanel from './components/AdminPanel.tsx';
 import MasterData from './components/MasterData.tsx';
 import AttendanceTracker from './components/AttendanceTracker.tsx';
 import MedicalDashboard from './components/MedicalDashboard.tsx';
+import FeesManagement from './components/FeesManagement.tsx'; // Nuevo
 import SplashScreen from './components/SplashScreen.tsx';
 import { Player, Position } from './types.ts';
 import { Filter, Search, Grid, List as ListIcon } from 'lucide-react';
@@ -135,13 +136,28 @@ function App() {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  // Filtering Logic for Players View
-  const getFilteredPlayers = () => {
-    return MOCK_PLAYERS.filter(player => {
+  // Filtering & Grouping Logic
+  const getGroupedPlayers = () => {
+    const filtered = MOCK_PLAYERS.filter(player => {
         const matchesDiscipline = filterDiscipline === 'Todas' || player.discipline === filterDiscipline;
         const matchesCategory = filterCategory === 'Todas' || player.category === filterCategory;
         return matchesDiscipline && matchesCategory;
     });
+
+    // Grouping by Discipline then Category
+    const grouped: Record<string, Record<string, Player[]>> = {};
+
+    filtered.forEach(player => {
+        if (!grouped[player.discipline]) {
+            grouped[player.discipline] = {};
+        }
+        if (!grouped[player.discipline][player.category]) {
+            grouped[player.discipline][player.category] = [];
+        }
+        grouped[player.discipline][player.category].push(player);
+    });
+
+    return grouped;
   };
 
   const renderContent = () => {
@@ -150,14 +166,16 @@ function App() {
         return <Dashboard />;
       case 'medical':
         return <MedicalDashboard players={MOCK_PLAYERS} />;
+      case 'fees':
+        return <FeesManagement />;
       case 'players':
-        const filteredPlayers = getFilteredPlayers();
+        const groupedPlayers = getGroupedPlayers();
         return (
           <div className="p-6 h-full flex flex-col">
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
                <div>
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Planteles</h2>
-                  <p className="text-slate-500 dark:text-slate-400">Administración multidisciplinaria ({filteredPlayers.length} atletas)</p>
+                  <p className="text-slate-500 dark:text-slate-400">Administración y Visualización Agrupada</p>
                </div>
                
                <div className="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
@@ -170,7 +188,6 @@ function App() {
                        <option value="Todas">Todas Disciplinas</option>
                        <option value="Fútbol">Fútbol</option>
                        <option value="Básquet">Básquet</option>
-                       <option value="Vóley">Vóley</option>
                    </select>
 
                    <select 
@@ -181,18 +198,7 @@ function App() {
                        <option value="Todas">Todas las Categorías</option>
                        <option value="Primera">Primera</option>
                        <option value="Reserva">Reserva</option>
-                       <option value="Sub-20">Sub-20</option>
-                       <option value="Cat. 2013">Cat. 2013</option>
                    </select>
-
-                  <div className="relative flex-1 md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Buscar por nombre..." 
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-sm"
-                    />
-                  </div>
                   
                   {/* View Toggles */}
                   <div className="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1">
@@ -212,76 +218,85 @@ function App() {
                </div>
             </div>
 
-            {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto">
-                {filteredPlayers.map((player) => (
-                    <div 
-                    key={player.id} 
-                    onClick={() => setSelectedPlayer(player)}
-                    className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-                    >
-                    <div className="h-40 overflow-hidden relative">
-                        <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute top-2 right-2 flex gap-1">
-                            <span className="bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase">{player.discipline}</span>
-                        </div>
-                        <div className="absolute bottom-2 left-2">
-                             <span className="bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-slate-800 dark:text-white">{player.position}</span>
-                        </div>
-                    </div>
-                    <div className="p-4">
-                        <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold text-slate-800 dark:text-white truncate">{player.name}</h3>
-                            <span className="text-slate-400 font-mono">#{player.number}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{player.category} - {player.division}</p>
-                        
-                        {/* Status Bar */}
-                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex">
-                            <div className={`h-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'} w-1/2`} title="Apto Médico"></div>
-                            <div className={`h-full ${player.status === 'Active' ? 'bg-primary-500' : 'bg-slate-400'} w-1/2`} title="Estado Deportivo"></div>
-                        </div>
-                    </div>
+            <div className="overflow-y-auto space-y-8">
+                {Object.entries(groupedPlayers).map(([discipline, categories]) => (
+                    <div key={discipline} className="animate-fade-in">
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 border-b pb-2 border-slate-200 dark:border-slate-700 uppercase tracking-wide">
+                            {discipline}
+                        </h3>
+                        {Object.entries(categories).map(([category, players]) => (
+                            <div key={category} className="mb-6">
+                                <h4 className="text-sm font-bold text-primary-600 dark:text-primary-400 mb-3 ml-2 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-primary-500"></span>
+                                    {category} ({players.length})
+                                </h4>
+                                {viewMode === 'grid' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {players.map((player) => (
+                                            <div 
+                                                key={player.id} 
+                                                onClick={() => setSelectedPlayer(player)}
+                                                className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                                            >
+                                                <div className="h-40 overflow-hidden relative">
+                                                    <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                    <div className="absolute bottom-2 left-2">
+                                                        <span className="bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-slate-800 dark:text-white">{player.position}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-4">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h3 className="font-bold text-slate-800 dark:text-white truncate">{player.name}</h3>
+                                                        <span className="text-slate-400 font-mono">#{player.number}</span>
+                                                    </div>
+                                                    
+                                                    {/* Status Bar */}
+                                                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex mt-2">
+                                                        <div className={`h-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'} w-1/2`} title="Apto Médico"></div>
+                                                        <div className={`h-full ${player.status === 'Active' ? 'bg-primary-500' : 'bg-slate-400'} w-1/2`} title="Estado Deportivo"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                                                <tr>
+                                                    <th className="p-4 font-medium">Jugador</th>
+                                                    <th className="p-4 font-medium">Posición</th>
+                                                    <th className="p-4 font-medium">Estado</th>
+                                                    <th className="p-4 font-medium text-right">Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                                                {players.map(player => (
+                                                    <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer" onClick={() => setSelectedPlayer(player)}>
+                                                        <td className="p-4 flex items-center gap-3">
+                                                            <img src={player.photoUrl} className="w-8 h-8 rounded-full bg-slate-200 object-cover" alt="" />
+                                                            <span className="font-bold text-slate-800 dark:text-white">{player.name}</span>
+                                                        </td>
+                                                        <td className="p-4 text-slate-500 dark:text-slate-400">{player.position}</td>
+                                                        <td className="p-4">
+                                                             <span className={`px-2 py-0.5 rounded text-xs ${player.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                                {player.status === 'Active' ? 'Activo' : 'Inactivo'}
+                                                             </span>
+                                                        </td>
+                                                        <td className="p-4 text-right">
+                                                            <button className="text-primary-600 font-medium hover:underline">Ver Ficha</button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 ))}
-                </div>
-            ) : (
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                            <tr>
-                                <th className="p-4 font-medium">Jugador</th>
-                                <th className="p-4 font-medium">Disciplina / Cat</th>
-                                <th className="p-4 font-medium">Posición</th>
-                                <th className="p-4 font-medium">Estado</th>
-                                <th className="p-4 font-medium text-right">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                            {filteredPlayers.map(player => (
-                                <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer" onClick={() => setSelectedPlayer(player)}>
-                                    <td className="p-4 flex items-center gap-3">
-                                        <img src={player.photoUrl} className="w-8 h-8 rounded-full bg-slate-200 object-cover" alt="" />
-                                        <span className="font-bold text-slate-800 dark:text-white">{player.name}</span>
-                                    </td>
-                                    <td className="p-4 text-slate-500 dark:text-slate-400">
-                                        {player.discipline} - <span className="text-slate-800 dark:text-slate-200 font-medium">{player.category}</span>
-                                    </td>
-                                    <td className="p-4 text-slate-500 dark:text-slate-400">{player.position}</td>
-                                    <td className="p-4">
-                                         <span className={`px-2 py-0.5 rounded text-xs ${player.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                            {player.status === 'Active' ? 'Activo' : 'Inactivo'}
-                                         </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button className="text-primary-600 font-medium hover:underline">Ver Ficha</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            </div>
           </div>
         );
       case 'fixtures':

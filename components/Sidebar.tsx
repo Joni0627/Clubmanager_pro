@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Calendar, Briefcase, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield, HeartPulse } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Briefcase, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield, HeartPulse, CreditCard } from 'lucide-react';
 
 interface SidebarProps {
   currentView: string;
@@ -21,8 +21,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', label: 'Panel General', icon: LayoutDashboard },
     { id: 'players', label: 'Gestión Planteles', icon: Users },
-    { id: 'medical', label: 'Central Médica', icon: HeartPulse }, // Nuevo item
+    { id: 'medical', label: 'Central Médica', icon: HeartPulse },
     { id: 'attendance', label: 'Asistencia', icon: ClipboardCheck },
+    { id: 'fees', label: 'Gestión Cuotas', icon: CreditCard }, // Nuevo
     { id: 'fixtures', label: 'Temporada', icon: Calendar },
     { id: 'staff', label: 'Cuerpo Técnico', icon: Briefcase },
     { id: 'master-data', label: 'Datos Maestros', icon: Database },

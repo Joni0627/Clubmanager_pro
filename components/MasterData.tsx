@@ -1,24 +1,36 @@
 import React, { useState } from 'react';
-import { SystemUser, InventoryItem } from '../types';
-import { Search, Plus, Trash2, Edit2, Shield, Box, Coins, Settings } from 'lucide-react';
+import { SystemUser, InventoryItem, DisciplineConfig } from '../types';
+import { Search, Plus, Trash2, Edit2, Shield, Box, Coins, Settings, Trophy, ChevronRight, ChevronDown } from 'lucide-react';
 
 const MasterData: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'users' | 'inventory' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'inventory' | 'disciplines' | 'settings'>('users');
 
   const [users] = useState<SystemUser[]>([
     { id: '1', name: 'Admin Usuario', email: 'admin@plegma.com', role: 'Admin', avatar: 'https://ui-avatars.com/api/?name=Admin+Usuario&background=db2777&color=fff' },
     { id: '2', name: 'Marcelo Gallardo', email: 'mgallardo@club.com', role: 'Coach', avatar: 'https://ui-avatars.com/api/?name=Marcelo+Gallardo&background=0f172a&color=fff' },
-    { id: '3', name: 'Ayudante Campo', email: 'asistente@club.com', role: 'Assistant', avatar: 'https://ui-avatars.com/api/?name=Ayudante+Campo&background=64748b&color=fff' },
   ]);
 
   const [inventory] = useState<InventoryItem[]>([
     { id: '1', name: 'Balones Oficiales FIFA', category: 'Entrenamiento', quantity: 50, status: 'Good' },
     { id: '2', name: 'Conos de Agilidad', category: 'Equipamiento', quantity: 100, status: 'Good' },
-    { id: '3', name: 'Pechera Titular', category: 'Indumentaria', quantity: 15, status: 'Low' },
   ]);
+
+  // Mock Disciplines Data
+  const [disciplines, setDisciplines] = useState<DisciplineConfig[]>([
+      { id: 'd1', name: 'Fútbol', categories: ['Primera', 'Reserva', 'Sub-20', 'Infantil'] },
+      { id: 'd2', name: 'Básquet', categories: ['Primera', 'Sub-23', 'Sub-19', 'Mini'] },
+      { id: 'd3', name: 'Vóley', categories: ['Primera Fem', 'Primera Masc', 'Sub-18'] },
+  ]);
+
+  const [expandedDiscipline, setExpandedDiscipline] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+      setExpandedDiscipline(expandedDiscipline === id ? null : id);
+  }
 
   const tabs = [
     { id: 'users', label: 'Usuarios y Perfiles', icon: Shield },
+    { id: 'disciplines', label: 'Disciplinas y Categorías', icon: Trophy }, // Nuevo
     { id: 'inventory', label: 'Catálogo de Insumos', icon: Box },
     { id: 'settings', label: 'Configuración General', icon: Settings },
   ];
@@ -98,7 +110,60 @@ const MasterData: React.FC = () => {
           </div>
         )}
 
-        {/* Inventory Master Data */}
+        {/* Disciplines Tab */}
+        {activeTab === 'disciplines' && (
+            <div className="p-6">
+                 <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="font-semibold text-lg text-slate-800 dark:text-white">Estructura Deportiva</h3>
+                        <p className="text-sm text-slate-500">Define las disciplinas y sus categorías inferiores</p>
+                    </div>
+                    <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <Plus size={16} /> Nueva Disciplina
+                    </button>
+                </div>
+                
+                <div className="space-y-4">
+                    {disciplines.map(d => (
+                        <div key={d.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                            <div 
+                                className="bg-slate-50 dark:bg-slate-700/50 p-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                onClick={() => toggleExpand(d.id)}
+                            >
+                                <div className="flex items-center gap-3">
+                                    {expandedDiscipline === d.id ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
+                                    <span className="font-bold text-slate-800 dark:text-white">{d.name}</span>
+                                    <span className="text-xs bg-slate-200 dark:bg-slate-600 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 font-medium">
+                                        {d.categories.length} Categorías
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                     <button className="p-1.5 text-slate-400 hover:text-primary-600"><Edit2 size={16}/></button>
+                                </div>
+                            </div>
+                            
+                            {expandedDiscipline === d.id && (
+                                <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 animate-fade-in">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {d.categories.map((cat, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 text-sm">
+                                                <span className="text-slate-700 dark:text-slate-300">{cat}</span>
+                                                <button className="text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
+                                            </div>
+                                        ))}
+                                        <button className="flex items-center justify-center gap-1 p-2 rounded border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 hover:text-primary-600 hover:border-primary-500 text-sm">
+                                            <Plus size={14} /> Agregar Categoría
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+
+        {/* Inventory Tab */}
         {activeTab === 'inventory' && (
           <div className="p-6">
              <div className="flex justify-between items-center mb-6">
@@ -151,14 +216,6 @@ const MasterData: React.FC = () => {
                        <option>USD ($)</option>
                        <option>ARS ($)</option>
                     </select>
-                 </div>
-
-                 <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
-                    <div>
-                       <p className="font-medium text-slate-800 dark:text-slate-200">Nombre del Club</p>
-                       <p className="text-sm text-slate-500">Visible en reportes y cabeceras</p>
-                    </div>
-                    <input type="text" value="PLEGMA FC" className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-3 py-1 text-sm dark:text-white text-right" readOnly />
                  </div>
               </div>
            </div>

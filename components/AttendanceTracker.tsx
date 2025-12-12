@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Player, TrainingGroup, Discipline } from '../types';
-import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Filter, Users, Settings, Plus, ChevronRight } from 'lucide-react';
+import { Player, TrainingGroup } from '../types';
+import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Users, Settings, Plus, ChevronRight, Edit2 } from 'lucide-react';
 
 interface AttendanceTrackerProps {
   players: Player[];
@@ -11,22 +11,42 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, string>>({});
   const [selectedGroup, setSelectedGroup] = useState<string>('g1');
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<TrainingGroup | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Mock Groups
-  const groups: TrainingGroup[] = [
+  // Mock Groups State
+  const [groups, setGroups] = useState<TrainingGroup[]>([
       { id: 'g1', name: 'Primera Fútbol - Grupo A', coachId: 'c1', discipline: 'Fútbol', playerIds: ['1', '2', '3'], schedule: 'Lun-Mie-Vie' },
       { id: 'g2', name: 'Básquet Sub-20', coachId: 'c2', discipline: 'Básquet', playerIds: [], schedule: 'Mar-Jue' },
       { id: 'g3', name: 'Escuelita Turno Mañana', coachId: 'c3', discipline: 'Fútbol', playerIds: ['7'], schedule: 'Sab' },
-  ];
+  ]);
 
   // Logic for "Taking" mode
   const currentGroup = groups.find(g => g.id === selectedGroup);
-  // In a real app, we would filter players by ID. For now, we mock filtering based on Discipline/Category match or simply simulate it.
-  // Let's filter players that "belong" to this group logic (mocked by discipline for simplicity in this view)
+  // Filter players based on Discipline for this example (in real app, use playerIds in group)
   const filteredPlayers = players.filter(p => p.discipline === currentGroup?.discipline); 
 
   const handleStatusChange = (playerId: string, status: string) => {
     setAttendance(prev => ({ ...prev, [playerId]: status }));
+  };
+
+  const handleSaveAttendance = () => {
+      setIsSaving(true);
+      setTimeout(() => {
+          setIsSaving(false);
+          alert("Asistencia guardada correctamente");
+      }, 1000);
+  };
+
+  const handleEditGroup = (group: TrainingGroup) => {
+      setEditingGroup(group);
+      setShowGroupModal(true);
+  };
+
+  const handleCreateGroup = () => {
+      setEditingGroup(null);
+      setShowGroupModal(true);
   };
 
   const getStatusButtonClass = (playerId: string, status: string) => {
@@ -46,7 +66,7 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
@@ -144,10 +164,12 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
                 
                 <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
                 <button 
-                    disabled={filteredPlayers.length === 0}
+                    onClick={handleSaveAttendance}
+                    disabled={isSaving || filteredPlayers.length === 0}
                     className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-primary-500/20 transition-all"
                 >
-                    <Save size={18} /> Guardar Asistencia
+                    {isSaving ? <Clock size={18} className="animate-spin" /> : <Save size={18} />}
+                    {isSaving ? 'Guardando...' : 'Guardar Asistencia'}
                 </button>
                 </div>
             </div>
@@ -158,19 +180,27 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
                  <div className="flex justify-between items-center mb-6">
                      <h3 className="font-bold text-lg text-slate-800 dark:text-white">Grupos Vigentes</h3>
-                     <button className="text-sm bg-slate-900 dark:bg-slate-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-slate-800">
+                     <button 
+                        onClick={handleCreateGroup}
+                        className="text-sm bg-slate-900 dark:bg-slate-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-slate-800"
+                     >
                          <Plus size={14}/> Crear Nuevo
                      </button>
                  </div>
                  <div className="space-y-3">
                      {groups.map(g => (
-                         <div key={g.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-500 cursor-pointer transition-colors group">
+                         <div key={g.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-500 cursor-pointer transition-colors group relative">
                              <div className="flex justify-between items-start">
                                  <div>
                                      <h4 className="font-bold text-slate-800 dark:text-white">{g.name}</h4>
                                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{g.discipline} • {g.schedule}</p>
                                  </div>
-                                 <ChevronRight className="text-slate-300 group-hover:text-primary-500" />
+                                 <button 
+                                    onClick={(e) => { e.stopPropagation(); handleEditGroup(g); }}
+                                    className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                                 >
+                                    <Edit2 size={16} />
+                                 </button>
                              </div>
                              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wide">
                                  <span>{g.playerIds.length} Jugadores</span>
@@ -182,13 +212,61 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
                  </div>
              </div>
 
-             {/* Assignation Panel (Mock) */}
+             {/* Placeholder for no selection (or can be used for details) */}
              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-8 flex flex-col items-center justify-center text-center">
                  <Settings size={48} className="text-slate-300 mb-4" />
-                 <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">Configuración de Grupo</h3>
-                 <p className="text-slate-500 dark:text-slate-400 max-w-xs mt-2">Selecciona un grupo de la izquierda para editar sus miembros y asignar un entrenador responsable.</p>
+                 <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">Gestión de Grupos</h3>
+                 <p className="text-slate-500 dark:text-slate-400 max-w-xs mt-2">Crea grupos de entrenamiento, asigna horarios y entrenadores responsables.</p>
              </div>
         </div>
+      )}
+
+      {/* Modal for Group Create/Edit */}
+      {showGroupModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                          {editingGroup ? 'Editar Grupo' : 'Nuevo Grupo de Entrenamiento'}
+                      </h3>
+                      <button onClick={() => setShowGroupModal(false)} className="text-slate-400 hover:text-slate-600">
+                          <X size={20} />
+                      </button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-500 uppercase">Nombre del Grupo</label>
+                          <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.name} placeholder="Ej: Fútbol Primera Tarde" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                              <label className="text-xs font-bold text-slate-500 uppercase">Disciplina</label>
+                              <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.discipline}>
+                                  <option>Fútbol</option>
+                                  <option>Básquet</option>
+                              </select>
+                          </div>
+                          <div className="space-y-1">
+                              <label className="text-xs font-bold text-slate-500 uppercase">Días / Horario</label>
+                              <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.schedule} placeholder="Ej: Lun-Mie 18hs" />
+                          </div>
+                      </div>
+                      <div className="space-y-1">
+                           <label className="text-xs font-bold text-slate-500 uppercase">Entrenador Responsable</label>
+                           <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white">
+                               <option value="c1">Marcelo Gallardo</option>
+                               <option value="c2">Steve Kerr</option>
+                           </select>
+                      </div>
+                  </div>
+                  <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                      <button onClick={() => setShowGroupModal(false)} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-medium">Cancelar</button>
+                      <button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary-500/20">
+                          Guardar
+                      </button>
+                  </div>
+              </div>
+          </div>
       )}
     </div>
   );
