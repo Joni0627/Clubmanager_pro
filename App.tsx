@@ -5,6 +5,7 @@ import PlayerCard from './components/PlayerCard.tsx';
 import AdminPanel from './components/AdminPanel.tsx';
 import MasterData from './components/MasterData.tsx';
 import AttendanceTracker from './components/AttendanceTracker.tsx';
+import SplashScreen from './components/SplashScreen.tsx';
 import { Player, Position } from './types.ts';
 import { Filter, Search } from 'lucide-react';
 
@@ -93,12 +94,20 @@ function App() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     // Check system preference on load
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
        setIsDarkMode(true);
     }
+    
+    // Simulate loading time for splash screen
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -202,6 +211,10 @@ function App() {
     }
   };
 
+  if (showSplash) {
+    return <SplashScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex transition-colors duration-300">
       <Sidebar 
@@ -213,8 +226,17 @@ function App() {
         toggleTheme={toggleTheme}
       />
       
-      <main className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-        {renderContent()}
+      <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className="flex-1">
+          {renderContent()}
+        </div>
+        
+        {/* Copyright Footer */}
+        <div className="py-6 text-center border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 mt-auto">
+          <p className="text-sm text-slate-400 font-medium">
+            &copy; {new Date().getFullYear()} Club Manager <span className="text-primary-500">Plegma</span>. Todos los derechos reservados.
+          </p>
+        </div>
       </main>
 
       {selectedPlayer && (

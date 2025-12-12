@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Calendar, Briefcase, Settings, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Briefcase, Settings, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield } from 'lucide-react';
 
 interface SidebarProps {
   currentView: string;
@@ -32,23 +32,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 h-16">
         {!isCollapsed && (
-          <div className="flex items-center gap-2 animate-fade-in">
-             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-sm grid grid-cols-2 gap-0.5">
-                   <div className="bg-primary-600 rounded-[1px]"></div>
-                   <div className="bg-primary-600 rounded-[1px]"></div>
-                   <div className="bg-primary-600 rounded-[1px] col-span-2"></div>
-                </div>
+          <div className="flex items-center gap-2 animate-fade-in overflow-hidden">
+             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center shrink-0">
+                <Shield size={18} className="text-white" />
              </div>
-             <div>
-                <h1 className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">PLEGMA</h1>
+             <div className="leading-tight whitespace-nowrap">
+                <h1 className="font-bold text-sm tracking-tight text-slate-800 dark:text-white">Club Manager</h1>
+                <h2 className="font-bold text-xs text-primary-600">PLEGMA</h2>
              </div>
           </div>
         )}
         {isCollapsed && (
            <div className="w-full flex justify-center">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                 <span className="font-bold text-white text-xs">P</span>
+                 <Shield size={18} className="text-white" />
               </div>
            </div>
         )}
