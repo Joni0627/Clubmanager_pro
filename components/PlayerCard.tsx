@@ -1,18 +1,22 @@
 
 import React, { useState } from 'react';
 import { Player, PlayerStats, Position } from '../types.ts';
-import { X, Activity, Save, Edit3, User, Stethoscope, FileHeart, AlertTriangle, Sparkles, Loader2, ClipboardType } from 'lucide-react';
+import { X, Activity, Save, Edit3, User, Stethoscope, FileHeart, AlertTriangle, Sparkles, Loader2, ClipboardType, CheckCircle } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { generatePlayerReport } from '../services/geminiService.ts';
+import { db } from '../lib/supabase.ts';
 
 interface PlayerCardProps {
   player: Player;
   onClose: () => void;
+  onSaveSuccess?: () => void;
 }
 
-const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose }) => {
+const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose, onSaveSuccess }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'profile' | 'medical'>('stats');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [player, setPlayer] = useState<Player>(initialPlayer);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -35,6 +39,37 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
         [key]: Math.min(100, Math.max(0, numValue))
       }
     }));
+  };
+
+  const handleToggleEdit = async () => {
+    if (isEditing) {
+      // Guardar cambios en Supabase
+      setIsSaving(true);
+      setSaveStatus('idle');
+      try {
+        // Si el ID empieza por 'new-', lo quitamos para que Supabase genere uno real o lo manejamos
+        const dataToSave = { ...player };
+        if (dataToSave.id.startsWith('new-')) {
+            // @ts-ignore - Eliminamos ID para que sea un insert limpio
+            delete dataToSave.id;
+        }
+
+        const { error } = await db.players.upsert(dataToSave);
+        if (error) throw error;
+        
+        setSaveStatus('success');
+        setIsEditing(false);
+        if (onSaveSuccess) onSaveSuccess();
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      } catch (err) {
+        console.error("Error al guardar jugador:", err);
+        setSaveStatus('error');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      setIsEditing(true);
+    }
   };
 
   const handleGenerateAIReport = async () => {
@@ -96,11 +131,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
           </div>
 
           <div className="z-10 w-40 h-40 rounded-full border-4 border-primary-500/50 overflow-hidden shadow-2xl mb-4 bg-slate-700 relative group">
-             <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
+             <img src={player.photoUrl || 'https://via.placeholder.com/400'} alt={player.name} className="w-full h-full object-cover" />
           </div>
 
           <div className="z-10 text-center mb-6">
-            <h2 className="text-2xl font-bold uppercase tracking-wide leading-tight">{player.name}</h2>
+            <h2 className="text-2xl font-bold uppercase tracking-wide leading-tight">{player.name || 'NUEVO JUGADOR'}</h2>
             <p className="text-slate-400 text-lg font-mono tracking-tighter">#{player.number}</p>
           </div>
 
@@ -126,6 +161,16 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white">Gestión del Jugador</h3>
                     <div className="flex gap-2">
+                        {saveStatus === 'success' && (
+                            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold animate-fade-in">
+                                <CheckCircle size={14} /> Guardado
+                            </div>
+                        )}
+                        {saveStatus === 'error' && (
+                            <div className="flex items-center gap-1 text-red-600 text-xs font-bold animate-fade-in">
+                                <AlertTriangle size={14} /> Error al guardar
+                            </div>
+                        )}
                         {!isEditing && (
                             <button 
                                 onClick={handleGenerateAIReport}
@@ -137,35 +182,28 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                             </button>
                         )}
                         <button 
-                            onClick={() => setIsEditing(!isEditing)}
+                            onClick={handleToggleEdit}
+                            disabled={isSaving}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                                 isEditing 
-                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' 
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-700' 
                                 : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                             }`}
                             >
-                            {isEditing ? <><Save size={16}/> Guardar</> : <><Edit3 size={16}/> Editar</>}
+                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : (isEditing ? <Save size={16}/> : <Edit3 size={16}/>)}
+                            {isSaving ? 'Procesando...' : (isEditing ? 'Confirmar Cambios' : 'Editar Ficha')}
                         </button>
                     </div>
                 </div>
 
                 <div className="flex gap-6 overflow-x-auto">
-                    <button 
-                        onClick={() => setActiveTab('stats')}
-                        className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'stats' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-                    >
+                    <button onClick={() => setActiveTab('stats')} className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'stats' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
                         <Activity size={18} /> Rendimiento
                     </button>
-                    <button 
-                        onClick={() => setActiveTab('profile')}
-                        className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'profile' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-                    >
+                    <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'profile' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
                         <User size={18} /> Perfil & Datos
                     </button>
-                    <button 
-                        onClick={() => setActiveTab('medical')}
-                        className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'medical' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-                    >
+                    <button onClick={() => setActiveTab('medical')} className={`flex items-center gap-2 pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'medical' ? 'border-primary-500 text-primary-600 dark:text-primary-400 font-medium' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
                         <Stethoscope size={18} /> Dpto. Médico
                     </button>
                 </div>
@@ -181,14 +219,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                                     <PolarGrid stroke="#94a3b8" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
                                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                    <Radar
-                                        name={player.name}
-                                        dataKey="A"
-                                        stroke="#db2777"
-                                        strokeWidth={3}
-                                        fill="#db2777"
-                                        fillOpacity={0.4}
-                                    />
+                                    <Radar name={player.name} dataKey="A" stroke="#db2777" strokeWidth={3} fill="#db2777" fillOpacity={0.4} />
                                     </RadarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -220,7 +251,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                             </div>
                         </div>
 
-                        {/* AI Analysis Result */}
                         {(aiReport || isAnalyzing) && (
                             <div className="animate-fade-in mt-4">
                                 <div className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900 rounded-2xl overflow-hidden shadow-sm">
@@ -236,7 +266,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                                                 <div className="w-full max-w-xs h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                     <div className="h-full bg-indigo-500 animate-shine w-full"></div>
                                                 </div>
-                                                <p className="text-xs font-medium text-slate-400 animate-pulse">Procesando métricas con Gemini 3 Pro...</p>
+                                                <p className="text-xs font-medium text-slate-400 animate-pulse">Consultando a Gemini...</p>
                                             </div>
                                         ) : (
                                             <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed font-serif italic text-sm">
@@ -255,44 +285,21 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Nombre Completo</label>
-                                <input 
-                                    type="text" 
-                                    disabled={!isEditing}
-                                    value={player.name}
-                                    onChange={(e) => handleInfoChange('name', e.target.value)}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                />
+                                <input type="text" disabled={!isEditing} value={player.name} onChange={(e) => handleInfoChange('name', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white" />
                             </div>
                              <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Nacionalidad</label>
-                                <input 
-                                    type="text" 
-                                    disabled={!isEditing}
-                                    value={player.nationality}
-                                    onChange={(e) => handleInfoChange('nationality', e.target.value)}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                />
+                                <input type="text" disabled={!isEditing} value={player.nationality} onChange={(e) => handleInfoChange('nationality', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Posición Táctica</label>
-                                <select 
-                                    disabled={!isEditing}
-                                    value={player.position}
-                                    onChange={(e) => handleInfoChange('position', e.target.value)}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                >
+                                <select disabled={!isEditing} value={player.position} onChange={(e) => handleInfoChange('position', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white">
                                     {Object.values(Position).map(pos => <option key={pos} value={pos}>{pos}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Número Camiseta</label>
-                                <input 
-                                    type="number" 
-                                    disabled={!isEditing}
-                                    value={player.number}
-                                    onChange={(e) => handleInfoChange('number', parseInt(e.target.value))}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white font-mono"
-                                />
+                                <input type="number" disabled={!isEditing} value={player.number} onChange={(e) => handleInfoChange('number', parseInt(e.target.value))} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white font-mono" />
                             </div>
                         </div>
                         
@@ -301,12 +308,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Estado Actual</label>
-                                    <select 
-                                        disabled={!isEditing}
-                                        value={player.status}
-                                        onChange={(e) => handleInfoChange('status', e.target.value)}
-                                        className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                    >
+                                    <select disabled={!isEditing} value={player.status} onChange={(e) => handleInfoChange('status', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white">
                                         <option value="Active">Activo / Disponible</option>
                                         <option value="Injured">Lesionado</option>
                                         <option value="Suspended">Suspendido</option>
@@ -315,12 +317,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Plantel Asignado</label>
-                                    <select 
-                                        disabled={!isEditing}
-                                        value={player.category}
-                                        onChange={(e) => handleInfoChange('category', e.target.value)}
-                                        className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                    >
+                                    <select disabled={!isEditing} value={player.category} onChange={(e) => handleInfoChange('category', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white">
                                         <option value="Primera">Primera División</option>
                                         <option value="Reserva">Reserva</option>
                                         <option value="Sub-20">Sub-20</option>
@@ -340,12 +337,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                                     {player.medical?.isFit ? <FileHeart size={24} /> : <AlertTriangle size={24} />}
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-lg text-slate-800 dark:text-white">
-                                        {player.medical?.isFit ? 'APTO PARA COMPETENCIA' : 'NO APTO MÉDICAMENTE'}
-                                    </h4>
-                                    <p className="text-sm opacity-80 text-slate-600 dark:text-slate-300">
-                                        Certificado vigente hasta: <strong>{player.medical?.expiryDate || 'No definido'}</strong>
-                                    </p>
+                                    <h4 className="font-bold text-lg text-slate-800 dark:text-white">{player.medical?.isFit ? 'APTO PARA COMPETENCIA' : 'NO APTO MÉDICAMENTE'}</h4>
+                                    <p className="text-sm opacity-80 text-slate-600 dark:text-slate-300">Certificado vigente hasta: <strong>{player.medical?.expiryDate || 'No definido'}</strong></p>
                                 </div>
                             </div>
                         </div>
@@ -353,38 +346,20 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Estado Apto Médico</label>
-                                <select 
-                                    disabled={!isEditing}
-                                    value={player.medical?.isFit ? 'true' : 'false'}
-                                    onChange={(e) => handleMedicalChange('isFit', e.target.value === 'true')}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                >
+                                <select disabled={!isEditing} value={player.medical?.isFit ? 'true' : 'false'} onChange={(e) => handleMedicalChange('isFit', e.target.value === 'true')} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white">
                                     <option value="true">APTO (Fit)</option>
                                     <option value="false">NO APTO (Unfit)</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Vencimiento Certificado</label>
-                                <input 
-                                    type="date"
-                                    disabled={!isEditing}
-                                    value={player.medical?.expiryDate}
-                                    onChange={(e) => handleMedicalChange('expiryDate', e.target.value)}
-                                    className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white"
-                                />
+                                <input type="date" disabled={!isEditing} value={player.medical?.expiryDate} onChange={(e) => handleMedicalChange('expiryDate', e.target.value)} className="w-full p-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-500 dark:text-slate-400">Observaciones Clínicas / Historial</label>
-                            <textarea 
-                                disabled={!isEditing}
-                                rows={6}
-                                value={player.medical?.notes}
-                                onChange={(e) => handleMedicalChange('notes', e.target.value)}
-                                className="w-full p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                                placeholder="Ingrese observaciones médicas relevantes, lesiones previas o recomendaciones..."
-                            />
+                            <textarea disabled={!isEditing} rows={6} value={player.medical?.notes} onChange={(e) => handleMedicalChange('notes', e.target.value)} className="w-full p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-primary-500 focus:outline-none" placeholder="Ingrese observaciones médicas relevantes..." />
                         </div>
                     </div>
                 )}
