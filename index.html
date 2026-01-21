@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Club Manager Plegma</title>
     <script>
-      // Configuración de variables de entorno globales
+      // Shim para compatibilidad de process.env en el navegador
       window.process = {
         env: {
-          API_KEY: '', // Se inyecta en ejecución
+          API_KEY: '', 
           SUPABASE_URL: 'https://nkijuhefbatayefcpcbn.supabase.co',
           SUPABASE_KEY: 'sb_publishable_oFs8-5mUjP9rr5P07Ol1gw_ssxbm1PB'
         }
