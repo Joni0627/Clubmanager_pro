@@ -1,19 +1,21 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Prioridad a variables de entorno (Vercel), fallback a tus datos para preview
-const supabaseUrl = process.env.SUPABASE_URL || 'https://nkijuhefbatayefcpcbn.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || 'sb_publishable_oFs8-5mUjP9rr5P07Ol1gw_ssxbm1PB';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("Faltan las credenciales de Supabase.");
+  console.warn("Advertencia: Las credenciales de Supabase no están definidas en el entorno.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseKey || 'placeholder-key'
+);
 
 export const db = {
   players: {
-    getAll: () => supabase.from('players').select('*'),
+    getAll: () => supabase.from('players').select('*').order('name', { ascending: true }),
     upsert: (data: any) => supabase.from('players').upsert(data),
     delete: (id: string) => supabase.from('players').delete().eq('id', id)
   },

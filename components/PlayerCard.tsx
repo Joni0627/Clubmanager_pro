@@ -17,6 +17,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [player, setPlayer] = useState<Player>(initialPlayer);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -43,27 +44,33 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
   const handleToggleEdit = async () => {
     if (isEditing) {
-      // Guardar cambios en Supabase
       setIsSaving(true);
       setSaveStatus('idle');
+      setErrorMessage('');
+      
       try {
-        // Si el ID empieza por 'new-', lo quitamos para que Supabase genere uno real o lo manejamos
         const dataToSave = { ...player };
+        // Si es nuevo jugador, removemos el ID temporal para que Supabase lo genere
         if (dataToSave.id.startsWith('new-')) {
-            // @ts-ignore - Eliminamos ID para que sea un insert limpio
+            // @ts-ignore
             delete dataToSave.id;
         }
 
         const { error } = await db.players.upsert(dataToSave);
-        if (error) throw error;
+        
+        if (error) {
+            console.error("Error detallado de Supabase:", error);
+            throw new Error(error.message);
+        }
         
         setSaveStatus('success');
         setIsEditing(false);
         if (onSaveSuccess) onSaveSuccess();
         setTimeout(() => setSaveStatus('idle'), 3000);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error al guardar jugador:", err);
         setSaveStatus('error');
+        setErrorMessage(err.message || 'Error de conexión');
       } finally {
         setIsSaving(false);
       }
@@ -74,9 +81,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
   const handleGenerateAIReport = async () => {
     setIsAnalyzing(true);
+    setAiReport(null);
     try {
       const report = await generatePlayerReport(player);
       setAiReport(report);
+    } catch (err) {
+      setAiReport("Error al generar el reporte. Verifica tu API Key.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -160,15 +170,18 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
             <div className="px-6 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white">Gestión del Jugador</h3>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         {saveStatus === 'success' && (
                             <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold animate-fade-in">
                                 <CheckCircle size={14} /> Guardado
                             </div>
                         )}
                         {saveStatus === 'error' && (
-                            <div className="flex items-center gap-1 text-red-600 text-xs font-bold animate-fade-in">
-                                <AlertTriangle size={14} /> Error al guardar
+                            <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-1 text-red-600 text-xs font-bold animate-fade-in">
+                                    <AlertTriangle size={14} /> Error al guardar
+                                </div>
+                                <span className="text-[8px] text-red-400 max-w-[120px] truncate">{errorMessage}</span>
                             </div>
                         )}
                         {!isEditing && (
