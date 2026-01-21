@@ -1,12 +1,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://nkijuhefbatayefcpcbn.supabase.co';
-const supabaseKey = 'sb_publishable_oFs8-5mUjP9rr5P07Ol1gw_ssxbm1PB';
+// Prioridad a variables de entorno (Vercel), fallback a tus datos para preview
+const supabaseUrl = process.env.SUPABASE_URL || 'https://nkijuhefbatayefcpcbn.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'sb_publishable_oFs8-5mUjP9rr5P07Ol1gw_ssxbm1PB';
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Faltan las credenciales de Supabase.");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Helpers para operaciones comunes
 export const db = {
   players: {
     getAll: () => supabase.from('players').select('*'),
