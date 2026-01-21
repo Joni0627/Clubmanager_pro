@@ -50,32 +50,35 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
       
       try {
         const dataToSave = { ...player };
-        // Si es nuevo jugador, removemos el ID temporal para que Supabase lo genere
+        
+        // Limpieza de ID temporal para nuevos registros
         if (dataToSave.id.startsWith('new-')) {
             // @ts-ignore
             delete dataToSave.id;
         }
 
+        // Enviamos a Supabase
         const { error } = await db.players.upsert(dataToSave);
         
         if (error) {
-            console.error("Error detallado de Supabase:", error);
+            console.error("Error Supabase:", error);
             throw new Error(error.message);
         }
         
         setSaveStatus('success');
         setIsEditing(false);
         if (onSaveSuccess) onSaveSuccess();
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        setTimeout(() => setSaveStatus('idle'), 4000);
       } catch (err: any) {
-        console.error("Error al guardar jugador:", err);
+        console.error("Fallo al guardar:", err);
         setSaveStatus('error');
-        setErrorMessage(err.message || 'Error de conexión');
+        setErrorMessage(err.message || 'Error de base de datos');
       } finally {
         setIsSaving(false);
       }
     } else {
       setIsEditing(true);
+      setSaveStatus('idle');
     }
   };
 
@@ -86,7 +89,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
       const report = await generatePlayerReport(player);
       setAiReport(report);
     } catch (err) {
-      setAiReport("Error al generar el reporte. Verifica tu API Key.");
+      setAiReport("Error al generar el reporte. Verifica tu API Key en Vercel.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -172,16 +175,18 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white">Gestión del Jugador</h3>
                     <div className="flex gap-2 items-center">
                         {saveStatus === 'success' && (
-                            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold animate-fade-in">
-                                <CheckCircle size={14} /> Guardado
+                            <div className="flex items-center gap-1 text-emerald-600 text-xs font-bold animate-fade-in bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">
+                                <CheckCircle size={14} /> ¡Guardado con éxito!
                             </div>
                         )}
                         {saveStatus === 'error' && (
-                            <div className="flex flex-col items-end">
-                                <div className="flex items-center gap-1 text-red-600 text-xs font-bold animate-fade-in">
-                                    <AlertTriangle size={14} /> Error al guardar
+                            <div className="flex flex-col items-end max-w-[200px]">
+                                <div className="flex items-center gap-1 text-red-600 text-xs font-bold animate-shake">
+                                    <AlertTriangle size={14} /> Error de base de datos
                                 </div>
-                                <span className="text-[8px] text-red-400 max-w-[120px] truncate">{errorMessage}</span>
+                                <span className="text-[10px] text-red-500 leading-tight text-right break-words w-full">
+                                    {errorMessage.includes('marketValue') ? 'Falta columna "marketValue" en Supabase' : errorMessage}
+                                </span>
                             </div>
                         )}
                         {!isEditing && (
