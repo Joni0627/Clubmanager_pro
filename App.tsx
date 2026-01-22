@@ -36,7 +36,11 @@ function App() {
       const { data: configData, error: configError } = await db.clubConfig.get();
       
       if (!configError && configData) {
-        setClubConfig(configData);
+        // Nos aseguramos de que disciplines sea un array para evitar errores de .length
+        setClubConfig({
+            ...configData,
+            disciplines: configData.disciplines || []
+        });
       } else {
         const defaultConfig: ClubConfig = {
           name: 'PLEGMA CLUB',
@@ -52,29 +56,36 @@ function App() {
           }]
         };
         setClubConfig(defaultConfig);
-        try { await db.clubConfig.update(defaultConfig); } catch (e) {}
+        try { await db.clubConfig.update(defaultConfig); } catch (e) { console.warn("Supabase local/error"); }
       }
 
       const { data: playersData } = await db.players.getAll();
       if (playersData) setPlayers(playersData);
       
     } catch (error) {
-      console.error("Initialization error:", error);
+      console.error("Critical Init Error:", error);
     } finally {
       setIsLoading(false);
-      // Forzar que el splash se quite incluso si hay errores
-      setTimeout(() => setShowSplash(false), 500);
+      // Forzar cierre de splash pase lo que pase para evitar bloqueo visual
+      setTimeout(() => setShowSplash(false), 800);
     }
   };
 
+  // Efecto de sincronización con guardias de seguridad
   useEffect(() => {
-    if (clubConfig.disciplines.length > 0) {
-      const currentDisc = clubConfig.disciplines.find(d => d.name === activeDiscipline) || clubConfig.disciplines[0];
-      if (activeDiscipline !== currentDisc.name) setActiveDiscipline(currentDisc.name);
+    const disciplines = clubConfig?.disciplines || [];
+    if (disciplines.length > 0) {
+      const currentDisc = disciplines.find(d => d.name === activeDiscipline) || disciplines[0];
+      if (activeDiscipline !== currentDisc.name) {
+          setActiveDiscipline(currentDisc.name);
+      }
 
-      if (currentDisc.categories.length > 0) {
-        const currentCat = currentDisc.categories.find(c => c.name === activeCategory) || currentDisc.categories[0];
-        if (activeCategory !== currentCat.name) setActiveCategory(currentCat.name);
+      const categories = currentDisc.categories || [];
+      if (categories.length > 0) {
+        const currentCat = categories.find(c => c.name === activeCategory) || categories[0];
+        if (activeCategory !== currentCat.name) {
+            setActiveCategory(currentCat.name);
+        }
       } else if (activeCategory !== null) {
         setActiveCategory(null);
       }
@@ -99,7 +110,7 @@ function App() {
   const updateClubConfig = async (newConfig: ClubConfig) => {
       setClubConfig(newConfig);
       try { await db.clubConfig.update(newConfig); } 
-      catch (e) { console.error(e); }
+      catch (e) { console.error("Update config error:", e); }
   };
 
   const refreshPlayers = async () => {
@@ -113,10 +124,11 @@ function App() {
   }, [players, activeDiscipline, activeCategory]);
 
   const renderContent = () => {
+    // Si todavía estamos cargando los datos esenciales de la DB
     if (isLoading) return (
         <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
             <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Cargando Sistema...</p>
+            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] animate-pulse">Sincronizando Cloud Plegma...</p>
         </div>
     );
 
@@ -132,37 +144,58 @@ function App() {
             <div className="flex justify-between items-center mb-10">
                <div>
                   <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Planteles</h2>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{activeDiscipline} • {activeCategory}</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                      {activeDiscipline || 'Cargando...'} • {activeCategory || 'Sin Categoría'}
+                  </p>
                </div>
                <button onClick={() => {}} className="flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all hover:scale-105">
-                    <Plus size={18} /> Nuevo Jugador
+                    <Plus size={18} /> Inscribir Jugador
                </button>
             </div>
 
-            {clubConfig.disciplines.length > 0 && (
+            {clubConfig.disciplines && clubConfig.disciplines.length > 0 ? (
                 <>
                     <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-8">
                         {clubConfig.disciplines.map((disc) => (
-                            <button key={disc.id} onClick={() => setActiveDiscipline(disc.name)} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeDiscipline === disc.name ? 'bg-primary-600 text-white shadow-xl' : 'bg-white dark:bg-slate-900 text-slate-400'}`}>
+                            <button 
+                                key={disc.id} 
+                                onClick={() => setActiveDiscipline(disc.name)} 
+                                className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeDiscipline === disc.name ? 'bg-primary-600 text-white shadow-xl' : 'bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600'}`}
+                            >
                                 {disc.name}
                             </button>
                         ))}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 overflow-y-auto pr-2 pb-20">
-                        {filteredPlayers.map(player => (
-                            <div key={player.id} onClick={() => setSelectedPlayer(player)} className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-2xl transition-all group">
-                                <div className="h-64 bg-slate-950 relative overflow-hidden">
-                                    {player.photoUrl ? <img src={player.photoUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" /> : <div className="w-full h-full flex items-center justify-center opacity-10"><Users size={64} /></div>}
-                                    <div className="absolute top-6 left-6 bg-primary-600 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-xl">{player.overallRating}</div>
-                                    <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-slate-950 to-transparent">
-                                        <h3 className="text-xl font-black text-white uppercase truncate">{player.name}</h3>
-                                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">{player.position}</p>
+                        {filteredPlayers.length > 0 ? (
+                            filteredPlayers.map(player => (
+                                <div key={player.id} onClick={() => setSelectedPlayer(player)} className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-2xl transition-all group">
+                                    <div className="h-64 bg-slate-950 relative overflow-hidden">
+                                        {player.photoUrl ? (
+                                            <img src={player.photoUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={player.name} />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center opacity-10"><Users size={64} /></div>
+                                        )}
+                                        <div className="absolute top-6 left-6 bg-primary-600 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-xl">{player.overallRating}</div>
+                                        <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-slate-950 to-transparent">
+                                            <h3 className="text-xl font-black text-white uppercase truncate">{player.name || 'Sin Nombre'}</h3>
+                                            <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">{player.position}</p>
+                                        </div>
                                     </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center text-slate-400 font-black uppercase tracking-widest text-xs border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem]">
+                                No hay jugadores en esta categoría
                             </div>
-                        ))}
+                        )}
                     </div>
                 </>
+            ) : (
+                <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[3rem] p-20 text-center shadow-inner">
+                    <Database size={48} className="text-slate-200 mb-4" />
+                    <p className="text-slate-500 font-bold max-w-xs">No se ha configurado la estructura del club. Ve a Datos Maestros para comenzar.</p>
+                </div>
             )}
           </div>
         );
@@ -173,12 +206,22 @@ function App() {
   if (showSplash) return <SplashScreen />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} isDarkMode={isDarkMode} toggleTheme={toggleTheme} clubConfig={clubConfig} />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300">
+      <Sidebar 
+          currentView={currentView} 
+          setCurrentView={setCurrentView} 
+          isCollapsed={isSidebarCollapsed} 
+          setIsCollapsed={setIsSidebarCollapsed} 
+          isDarkMode={isDarkMode} 
+          toggleTheme={toggleTheme} 
+          clubConfig={clubConfig} 
+      />
       <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
         <div className="py-6 text-center border-t border-slate-100 dark:border-white/5 bg-white dark:bg-slate-950">
-          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} {clubConfig.name || 'PLEGMA CLUB'} • PlegmaSport Cloud</p>
+          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.5em]">
+              &copy; {new Date().getFullYear()} {clubConfig.name || 'PLEGMA CLUB'} • PlegmaSport Cloud System
+          </p>
         </div>
       </main>
       {selectedPlayer && (
