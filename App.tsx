@@ -85,6 +85,15 @@ function App() {
           division: 'Masculino',
           category: 'Primera',
           marketValue: '-',
+          dni: '',
+          email: '',
+          phone: '',
+          address: '',
+          tutor: {
+            name: '',
+            email: '',
+            phone: ''
+          },
           medical: { isFit: true, lastCheckup: '', expiryDate: '', notes: '' }
       };
       setSelectedPlayer(newPlayer);

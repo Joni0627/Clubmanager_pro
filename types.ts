@@ -1,3 +1,4 @@
+
 export enum Position {
   GK = 'Portero',
   DEF = 'Defensa',
@@ -29,6 +30,12 @@ export interface MedicalRecord {
   notes: string;
 }
 
+export interface TutorInfo {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -40,6 +47,15 @@ export interface Player {
   stats: PlayerStats;
   status: 'Active' | 'Injured' | 'Suspended' | 'Reserve';
   
+  // Datos Personales extendidos
+  dni: string;
+  email: string;
+  phone: string;
+  address: string;
+  
+  // Datos del Tutor
+  tutor: TutorInfo;
+
   // Jerarquía
   discipline: Discipline;
   division: 'Masculino' | 'Femenino' | 'Mixto' | 'Escuela Infantil'; 
