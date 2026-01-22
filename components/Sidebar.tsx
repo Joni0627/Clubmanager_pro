@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { LayoutDashboard, Users, Calendar, Briefcase, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield, HeartPulse, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Briefcase, Database, ChevronLeft, ChevronRight, Moon, Sun, ClipboardCheck, Shield, Activity, CreditCard } from 'lucide-react';
 import { ClubConfig } from '../types';
 
 interface SidebarProps {
@@ -9,7 +10,7 @@ interface SidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
-  clubConfig: ClubConfig; // Nueva prop
+  clubConfig: ClubConfig;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -24,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', label: 'Panel General', icon: LayoutDashboard },
     { id: 'players', label: 'Gestión Planteles', icon: Users },
-    { id: 'medical', label: 'Central Médica', icon: HeartPulse },
+    { id: 'medical', label: 'Central Médica', icon: Activity },
     { id: 'attendance', label: 'Asistencia', icon: ClipboardCheck },
     { id: 'fees', label: 'Gestión Cuotas', icon: CreditCard },
     { id: 'fixtures', label: 'Temporada', icon: Calendar },
@@ -34,7 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 h-screen fixed left-0 top-0 flex flex-col shadow-xl z-50 transition-all duration-300 border-r border-slate-200 dark:border-slate-800`}>
-      {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 h-16">
         {!isCollapsed && (
           <div className="flex items-center gap-2 animate-fade-in overflow-hidden">
@@ -46,8 +46,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
              </div>
              <div className="leading-tight whitespace-nowrap overflow-hidden">
-                <h1 className="font-bold text-sm tracking-tight text-slate-800 dark:text-white truncate max-w-[140px]">{clubConfig.name}</h1>
-                <h2 className="font-bold text-[10px] text-primary-600 uppercase">Club Manager</h2>
+                <h1 className="font-bold text-sm tracking-tight text-slate-800 dark:text-white truncate max-w-[140px]">{clubConfig.name || 'CLUB MANAGER'}</h1>
+                <h2 className="font-bold text-[10px] text-primary-600 uppercase">Plegma Sport</h2>
              </div>
           </div>
         )}
@@ -71,7 +71,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
       
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -88,8 +87,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <Icon size={22} className={isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'} />
               {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
-              
-              {/* Tooltip for collapsed mode */}
               {isCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   {item.label}
@@ -100,9 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      {/* User & Theme Toggle */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        
         <div className={`flex items-center justify-between mb-4 ${isCollapsed ? 'flex-col gap-4' : ''}`}>
            {!isCollapsed && <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Modo</span>}
            <button 

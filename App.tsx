@@ -9,8 +9,8 @@ import AttendanceTracker from './components/AttendanceTracker.tsx';
 import MedicalDashboard from './components/MedicalDashboard.tsx';
 import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { Player, Position, ClubConfig, DisciplineConfig } from './types.ts';
-import { Filter, Search, Grid, List as ListIcon, Plus, Loader2, Users, Trophy, Layers, Settings, ArrowRight, DatabaseZap } from 'lucide-react';
+import { Player, Position, ClubConfig } from './types.ts';
+import { Filter, Search, Grid, List as ListIcon, Plus, Loader2, Users, Trophy, Layers, Settings, ArrowRight, Database } from 'lucide-react';
 import { db } from './lib/supabase.ts';
 
 function App() {
@@ -29,20 +29,18 @@ function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Control de Tabs anidadas
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  // Carga inicial ultra-segura
   const loadInitialData = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const { data: configData, error: configError } = await db.clubConfig.get();
       
-      if (!configError && configData) {
-        setClubConfig(configData);
-      } else {
-        // Si no hay configuración, creamos una por defecto para que no esté vacío
-        const defaultConfig: ClubConfig = {
+      let currentConfig = configData;
+      if (configError || !configData) {
+        currentConfig = {
           name: 'PLEGMA CLUB',
           logoUrl: '',
           disciplines: [{
@@ -58,53 +56,48 @@ function App() {
             }]
           }]
         };
-        setClubConfig(defaultConfig);
-        await db.clubConfig.update(defaultConfig);
+        setClubConfig(currentConfig);
+        try { await db.clubConfig.update(currentConfig); } catch (e) { console.warn("Supabase Offline"); }
+      } else {
+        setClubConfig(currentConfig);
       }
 
-      const { data: playersData, error: playersError } = await db.players.getAll();
-      if (!playersError && playersData) setPlayers(playersData);
+      const { data: playersData } = await db.players.getAll();
+      if (playersData) setPlayers(playersData);
       
     } catch (error) {
-      console.error("Error cargando datos:", error);
+      console.error("Error crítico de carga:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Sincronización robusta de Pestañas
+  // Efecto de Sincronización de Pestañas Optimizado
   useEffect(() => {
     if (clubConfig.disciplines.length > 0) {
-      // Validar si la disciplina activa existe en la config
-      const discExists = clubConfig.disciplines.find(d => d.name === activeDiscipline);
+      const currentDisc = clubConfig.disciplines.find(d => d.name === activeDiscipline) || clubConfig.disciplines[0];
       
-      if (!activeDiscipline || !discExists) {
-        const firstDisc = clubConfig.disciplines[0];
-        setActiveDiscipline(firstDisc.name);
-        if (firstDisc.categories.length > 0) {
-          setActiveCategory(firstDisc.categories[0].name);
-        }
-      } else {
-        // Validar si la categoría activa existe dentro de la disciplina
-        const catExists = discExists.categories.find(c => c.name === activeCategory);
-        if (!activeCategory || !catExists) {
-          if (discExists.categories.length > 0) {
-            setActiveCategory(discExists.categories[0].name);
-          } else {
-            setActiveCategory(null);
-          }
-        }
+      if (activeDiscipline !== currentDisc.name) {
+        setActiveDiscipline(currentDisc.name);
       }
-    } else {
-      setActiveDiscipline(null);
-      setActiveCategory(null);
+
+      if (currentDisc.categories.length > 0) {
+        const currentCat = currentDisc.categories.find(c => c.name === activeCategory) || currentDisc.categories[0];
+        if (activeCategory !== currentCat.name) {
+          setActiveCategory(currentCat.name);
+        }
+      } else if (activeCategory !== null) {
+        setActiveCategory(null);
+      }
     }
-  }, [clubConfig, activeDiscipline, activeCategory]);
+  }, [clubConfig.disciplines, activeDiscipline, activeCategory]);
 
   useEffect(() => {
-    loadInitialData().then(() => {
-        setTimeout(() => setShowSplash(false), 1000);
+    loadInitialData().finally(() => {
+        // Garantizamos que el splash screen desaparezca aunque falle la red
+        setTimeout(() => setShowSplash(false), 800);
     });
+
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
        setIsDarkMode(true);
     }
@@ -120,11 +113,8 @@ function App() {
 
   const updateClubConfig = async (newConfig: ClubConfig) => {
       setClubConfig(newConfig);
-      try { 
-        await db.clubConfig.update(newConfig); 
-      } catch (e) { 
-        console.error("Error persistiendo config:", e); 
-      }
+      try { await db.clubConfig.update(newConfig); } 
+      catch (e) { console.error("Error persistiendo config:", e); }
   };
 
   const handleNewPlayer = () => {
@@ -160,8 +150,8 @@ function App() {
   };
 
   const refreshPlayers = async () => {
-      const { data, error } = await db.players.getAll();
-      if (!error && data) setPlayers(data);
+      const { data } = await db.players.getAll();
+      if (data) setPlayers(data);
   };
 
   const filteredPlayers = useMemo(() => {
@@ -173,7 +163,7 @@ function App() {
     if (isLoading) return (
         <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
             <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Sincronizando con Cloud Plegma...</p>
+            <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] animate-pulse">Sincronizando Sistema Plegma...</p>
         </div>
     );
 
@@ -186,13 +176,12 @@ function App() {
       case 'players':
         return (
           <div className="p-6 h-full flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
                <div>
                   <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestión de Planteles</h2>
                   <div className="flex items-center gap-2 mt-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{activeDiscipline || 'Sin Disciplina'} • {activeCategory || 'Sin Categoría'}</p>
+                      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{activeDiscipline || 'Cargando...'} • {activeCategory || 'Sin Cat'}</p>
                   </div>
                </div>
                <button 
@@ -205,10 +194,10 @@ function App() {
             </div>
 
             {clubConfig.disciplines.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[3.5rem] border-2 border-slate-100 dark:border-white/5 p-12 text-center shadow-inner">
-                    <DatabaseZap size={64} className="text-primary-500/20 mb-6" />
-                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">Estructura no inicializada</h3>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-8 font-medium text-sm">Para ver los planteles, primero debes crear las Disciplinas y sus respectivas Categorías.</p>
+                <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[3rem] border-2 border-slate-100 dark:border-white/5 p-12 text-center shadow-inner">
+                    <Database size={64} className="text-primary-500/20 mb-6" />
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">Estructura Vacía</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-8 font-medium text-sm">Debes configurar disciplinas para gestionar los planteles.</p>
                     <button 
                         onClick={() => setCurrentView('master-data')}
                         className="flex items-center gap-3 bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-2xl"
@@ -218,7 +207,6 @@ function App() {
                 </div>
             ) : (
                 <>
-                    {/* TABS DISCIPLINAS */}
                     <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-6 p-1">
                         {clubConfig.disciplines.map((disc) => (
                             <button 
@@ -235,7 +223,6 @@ function App() {
                         ))}
                     </div>
 
-                    {/* TABS CATEGORÍAS */}
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-8">
                         {clubConfig.disciplines.find(d => d.name === activeDiscipline)?.categories.map((cat) => (
                             <button 
@@ -248,12 +235,11 @@ function App() {
                         ))}
                     </div>
 
-                    {/* JUGADORES */}
                     <div className="flex-1 overflow-y-auto pr-2 pb-10">
                         {filteredPlayers.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-28 text-slate-400 bg-white dark:bg-slate-900/50 rounded-[3rem] border-4 border-dashed border-slate-100 dark:border-white/5">
                                 <Users className="mb-4 opacity-10" size={100} />
-                                <p className="font-black uppercase tracking-widest text-xs mb-6">No se encontraron registros para esta división</p>
+                                <p className="font-black uppercase tracking-widest text-xs mb-6">No hay registros para {activeCategory || 'esta división'}</p>
                                 <button onClick={handleNewPlayer} className="px-10 py-3 bg-primary-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-primary-500/20 hover:scale-105 transition-all">
                                     Inscribir Primer Jugador
                                 </button>
@@ -289,7 +275,7 @@ function App() {
                                         </div>
                                         <div className="p-6 bg-white dark:bg-slate-900">
                                             <div className="flex gap-2 mb-4">
-                                                <div className={`flex-1 h-1.5 rounded-full ${player.medical?.isFit ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}></div>
+                                                <div className={`flex-1 h-1.5 rounded-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                                                 <div className={`flex-1 h-1.5 rounded-full ${player.status === 'Active' ? 'bg-primary-500 shadow-[0_0_10px_rgba(236,72,153,0.3)]' : 'bg-slate-700'}`}></div>
                                             </div>
                                             <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
@@ -318,7 +304,7 @@ function App() {
       <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="flex-1 overflow-hidden">{renderContent()}</div>
         <div className="py-6 text-center border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} {clubConfig.name} <span className="text-primary-500">•</span> PlegmaSport Cloud System</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} {clubConfig.name || 'PLEGMA CLUB'} <span className="text-primary-500">•</span> PlegmaSport Cloud</p>
         </div>
       </main>
       {selectedPlayer && (
