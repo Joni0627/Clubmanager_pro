@@ -17,19 +17,29 @@ export const db = {
   players: {
     getAll: () => supabase.from('players').select('*').order('name', { ascending: true }),
     upsert: (data: any) => {
-      // Limpiamos el objeto para asegurar que no enviamos campos calculados o temporales
+      // Limpiamos el objeto para asegurar que no enviamos campos calculados o temporales de React
       const { ...payload } = data;
       return supabase.from('players').upsert(payload);
     },
     delete: (id: string) => supabase.from('players').delete().eq('id', id)
   },
   clubConfig: {
-    // Usamos id fijo 1 para la configuración global del club
+    // Obtenemos la fila única de configuración
     get: () => supabase.from('club_config').select('*').eq('id', 1).maybeSingle(),
-    update: (data: any) => supabase.from('club_config').upsert({ id: 1, ...data })
+    // Sincronizamos la jerarquía completa (disciplinas, categorías, métricas)
+    update: (data: any) => {
+        const payload = {
+            id: 1,
+            name: data.name,
+            logo_url: data.logoUrl,
+            disciplines: data.disciplines,
+            updated_at: new Date().toISOString()
+        };
+        return supabase.from('club_config').upsert(payload);
+    }
   },
   fees: {
-    getAll: () => supabase.from('member_fees').select('*'),
+    getAll: () => supabase.from('member_fees').select('*').order('due_date', { ascending: false }),
     upsert: (data: any) => supabase.from('member_fees').upsert(data),
     delete: (id: string) => supabase.from('member_fees').delete().eq('id', id)
   }
