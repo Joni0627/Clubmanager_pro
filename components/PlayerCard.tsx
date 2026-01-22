@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Player, PlayerStats, Position } from '../types.ts';
-import { X, Activity, Save, Edit3, User, Stethoscope, FileHeart, AlertTriangle, Sparkles, Loader2, ClipboardType, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, Users2, Shield, Hash, Camera, Link as LinkIcon } from 'lucide-react';
+import { X, Activity, Save, Edit3, User, Stethoscope, FileHeart, AlertTriangle, Sparkles, Loader2, ClipboardType, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, Users2, Shield, Hash, Camera, Link as LinkIcon, Upload } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { generatePlayerReport } from '../services/geminiService.ts';
 import { db } from '../lib/supabase.ts';
@@ -21,6 +21,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   const [player, setPlayer] = useState<Player>(initialPlayer);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Referencia para el input de archivo
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const statsData = [
     { subject: 'Ritmo', A: player.stats.pace, fullMark: 100 },
@@ -109,6 +112,32 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
     }));
   };
 
+  // Función para abrir el selector de archivos
+  const triggerFileSelect = () => {
+    if (isEditing) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  // Función para procesar la imagen seleccionada
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar que sea una imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona un archivo de imagen válido.');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        handleInfoChange('photoUrl', base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const StatInput = ({ label, statKey, value }: { label: string, statKey: keyof PlayerStats, value: number }) => (
     <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-700/50 p-2.5 rounded-xl">
        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{label}</label>
@@ -123,6 +152,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-0 md:p-4">
+      {/* Input de archivo oculto */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
+
       <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-full md:h-[90vh] md:rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative animate-fade-in border border-white/10">
         
         <button 
@@ -148,19 +186,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
           {/* Player Photo Container with Upload Capability */}
           <div className="z-10 relative group">
-              <div className="w-32 h-32 md:w-44 md:h-44 rounded-full border-4 border-primary-500/30 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] mb-6 bg-slate-800 relative">
+              <div 
+                onClick={triggerFileSelect}
+                className={`w-32 h-32 md:w-44 md:h-44 rounded-full border-4 border-primary-500/30 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] mb-6 bg-slate-800 relative transition-all ${isEditing ? 'cursor-pointer hover:border-primary-500' : ''}`}
+              >
                  <img 
                    src={player.photoUrl || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?q=80&w=400&h=400&auto=format&fit=crop'} 
                    alt={player.name} 
                    className="w-full h-full object-cover transition-transform group-hover:scale-105" 
                  />
                  {isEditing && (
-                    <div 
-                        onClick={() => setActiveTab('profile')}
-                        className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    >
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera size={32} className="text-white mb-1" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">Cambiar Foto</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white">Subir Foto</span>
                     </div>
                  )}
               </div>
@@ -278,9 +316,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                     <div className="space-y-10 animate-fade-in pb-16">
                         {/* SECCIÓN 1: CONTACTO */}
                         <section>
-                          <h4 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 border-b border-slate-200 dark:border-white/10 pb-3">
-                            <Fingerprint size={16} className="text-primary-500" /> Información de Contacto
-                          </h4>
+                          <div className="flex justify-between items-center mb-6 border-b border-slate-200 dark:border-white/10 pb-3">
+                            <h4 className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                <Fingerprint size={16} className="text-primary-500" /> Información de Contacto
+                            </h4>
+                            {isEditing && (
+                                <button 
+                                    onClick={triggerFileSelect}
+                                    className="flex items-center gap-2 text-[10px] font-black text-primary-500 hover:text-primary-600 uppercase transition-colors"
+                                >
+                                    <Upload size={14} /> Adjuntar Imagen de Perfil
+                                </button>
+                            )}
+                          </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                               {[
                                 { label: 'DNI / Documento', key: 'dni' as keyof Player, icon: Fingerprint, placeholder: '42.000.000' },
@@ -341,17 +389,27 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                                   <input type="number" disabled={!isEditing} value={player.number} onChange={(e) => handleInfoChange('number', parseInt(e.target.value))} className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-black dark:text-white font-mono" />
                               </div>
                               
-                              {/* NUEVO CAMPO PARA EL AVATAR */}
                               <div className="sm:col-span-2 lg:col-span-3 space-y-1.5">
-                                  <label className="text-[10px] font-black text-primary-500 uppercase flex items-center gap-1.5"><LinkIcon size={12} /> URL de la Foto de Perfil (Avatar)</label>
-                                  <input 
-                                    type="text" 
-                                    disabled={!isEditing} 
-                                    value={player.photoUrl} 
-                                    onChange={(e) => handleInfoChange('photoUrl', e.target.value)} 
-                                    className="w-full p-3 bg-white dark:bg-slate-900 border border-primary-500/30 dark:border-primary-500/20 rounded-2xl text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-50" 
-                                    placeholder="https://ejemplo.com/foto.jpg" 
-                                  />
+                                  <label className="text-[10px] font-black text-primary-500 uppercase flex items-center gap-1.5"><LinkIcon size={12} /> URL o Base64 de la Foto</label>
+                                  <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        disabled={!isEditing} 
+                                        value={player.photoUrl} 
+                                        onChange={(e) => handleInfoChange('photoUrl', e.target.value)} 
+                                        className="flex-1 p-3 bg-white dark:bg-slate-900 border border-primary-500/30 dark:border-primary-500/20 rounded-2xl text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 disabled:opacity-50" 
+                                        placeholder="https://ejemplo.com/foto.jpg o adjunta una arriba" 
+                                    />
+                                    {isEditing && (
+                                        <button 
+                                            onClick={triggerFileSelect}
+                                            className="p-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors"
+                                            title="Adjuntar archivo"
+                                        >
+                                            <Upload size={18} />
+                                        </button>
+                                    )}
+                                  </div>
                               </div>
 
                               <div className="space-y-1.5">
@@ -386,7 +444,36 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
                 {activeTab === 'medical' && (
                     <div className="space-y-8 animate-fade-in pb-16">
-                        {/* ... (Contenido médico sin cambios) ... */}
+                        <div className={`p-8 rounded-[2.5rem] border-2 shadow-xl ${player.medical?.isFit ? 'bg-emerald-50/50 border-emerald-500/20 dark:bg-emerald-500/5 dark:border-emerald-500/20' : 'bg-red-50/50 border-red-500/20 dark:bg-red-500/5 dark:border-red-500/20'}`}>
+                            <div className="flex flex-col sm:flex-row items-center gap-6">
+                                <div className={`p-6 rounded-[2rem] ${player.medical?.isFit ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-red-500 text-white shadow-lg shadow-red-500/30'}`}>
+                                    {player.medical?.isFit ? <FileHeart size={48} /> : <AlertTriangle size={48} />}
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <h4 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{player.medical?.isFit ? 'Apto Físico Vigente' : 'Pendiente / Inhabilitado'}</h4>
+                                    <p className="text-sm font-bold text-slate-500">Vencimiento certificado: <span className="text-primary-500">{player.medical?.expiryDate || 'Sin Registro'}</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase">Dictamen</label>
+                                <select disabled={!isEditing} value={player.medical?.isFit ? 'true' : 'false'} onChange={(e) => handleMedicalChange('isFit', e.target.value === 'true')} className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-black dark:text-white outline-none">
+                                    <option value="true">APTO FÍSICO</option>
+                                    <option value="false">NO APTO / PENDIENTE</option>
+                                </select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase">Fecha Expiración</label>
+                                <input type="date" disabled={!isEditing} value={player.medical?.expiryDate} onChange={(e) => handleMedicalChange('expiryDate', e.target.value)} className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-black dark:text-white outline-none" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase">Observaciones y Antecedentes</label>
+                            <textarea disabled={!isEditing} rows={6} value={player.medical?.notes} onChange={(e) => handleMedicalChange('notes', e.target.value)} className="w-full p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[2rem] text-sm font-medium dark:text-white outline-none focus:ring-4 focus:ring-primary-500/10 transition-all resize-none shadow-inner" placeholder="Escriba aquí alergias, lesiones previas o recomendaciones médicas..." />
+                        </div>
                     </div>
                 )}
             </div>
