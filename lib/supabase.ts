@@ -6,7 +6,6 @@ const supabaseKey = process.env.SUPABASE_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Fix: Expanded db object to include players and fees to resolve property access errors in UI components
 export const db = {
   config: {
     get: () => supabase
@@ -17,7 +16,10 @@ export const db = {
     
     update: (data: any) => supabase
       .from('club_config')
-      .upsert({ id: 1, ...data })
+      .upsert(
+        { id: 1, ...data }, 
+        { onConflict: 'id' } // Forzamos que reconozca el ID 1 como clave de conflicto
+      )
   },
   players: {
     getAll: () => supabase

@@ -26,23 +26,30 @@ function App() {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      const { data, error } = await db.config.get();
-      if (data && !error) {
-        setConfig({
-          name: data.name,
-          logoUrl: data.logo_url,
-          primaryColor: data.primary_color,
-          secondaryColor: data.secondary_color,
-          disciplines: data.disciplines || []
-        });
+      try {
+        const { data, error } = await db.config.get();
+        if (data && !error) {
+          setConfig({
+            name: data.name,
+            logoUrl: data.logo_url || '',
+            primaryColor: data.primary_color || '#ec4899',
+            secondaryColor: data.secondary_color || '#0f172a',
+            disciplines: data.disciplines || []
+          });
+        }
+      } catch (err) {
+        console.error("Error inicializando config:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     fetchConfig();
   }, []);
 
   const handleSaveConfig = async (newConfig: ClubConfig) => {
+    // Actualizamos estado local inmediatamente para UI fluida
     setConfig(newConfig);
+    
     const { error } = await db.config.update({
       name: newConfig.name,
       logo_url: newConfig.logoUrl,
@@ -51,7 +58,11 @@ function App() {
       disciplines: newConfig.disciplines,
       updated_at: new Date().toISOString()
     });
-    if (error) alert('Error al guardar en la nube.');
+
+    if (error) {
+      console.error('Error de Supabase:', error.message, error.details);
+      alert(`Error al guardar: ${error.message}`);
+    }
   };
 
   if (isLoading) return <SplashScreen />;
