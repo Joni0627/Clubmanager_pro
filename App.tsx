@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar.tsx';
 import MasterData from './components/MasterData.tsx';
+import Squads from './components/Squads.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
 import { ClubConfig } from './types.ts';
 import { db } from './lib/supabase.ts';
 
 function App() {
-  const [view, setView] = useState('master-data');
+  const [view, setView] = useState('squads');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -83,9 +84,10 @@ function App() {
         `}
       >
         <div className="flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-0">
-          {view === 'master-data' ? (
-            <MasterData config={config} onSave={handleSaveConfig} />
-          ) : (
+          {view === 'master-data' && <MasterData config={config} onSave={handleSaveConfig} />}
+          {view === 'squads' && <Squads clubConfig={config} />}
+          
+          {view !== 'master-data' && view !== 'squads' && (
             <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
                <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter italic text-center">En Desarrollo</h1>
                <p className="text-[10px] font-black uppercase tracking-[0.5em] mt-4 text-center">Módulo administrativo</p>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Database, Sun, Moon, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Database, Sun, Moon, Shield, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { ClubConfig } from '../types';
 
 interface SidebarProps {
@@ -24,12 +24,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menu = [
     { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard },
+    { id: 'squads', label: 'Planteles', icon: Users },
     { id: 'master-data', label: 'Estructura', icon: Database },
   ];
 
   return (
     <>
-      {/* DESKTOP SIDEBAR (Hidden on Mobile) */}
+      {/* DESKTOP SIDEBAR */}
       <aside 
         className={`fixed left-0 top-0 h-screen bg-white dark:bg-[#0f1219] border-r border-slate-200 dark:border-white/5 hidden md:flex flex-col z-[100] transition-all duration-500 ease-in-out 
           ${isCollapsed ? 'w-24' : 'w-72'}
@@ -81,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </aside>
 
-      {/* MOBILE BOTTOM NAVIGATION (Hidden on Desktop) */}
+      {/* MOBILE NAVIGATION */}
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white/80 dark:bg-[#0f1219]/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 flex items-center justify-around px-4 md:hidden z-[200] pb-safe">
           {menu.map(item => {
             const Icon = item.icon;
