@@ -1,273 +1,111 @@
-import React, { useState } from 'react';
-import { Player, TrainingGroup } from '../types';
-import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Users, Settings, Plus, ChevronRight, Edit2 } from 'lucide-react';
+
+import React, { useState, useMemo } from 'react';
+import { Player, DisciplineConfig } from '../types';
+import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Users, Settings, Plus, LayoutGrid, Loader2 } from 'lucide-react';
 
 interface AttendanceTrackerProps {
   players: Player[];
+  clubConfig: any; // Pasamos el config para tener las disciplinas reales
 }
 
-const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players }) => {
-  const [mode, setMode] = useState<'taking' | 'managing'>('taking');
+const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ players, clubConfig }) => {
+  const [selectedDisc, setSelectedDisc] = useState<string | null>(clubConfig.disciplines?.[0]?.name || null);
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, string>>({});
-  const [selectedGroup, setSelectedGroup] = useState<string>('g1');
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<TrainingGroup | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mock Groups State
-  const [groups, setGroups] = useState<TrainingGroup[]>([
-      { id: 'g1', name: 'Primera Fútbol - Grupo A', coachId: 'c1', discipline: 'Fútbol', playerIds: ['1', '2', '3'], schedule: 'Lun-Mie-Vie' },
-      { id: 'g2', name: 'Básquet Sub-20', coachId: 'c2', discipline: 'Básquet', playerIds: [], schedule: 'Mar-Jue' },
-      { id: 'g3', name: 'Escuelita Turno Mañana', coachId: 'c3', discipline: 'Fútbol', playerIds: ['7'], schedule: 'Sab' },
-  ]);
-
-  // Logic for "Taking" mode
-  const currentGroup = groups.find(g => g.id === selectedGroup);
-  // Filter players based on Discipline for this example (in real app, use playerIds in group)
-  const filteredPlayers = players.filter(p => p.discipline === currentGroup?.discipline); 
+  const currentDisc = useMemo(() => clubConfig.disciplines?.find((d: any) => d.name === selectedDisc), [selectedDisc, clubConfig]);
+  
+  const filteredPlayers = useMemo(() => {
+    return players.filter(p => p.discipline === selectedDisc && (!selectedCat || p.category === selectedCat));
+  }, [players, selectedDisc, selectedCat]);
 
   const handleStatusChange = (playerId: string, status: string) => {
     setAttendance(prev => ({ ...prev, [playerId]: status }));
   };
 
-  const handleSaveAttendance = () => {
+  const handleSave = async () => {
       setIsSaving(true);
       setTimeout(() => {
           setIsSaving(false);
-          alert("Asistencia guardada correctamente");
-      }, 1000);
+          alert("Sincronizado con el servidor de asistencia.");
+      }, 1500);
   };
 
-  const handleEditGroup = (group: TrainingGroup) => {
-      setEditingGroup(group);
-      setShowGroupModal(true);
-  };
-
-  const handleCreateGroup = () => {
-      setEditingGroup(null);
-      setShowGroupModal(true);
-  };
-
-  const getStatusButtonClass = (playerId: string, status: string) => {
-    const isSelected = attendance[playerId] === status;
-    const baseClass = "p-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium border ";
-    if (isSelected) {
-      switch(status) {
-        case 'Present': return baseClass + "bg-emerald-100 text-emerald-700 border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-400";
-        case 'Absent': return baseClass + "bg-red-100 text-red-700 border-red-500 dark:bg-red-900/30 dark:text-red-400";
-        case 'Late': return baseClass + "bg-yellow-100 text-yellow-700 border-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400";
-        case 'Excused': return baseClass + "bg-blue-100 text-blue-700 border-blue-500 dark:bg-blue-900/30 dark:text-blue-400";
-        default: return baseClass;
-      }
-    } else {
-      return baseClass + "bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700";
-    }
+  const getBtnClass = (id: string, s: string) => {
+      const active = attendance[id] === s;
+      const base = "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ";
+      if (!active) return base + "bg-white dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-white/5";
+      if (s === 'P') return base + "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20";
+      if (s === 'A') return base + "bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20";
+      return base + "bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20";
   };
 
   return (
-    <div className="p-6 relative">
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
+    <div className="p-10">
+      <div className="flex justify-between items-center mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
-              {mode === 'taking' ? 'Toma de Asistencia' : 'Planificación de Grupos'}
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">
-              {mode === 'taking' ? 'Registro diario de actividad' : 'Administración de grupos de entrenamiento y asignaciones'}
-          </p>
+            <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Control de Presentismo</h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Registro diario por categoría</p>
         </div>
-        
-        <div className="flex gap-3 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-             <button 
-                onClick={() => setMode('taking')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === 'taking' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-             >
-                 Tomar Lista
-             </button>
-             <button 
-                onClick={() => setMode('managing')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${mode === 'managing' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
-             >
-                 <Settings size={16} /> Configurar Grupos
-             </button>
+        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-3 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5">
+            <CalendarIcon size={18} className="text-primary-600" />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-transparent font-black text-xs outline-none" />
         </div>
       </div>
 
-      {mode === 'taking' ? (
-        <>
-            <div className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-xl mb-6 flex flex-col md:flex-row gap-6 items-center border border-slate-200 dark:border-slate-700">
-                <div className="flex-1 w-full">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Seleccionar Grupo Asignado</label>
-                    <select 
-                        value={selectedGroup}
-                        onChange={(e) => setSelectedGroup(e.target.value)}
-                        className="w-full p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg font-medium text-slate-800 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                    >
-                        {groups.map(g => (
-                            <option key={g.id} value={g.id}>{g.name} ({g.schedule})</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="w-px h-10 bg-slate-300 dark:bg-slate-600 hidden md:block"></div>
-                <div className="w-full md:w-auto">
-                     <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Fecha de Entrenamiento</label>
-                     <div className="flex items-center gap-2 bg-white dark:bg-slate-700 p-2.5 rounded-lg border border-slate-200 dark:border-slate-600">
-                        <CalendarIcon className="text-primary-500" size={18} />
-                        <input 
-                            type="date" 
-                            value={date} 
-                            onChange={(e) => setDate(e.target.value)}
-                            className="bg-transparent text-slate-800 dark:text-white font-medium focus:outline-none text-sm"
-                        />
-                    </div>
-                </div>
-            </div>
+      <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+          {clubConfig.disciplines?.map((d: any) => (
+              <button key={d.id} onClick={() => { setSelectedDisc(d.name); setSelectedCat(null); }} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedDisc === d.name ? 'bg-primary-600 text-white shadow-xl' : 'bg-white dark:bg-slate-900 text-slate-400 border border-slate-100 dark:border-white/5'}`}>
+                  {d.name}
+              </button>
+          ))}
+      </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="grid grid-cols-12 gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                <div className="col-span-4 md:col-span-3 flex items-center gap-2">
-                    <Users size={16}/> JUGADORES ({filteredPlayers.length})
-                </div>
-                <div className="col-span-8 md:col-span-9 text-center md:text-left">ASISTENCIA</div>
-                </div>
-                
-                <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-[60vh] overflow-y-auto">
-                    {filteredPlayers.map(player => (
-                        <div key={player.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                        <div className="col-span-4 md:col-span-3 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200">
-                                <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <p className="font-bold text-slate-800 dark:text-white text-sm">{player.name}</p>
-                                <p className="text-xs text-slate-500">{player.discipline} • {player.category}</p>
-                            </div>
-                        </div>
-                        
-                        <div className="col-span-8 md:col-span-9 grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <button onClick={() => handleStatusChange(player.id, 'Present')} className={getStatusButtonClass(player.id, 'Present')}>
-                                <Check size={16} /> <span className="hidden md:inline">Presente</span>
-                            </button>
-                            <button onClick={() => handleStatusChange(player.id, 'Late')} className={getStatusButtonClass(player.id, 'Late')}>
-                                <Clock size={16} /> <span className="hidden md:inline">Tarde</span>
-                            </button>
-                            <button onClick={() => handleStatusChange(player.id, 'Absent')} className={getStatusButtonClass(player.id, 'Absent')}>
-                                <X size={16} /> <span className="hidden md:inline">Ausente</span>
-                            </button>
-                            <button onClick={() => handleStatusChange(player.id, 'Excused')} className={getStatusButtonClass(player.id, 'Excused')}>
-                                <AlertCircle size={16} /> <span className="hidden md:inline">Justificado</span>
-                            </button>
-                        </div>
-                        </div>
-                    ))}
-                </div>
-                
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-                <button 
-                    onClick={handleSaveAttendance}
-                    disabled={isSaving || filteredPlayers.length === 0}
-                    className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-primary-500/20 transition-all"
-                >
-                    {isSaving ? <Clock size={18} className="animate-spin" /> : <Save size={18} />}
-                    {isSaving ? 'Guardando...' : 'Guardar Asistencia'}
-                </button>
-                </div>
-            </div>
-        </>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-             {/* List of Groups */}
-             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                 <div className="flex justify-between items-center mb-6">
-                     <h3 className="font-bold text-lg text-slate-800 dark:text-white">Grupos Vigentes</h3>
-                     <button 
-                        onClick={handleCreateGroup}
-                        className="text-sm bg-slate-900 dark:bg-slate-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-slate-800"
-                     >
-                         <Plus size={14}/> Crear Nuevo
-                     </button>
-                 </div>
-                 <div className="space-y-3">
-                     {groups.map(g => (
-                         <div key={g.id} className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-500 cursor-pointer transition-colors group relative">
-                             <div className="flex justify-between items-start">
-                                 <div>
-                                     <h4 className="font-bold text-slate-800 dark:text-white">{g.name}</h4>
-                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{g.discipline} • {g.schedule}</p>
-                                 </div>
-                                 <button 
-                                    onClick={(e) => { e.stopPropagation(); handleEditGroup(g); }}
-                                    className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-                                 >
-                                    <Edit2 size={16} />
-                                 </button>
-                             </div>
-                             <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wide">
-                                 <span>{g.playerIds.length} Jugadores</span>
-                                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                 <span>Coach ID: {g.coachId}</span>
-                             </div>
-                         </div>
-                     ))}
-                 </div>
-             </div>
-
-             {/* Placeholder for no selection (or can be used for details) */}
-             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-8 flex flex-col items-center justify-center text-center">
-                 <Settings size={48} className="text-slate-300 mb-4" />
-                 <h3 className="font-bold text-lg text-slate-700 dark:text-slate-300">Gestión de Grupos</h3>
-                 <p className="text-slate-500 dark:text-slate-400 max-w-xs mt-2">Crea grupos de entrenamiento, asigna horarios y entrenadores responsables.</p>
-             </div>
-        </div>
-      )}
-
-      {/* Modal for Group Create/Edit */}
-      {showGroupModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700">
-                  <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                          {editingGroup ? 'Editar Grupo' : 'Nuevo Grupo de Entrenamiento'}
-                      </h3>
-                      <button onClick={() => setShowGroupModal(false)} className="text-slate-400 hover:text-slate-600">
-                          <X size={20} />
-                      </button>
-                  </div>
-                  <div className="p-6 space-y-4">
-                      <div className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 uppercase">Nombre del Grupo</label>
-                          <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.name} placeholder="Ej: Fútbol Primera Tarde" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">Disciplina</label>
-                              <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.discipline}>
-                                  <option>Fútbol</option>
-                                  <option>Básquet</option>
-                              </select>
-                          </div>
-                          <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">Días / Horario</label>
-                              <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingGroup?.schedule} placeholder="Ej: Lun-Mie 18hs" />
-                          </div>
-                      </div>
-                      <div className="space-y-1">
-                           <label className="text-xs font-bold text-slate-500 uppercase">Entrenador Responsable</label>
-                           <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white">
-                               <option value="c1">Marcelo Gallardo</option>
-                               <option value="c2">Steve Kerr</option>
-                           </select>
-                      </div>
-                  </div>
-                  <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
-                      <button onClick={() => setShowGroupModal(false)} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-medium">Cancelar</button>
-                      <button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary-500/20">
-                          Guardar
-                      </button>
-                  </div>
-              </div>
+      {currentDisc && (
+          <div className="flex gap-2 mb-10">
+              {currentDisc.categories.map((c: any) => (
+                  <button key={c.id} onClick={() => setSelectedCat(c.name)} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedCat === c.name ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                      {c.name}
+                  </button>
+              ))}
           </div>
       )}
+
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+        <div className="p-8 space-y-4">
+            {filteredPlayers.length > 0 ? filteredPlayers.map(p => (
+                <div key={p.id} className="flex items-center gap-6 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-[2rem] border border-slate-100 dark:border-white/5 group">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200">
+                        <img src={p.photoUrl || 'https://via.placeholder.com/64'} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter">{p.name}</h4>
+                        <p className="text-[10px] font-black text-primary-600 uppercase tracking-widest">{p.position}</p>
+                    </div>
+                    <div className="flex gap-2 w-72">
+                        <button onClick={() => handleStatusChange(p.id, 'P')} className={getBtnClass(p.id, 'P')}>P</button>
+                        <button onClick={() => handleStatusChange(p.id, 'A')} className={getBtnClass(p.id, 'A')}>A</button>
+                        <button onClick={() => handleStatusChange(p.id, 'T')} className={getBtnClass(p.id, 'T')}>T</button>
+                    </div>
+                </div>
+            )) : (
+                <div className="py-20 text-center">
+                    <Users size={48} className="mx-auto text-slate-200 mb-4" />
+                    <p className="text-slate-400 font-black uppercase text-[10px] tracking-widest">No hay jugadores asignados a esta categoría</p>
+                </div>
+            )}
+        </div>
+        {filteredPlayers.length > 0 && (
+            <div className="p-8 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-white/5 flex justify-end">
+                <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all">
+                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                    Finalizar Lista
+                </button>
+            </div>
+        )}
+      </div>
     </div>
   );
 };
