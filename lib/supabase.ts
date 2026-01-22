@@ -1,42 +1,45 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_KEY || '';
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseKey || 'placeholder-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Fix: Expanded db object to include players and fees to resolve property access errors in UI components
 export const db = {
-  players: {
-    getAll: () => supabase.from('players').select('*').order('name', { ascending: true }),
-    upsert: (data: any) => {
-      // Eliminar campos temporales de React antes de guardar
-      const { ...payload } = data;
-      return supabase.from('players').upsert(payload);
-    },
-    delete: (id: string) => supabase.from('players').delete().eq('id', id)
+  config: {
+    get: () => supabase
+      .from('club_config')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle(),
+    
+    update: (data: any) => supabase
+      .from('club_config')
+      .upsert({ id: 1, ...data })
   },
-  clubConfig: {
-    get: () => supabase.from('club_config').select('*').eq('id', 1).maybeSingle(),
-    update: (data: any) => {
-      return supabase.from('club_config').upsert({
-        id: 1,
-        name: data.name,
-        logo_url: data.logoUrl,
-        disciplines: data.disciplines,
-        updated_at: new Date().toISOString()
-      });
-    }
+  players: {
+    getAll: () => supabase
+      .from('players')
+      .select('*'),
+    
+    upsert: (player: any) => supabase
+      .from('players')
+      .upsert(player)
   },
   fees: {
-    getAll: () => supabase.from('member_fees').select(`
-      *,
-      player:players(name, dni, discipline, category)
-    `).order('due_date', { ascending: false }),
-    upsert: (data: any) => supabase.from('member_fees').upsert(data),
-    delete: (id: string) => supabase.from('member_fees').delete().eq('id', id)
+    getAll: () => supabase
+      .from('fees')
+      .select('*, player:players(*)'),
+    
+    upsert: (fee: any) => supabase
+      .from('fees')
+      .upsert(fee),
+    
+    delete: (id: string) => supabase
+      .from('fees')
+      .delete()
+      .eq('id', id)
   }
 };

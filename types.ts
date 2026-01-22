@@ -1,140 +1,86 @@
 
-export enum Position {
-  GK = 'Portero',
-  DEF = 'Defensa',
-  MID = 'Mediocampista',
-  FWD = 'Delantero',
-  PLAYER = 'Jugador',
-  BASE = 'Base',
-  ALERO = 'Alero',
-  PIVOT = 'Pivot'
-}
-
-export type Discipline = 'Fútbol' | 'Básquet' | 'Vóley' | 'Handball' | 'Hockey';
-
-export interface MetricDefinition {
+export interface Metric {
   id: string;
   name: string;
-  weight: number; // Ponderación (1-10)
+  weight: number;
 }
 
-export interface CategoryConfig {
+export interface Category {
   id: string;
   name: string;
-  metrics: MetricDefinition[];
+  metrics: Metric[];
 }
 
-export interface DisciplineConfig {
+export interface Discipline {
   id: string;
   name: string;
-  categories: CategoryConfig[];
+  categories: Category[];
 }
 
+export interface ClubConfig {
+  name: string;
+  logoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  disciplines: Discipline[];
+}
+
+// Fix: Added missing interfaces and types to resolve import errors in components
 export interface MedicalRecord {
-  id?: string;
   isFit: boolean;
   lastCheckup: string;
   expiryDate: string;
   notes: string;
 }
 
-export interface TutorInfo {
-  name: string;
-  email: string;
-  phone: string;
-}
-
-// Fix: Added PlayerStats interface to resolve missing exported member error in PlayerCard.tsx
-export interface PlayerStats {
-  [key: string]: number;
-}
-
 export interface Player {
   id: string;
   name: string;
-  number: number;
-  position: Position | string;
-  age: number;
-  nationality: string;
+  number: string;
+  position: string;
+  category: string;
+  discipline: string;
+  overallRating: number;
   photoUrl: string;
-  stats: Record<string, number>; // Ahora es dinámico: nombre_metrica -> valor
-  overallRating: number; // Promedio ponderado calculado
-  status: 'Active' | 'Injured' | 'Suspended' | 'Reserve';
-  
   dni: string;
   email: string;
-  phone: string;
-  address: string;
-  
-  tutor: TutorInfo;
-
-  discipline: string;
-  division: 'Masculino' | 'Femenino' | 'Mixto' | 'Escuela Infantil'; 
-  category: string; 
-  squad?: string;
-  
-  marketValue: string;
-  medical?: MedicalRecord;
-  attendanceRate?: number;
+  stats: Record<string, number>;
+  medical: MedicalRecord;
+  status?: 'Active' | 'Injured' | 'Suspended';
 }
 
-// Fix: Added Fixture interface to resolve missing exported member error in AdminPanel.tsx
 export interface Fixture {
   id: string;
   discipline: string;
   category: string;
   opponent: string;
   date: string;
-  venue: 'Home' | 'Away' | string;
+  venue: string;
   competition: string;
   result: string;
 }
 
-// Fix: Added TrainingGroup interface to resolve missing exported member error in AttendanceTracker.tsx
-export interface TrainingGroup {
+export interface TeamStructure {
   id: string;
-  name: string;
-  coachId: string;
   discipline: string;
-  playerIds: string[];
-  schedule: string;
+  category: string;
+  coach: string;
+  physicalTrainer: string;
+  medicalStaff: string;
+  playersCount: number;
 }
 
-// Fix: Added MemberFee interface to resolve missing exported member error in FeesManagement.tsx
 export interface MemberFee {
-  id: string;
+  id?: string;
   memberId: string;
-  memberName: string;
-  type: string;
-  lastPaymentDate?: string;
-  status: 'UpToDate' | 'Pending' | 'Late';
   amount: number;
   dueDate: string;
-  paymentMethod?: string;
+  paymentMethod: string;
+  status: 'UpToDate' | 'Pending' | 'Late';
   reference?: string;
 }
 
-// ... (resto de interfaces se mantienen igual)
-export interface Staff {
-  id: string;
-  name: string;
-  role: string;
-  phone: string;
-  photoUrl?: string;
-}
-
-export interface TeamStructure {
-    id: string;
-    discipline: string;
-    category: string;
-    coach: string;
-    physicalTrainer: string;
-    medicalStaff: string;
-    playersCount: number;
-}
-
-export interface ClubConfig {
-    name: string;
-    logoUrl: string;
-    disciplines: DisciplineConfig[]; // Jerarquía centralizada
-}
+// Fix: Added type aliases for compatibility with specific component usages
+export type Position = string;
+export type MetricDefinition = Metric;
+export type DisciplineConfig = Discipline;

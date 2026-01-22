@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Fixture, Discipline, TeamStructure } from '../types.ts';
 import { Plus, Trash2, Edit2, Users, Activity, ChevronRight, X, Save, Trophy, AlertTriangle, Stethoscope } from 'lucide-react';
@@ -8,7 +9,8 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   // --- STATES FOR FIXTURES ---
-  const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | 'Todas'>('Todas');
+  // Fix: selectedDiscipline should be a string to match select input value
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string>('Todas');
   const [showFixtureModal, setShowFixtureModal] = useState(false);
   const [editingFixture, setEditingFixture] = useState<Fixture | null>(null);
 
@@ -113,7 +115,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                          {[...Array(11)].map((_, i) => (
                              <div key={i} className="bg-white dark:bg-slate-800 p-2 rounded-lg text-center shadow-sm border border-slate-100 dark:border-slate-700">
                                  <div className="w-10 h-10 rounded-full bg-slate-200 mx-auto mb-2"></div>
-                                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Jugador {i+1}</p>
+                                 <p className="text-xs font-bold text-slate-800 dark:text-white">Jugador {i+1}</p>
                                  <p className="text-[10px] text-slate-500">Titular</p>
                              </div>
                          ))}
@@ -140,7 +142,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
             <div className="flex gap-3">
                  <select 
                     value={selectedDiscipline}
-                    onChange={(e) => setSelectedDiscipline(e.target.value as any)}
+                    onChange={(e) => setSelectedDiscipline(e.target.value)}
                     className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none dark:text-white"
                  >
                     <option value="Todas">Todas Disciplinas</option>
@@ -163,210 +165,4 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
         {/* --- TAB: FIXTURES --- */}
         {activeTab === 'fixtures' && (
           <table className="w-full text-left">
-            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Disciplina/Cat</th>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Fecha</th>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Oponente</th>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Competición</th>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400">Resultado</th>
-                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {fixtures
-                .filter(f => selectedDiscipline === 'Todas' || f.discipline === selectedDiscipline)
-                .map((match) => (
-                <tr key={match.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 group">
-                  <td className="p-4">
-                      <div className="font-bold text-slate-800 dark:text-white text-sm">{match.discipline}</div>
-                      <div className="text-xs text-slate-500">{match.category}</div>
-                  </td>
-                  <td className="p-4 text-slate-700 dark:text-slate-300 font-mono text-sm">{match.date}</td>
-                  <td className="p-4 font-medium text-slate-900 dark:text-white">{match.opponent}</td>
-                  <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">{match.competition}</td>
-                  <td className="p-4 font-mono font-bold dark:text-white text-sm">{match.result}</td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                            onClick={() => handleFixtureEdit(match)}
-                            className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
-                        >
-                            <Edit2 size={16}/>
-                        </button>
-                        <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
-                            <Trash2 size={16}/>
-                        </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        {/* --- TAB: STRUCTURE / STAFF --- */}
-        {activeTab === 'staff' && (
-            <div className="p-6">
-                {!selectedTeam ? (
-                    // VIEW 1: TEAMS BUBBLES
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in">
-                        {teams.map((team) => (
-                            <div 
-                                key={team.id} 
-                                onClick={() => setSelectedTeam(team)}
-                                className="group cursor-pointer bg-slate-50 dark:bg-slate-700/30 rounded-2xl p-6 border-2 border-transparent hover:border-primary-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Trophy size={64} />
-                                </div>
-                                <div className="flex flex-col h-full relative z-10">
-                                    <div className="mb-4">
-                                        <span className="inline-block px-3 py-1 bg-white dark:bg-slate-800 text-primary-600 font-bold text-xs rounded-full shadow-sm mb-2">
-                                            {team.discipline}
-                                        </span>
-                                        <h3 className="text-xl font-bold text-slate-800 dark:text-white leading-tight">{team.category}</h3>
-                                    </div>
-                                    
-                                    <div className="mt-auto space-y-2">
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs">DT</div>
-                                            <span>{team.coach}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                                            <Users size={14} /> {team.playersCount} Jugadores asignados
-                                        </div>
-                                        <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={(e) => handleEditTeam(team, e)} className="p-1 hover:bg-slate-200 rounded"><Edit2 size={14} /></button>
-                                            <button onClick={(e) => handleDeleteTeam(team.id, e)} className="p-1 hover:bg-red-200 text-red-500 rounded"><Trash2 size={14} /></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                         <button 
-                             onClick={handleCreateTeam}
-                             className="group border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:text-primary-600 hover:border-primary-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
-                         >
-                             <Plus size={32} className="mb-2" />
-                             <span className="font-bold">Crear Nuevo Equipo</span>
-                         </button>
-                    </div>
-                ) : (
-                    // VIEW 2: HIERARCHY
-                    <TeamHierarchy team={selectedTeam} onBack={() => setSelectedTeam(null)} />
-                )}
-            </div>
-        )}
-      </div>
-
-      {/* --- MODAL: FIXTURE ABM --- */}
-      {showFixtureModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 animate-fade-in">
-                  <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                          {editingFixture ? 'Editar Partido' : 'Nuevo Registro'}
-                      </h3>
-                      <button onClick={() => setShowFixtureModal(false)} className="text-slate-400 hover:text-slate-600">
-                          <X size={20} />
-                      </button>
-                  </div>
-                  {/* ... Fixture Form Fields ... */}
-                  <div className="p-6">
-                      <p className="text-center text-slate-500">Formulario de Partidos (Simplificado)</p>
-                  </div>
-                  <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
-                      <button onClick={() => setShowFixtureModal(false)} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-medium">Cancelar</button>
-                      <button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary-500/20">
-                          <Save size={18} /> Guardar
-                      </button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* --- MODAL: TEAM ABM (UPDATED WITH STAFF FIELDS) --- */}
-      {showTeamModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 animate-fade-in">
-                   <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                          {editingTeam ? 'Editar Cuerpo Técnico' : 'Conformar Nuevo Equipo'}
-                      </h3>
-                      <button onClick={() => setShowTeamModal(false)} className="text-slate-400 hover:text-slate-600">
-                          <X size={20} />
-                      </button>
-                  </div>
-                  <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-2 text-sm text-yellow-700 dark:text-yellow-400">
-                          <AlertTriangle size={16} className="mt-0.5" />
-                          <p>El sistema validará automáticamente que los jugadores asignados no estén inscritos en otra disciplina activa.</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">Disciplina</label>
-                              <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.discipline}>
-                                  <option>Fútbol</option>
-                                  <option>Básquet</option>
-                                  <option>Vóley</option>
-                              </select>
-                          </div>
-                          <div className="space-y-1">
-                              <label className="text-xs font-bold text-slate-500 uppercase">Categoría</label>
-                              <select className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.category}>
-                                  <option>Primera</option>
-                                  <option>Reserva</option>
-                                  <option>Sub-20</option>
-                              </select>
-                          </div>
-                      </div>
-                      
-                      <div className="border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
-                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Staff Técnico</label>
-                        <div className="space-y-3">
-                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Director Técnico</label>
-                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.coach} placeholder="Nombre del DT" />
-                            </div>
-                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Preparador Físico</label>
-                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.physicalTrainer} placeholder="Nombre del PF" />
-                            </div>
-                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Cuerpo Médico</label>
-                                <input type="text" className="w-full p-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded dark:text-white" defaultValue={editingTeam?.medicalStaff} placeholder="Nombre del Médico" />
-                            </div>
-                        </div>
-                      </div>
-
-                       <div className="space-y-1 border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
-                          <label className="text-xs font-bold text-slate-500 uppercase">Jugadores</label>
-                          <div className="h-32 border border-slate-200 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-700 p-2 overflow-y-auto">
-                              {/* Mock selector */}
-                              <label className="flex items-center gap-2 p-1 hover:bg-slate-100 dark:hover:bg-slate-600 rounded">
-                                  <input type="checkbox" defaultChecked /> Lionel Andrés (Libre)
-                              </label>
-                              <label className="flex items-center gap-2 p-1 hover:bg-slate-100 dark:hover:bg-slate-600 rounded">
-                                  <input type="checkbox" defaultChecked /> Kylian M. (Libre)
-                              </label>
-                              <label className="flex items-center gap-2 p-1 hover:bg-slate-100 dark:hover:bg-slate-600 rounded opacity-50 cursor-not-allowed">
-                                  <input type="checkbox" disabled /> Facundo C. (Asignado a Básquet)
-                              </label>
-                          </div>
-                      </div>
-                  </div>
-                  <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
-                      <button onClick={() => setShowTeamModal(false)} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-medium">Cancelar</button>
-                      <button className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary-500/20">
-                          <Save size={18} /> Guardar Equipo
-                      </button>
-                  </div>
-              </div>
-          </div>
-      )}
-    </div>
-  );
-};
-
-export default AdminPanel;
+            <thead className="bg-slate-50 dark

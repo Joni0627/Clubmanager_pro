@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Player, PlayerStats, Position, ClubConfig, MetricDefinition } from '../types.ts';
+// Fix: Removed non-existent PlayerStats and MetricDefinition from types.ts was actually added, but kept it clean
+import { Player, Position, ClubConfig, MetricDefinition } from '../types.ts';
 import { X, Activity, Save, Edit3, User, FileText, AlertTriangle, Sparkles, Loader2, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, Users, Shield, Hash, Camera, Link as LinkIcon, Upload, TrendingUp } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { generatePlayerReport } from '../services/geminiService.ts';
@@ -110,7 +111,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
         <div className="w-full md:w-96 shrink-0 bg-slate-950 text-white p-10 flex flex-col items-center border-b md:border-b-0 md:border-r border-white/5 relative">
           <div className="z-10 w-full flex justify-between items-start mb-10">
-            <div className="text-8xl font-black text-primary-500 italic drop-shadow-[0_0_30px_rgba(236,72,153,0.3)]">{player.overallRating}</div>
+            <div className="text-8xl font-black text-primary-500 italic drop-shadow-[0_0_30_rgba(236,72,153,0.3)]">{player.overallRating}</div>
             <div className="text-right">
                 <div className="text-2xl font-black tracking-tighter uppercase">{player.position}</div>
                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{player.discipline}</div>
@@ -195,6 +196,28 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                                 <input disabled={!isEditing} value={player.email} onChange={e => handleInfoChange('email', e.target.value)} className="w-full p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary-500/10" />
                             </div>
                         </section>
+                    </div>
+                )}
+                {activeTab === 'medical' && (
+                    <div className="animate-fade-in pb-20">
+                        <div className="bg-white dark:bg-slate-900 p-10 rounded-[3rem] border border-slate-100 dark:border-white/5">
+                            <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-6 flex items-center gap-2">
+                                <Activity size={20} className="text-primary-500" /> Estado Sanitario
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aptitud Competitiva</label>
+                                    <div className="flex gap-4">
+                                        <button disabled={!isEditing} onClick={() => handleInfoChange('medical', {...player.medical, isFit: true})} className={`flex-1 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border transition-all ${player.medical.isFit ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-transparent text-slate-400 border-slate-100 dark:border-white/5'}`}>Apto</button>
+                                        <button disabled={!isEditing} onClick={() => handleInfoChange('medical', {...player.medical, isFit: false})} className={`flex-1 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border transition-all ${!player.medical.isFit ? 'bg-red-500 text-white border-red-500' : 'bg-transparent text-slate-400 border-slate-100 dark:border-white/5'}`}>No Apto</button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vencimiento Apto</label>
+                                    <input type="date" disabled={!isEditing} value={player.medical.expiryDate} onChange={e => handleInfoChange('medical', {...player.medical, expiryDate: e.target.value})} className="w-full p-5 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-bold outline-none" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

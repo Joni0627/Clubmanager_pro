@@ -1,190 +1,83 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar.tsx';
-import Dashboard from './components/Dashboard.tsx';
-import PlayerCard from './components/PlayerCard.tsx';
-import AdminPanel from './components/AdminPanel.tsx';
 import MasterData from './components/MasterData.tsx';
-import AttendanceTracker from './components/AttendanceTracker.tsx';
-import MedicalDashboard from './components/MedicalDashboard.tsx';
-import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { Player, Position, ClubConfig } from './types.ts';
-import { Filter, Search, Grid, List as ListIcon, Plus, Loader2, Users, Trophy, Layers, Settings, ArrowRight, Database } from 'lucide-react';
+import { ClubConfig } from './types.ts';
 import { db } from './lib/supabase.ts';
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  const [view, setView] = useState('master-data');
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [clubConfig, setClubConfig] = useState<ClubConfig>({
-      name: 'PLEGMA SPORT CLUB',
-      logoUrl: '',
-      disciplines: []
+  const [config, setConfig] = useState<ClubConfig>({
+    name: 'CARGANDO...',
+    logoUrl: '',
+    primaryColor: '#ec4899',
+    secondaryColor: '#0f172a',
+    disciplines: []
   });
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const loadInitialData = async () => {
-    try {
-      setIsLoading(true);
-      const { data: configData, error: configError } = await db.clubConfig.get();
-      
-      if (!configError && configData) {
-        setClubConfig({
-            ...configData,
-            disciplines: configData.disciplines || []
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const { data, error } = await db.config.get();
+      if (data && !error) {
+        setConfig({
+          name: data.name,
+          logoUrl: data.logo_url,
+          primaryColor: data.primary_color,
+          secondaryColor: data.secondary_color,
+          disciplines: data.disciplines || []
         });
-      } else {
-        const defaultConfig: ClubConfig = {
-          name: 'PLEGMA CLUB',
-          logoUrl: '',
-          disciplines: []
-        };
-        setClubConfig(defaultConfig);
-        try { await db.clubConfig.update(defaultConfig); } catch (e) { console.warn("Init error"); }
       }
-
-      const { data: playersData } = await db.players.getAll();
-      if (playersData) setPlayers(playersData);
-      
-    } catch (error) {
-      console.error("Critical Init Error:", error);
-    } finally {
       setIsLoading(false);
-      setTimeout(() => setShowSplash(false), 800);
-    }
-  };
-
-  useEffect(() => {
-    const disciplines = clubConfig?.disciplines || [];
-    if (disciplines.length > 0) {
-      const currentDisc = disciplines.find(d => d.name === activeDiscipline) || disciplines[0];
-      if (activeDiscipline !== currentDisc.name) {
-          setActiveDiscipline(currentDisc.name);
-      }
-      const categories = currentDisc.categories || [];
-      if (categories.length > 0) {
-        const currentCat = categories.find(c => c.name === activeCategory) || categories[0];
-        if (activeCategory !== currentCat.name) {
-            setActiveCategory(currentCat.name);
-        }
-      } else if (activeCategory !== null) {
-        setActiveCategory(null);
-      }
-    }
-  }, [clubConfig, activeDiscipline, activeCategory]);
-
-  useEffect(() => {
-    loadInitialData();
+    };
+    fetchConfig();
   }, []);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
-
-  const updateClubConfig = async (newConfig: ClubConfig) => {
-      setClubConfig(newConfig);
-      try { await db.clubConfig.update(newConfig); } 
-      catch (e) { console.error(e); }
+  const handleSaveConfig = async (newConfig: ClubConfig) => {
+    setConfig(newConfig);
+    const { error } = await db.config.update({
+      name: newConfig.name,
+      logo_url: newConfig.logoUrl,
+      primary_color: newConfig.primaryColor,
+      secondary_color: newConfig.secondaryColor,
+      disciplines: newConfig.disciplines,
+      updated_at: new Date().toISOString()
+    });
+    if (error) alert('Error al guardar en la nube.');
   };
 
-  const refreshPlayers = async () => {
-      const { data } = await db.players.getAll();
-      if (data) setPlayers(data);
-  };
-
-  const filteredPlayers = useMemo(() => {
-      if (!activeDiscipline || !activeCategory) return [];
-      return players.filter(p => p.discipline === activeDiscipline && p.category === activeCategory);
-  }, [players, activeDiscipline, activeCategory]);
-
-  const renderContent = () => {
-    if (isLoading) return (
-        <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
-            <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Cargando Sistema Plegma...</p>
-        </div>
-    );
-
-    switch (currentView) {
-      case 'dashboard': return <Dashboard />;
-      case 'medical': return <MedicalDashboard players={players} />;
-      case 'fees': return <FeesManagement />;
-      case 'master-data': return <MasterData clubConfig={clubConfig} setClubConfig={updateClubConfig} />;
-      case 'attendance': return <AttendanceTracker players={players} clubConfig={clubConfig} />;
-      case 'players':
-        return (
-          <div className="p-10 h-full flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
-            <div className="flex justify-between items-center mb-10">
-               <div>
-                  <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Planteles</h2>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                      {activeDiscipline || 'Cargando...'} • {activeCategory || 'Sin Categoría'}
-                  </p>
-               </div>
-               <button onClick={() => {}} className="flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all hover:scale-105">
-                    <Plus size={18} /> Inscribir Jugador
-               </button>
-            </div>
-
-            {clubConfig.disciplines && clubConfig.disciplines.length > 0 ? (
-                <>
-                    <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-8">
-                        {clubConfig.disciplines.map((disc) => (
-                            <button key={disc.id} onClick={() => setActiveDiscipline(disc.name)} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeDiscipline === disc.name ? 'bg-primary-600 text-white shadow-xl' : 'bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600'}`}>
-                                {disc.name}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 overflow-y-auto pr-2 pb-20">
-                        {filteredPlayers.length > 0 ? filteredPlayers.map(player => (
-                            <div key={player.id} onClick={() => setSelectedPlayer(player)} className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-2xl transition-all group">
-                                <div className="h-64 bg-slate-950 relative overflow-hidden">
-                                    <img src={player.photoUrl || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={player.name} />
-                                    <div className="absolute top-6 left-6 bg-primary-600 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-xl">{player.overallRating}</div>
-                                    <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-slate-950 to-transparent">
-                                        <h3 className="text-xl font-black text-white uppercase truncate">{player.name}</h3>
-                                        <p className="text-[10px] text-primary-500 font-black uppercase tracking-widest">{player.position}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )) : (
-                            <div className="col-span-full py-20 text-center text-slate-400 font-black uppercase tracking-widest text-xs border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem]">
-                                No hay jugadores en esta categoría
-                            </div>
-                        )}
-                    </div>
-                </>
-            ) : (
-                <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[3rem] p-20 text-center shadow-inner">
-                    <Database size={48} className="text-slate-200 mb-4" />
-                    <p className="text-slate-500 font-bold max-w-xs">No se ha configurado la estructura del club. Ve a Datos Maestros para comenzar.</p>
-                </div>
-            )}
-          </div>
-        );
-      default: return <Dashboard />;
-    }
-  };
-
-  if (showSplash) return <SplashScreen />;
+  if (isLoading) return <SplashScreen />;
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''} bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300`}>
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} isDarkMode={isDarkMode} toggleTheme={toggleTheme} clubConfig={clubConfig} />
-      <main className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="flex-1 overflow-hidden">{renderContent()}</div>
-        <div className="py-6 text-center border-t border-slate-100 dark:border-white/5 bg-white dark:bg-slate-950">
-          <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.5em]">&copy; {new Date().getFullYear()} {clubConfig.name || 'PLEGMA CLUB'} • PlegmaSport Cloud</p>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 flex transition-colors duration-500 font-sans">
+      <Sidebar 
+        currentView={view} 
+        setView={setView} 
+        isDarkMode={isDarkMode} 
+        toggleTheme={() => setIsDarkMode(!isDarkMode)} 
+        config={config}
+      />
+      
+      <main className="flex-1 flex flex-col h-screen overflow-hidden pl-20 md:pl-64">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {view === 'master-data' ? (
+            <MasterData config={config} onSave={handleSaveConfig} />
+          ) : (
+            <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
+               <h1 className="text-6xl font-black uppercase tracking-tighter italic">Próximamente</h1>
+               <p className="text-xs font-black uppercase tracking-[1em] mt-4">Configura los Datos Maestros primero</p>
+            </div>
+          )}
         </div>
       </main>
-      {selectedPlayer && (
-        <PlayerCard player={selectedPlayer} onClose={() => setSelectedPlayer(null)} onSaveSuccess={refreshPlayers} clubConfig={clubConfig} />
-      )}
     </div>
   );
 }
