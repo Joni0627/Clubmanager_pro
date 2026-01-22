@@ -10,6 +10,7 @@ function App() {
   const [view, setView] = useState('master-data');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [config, setConfig] = useState<ClubConfig>({
     name: 'CARGANDO...',
     logoUrl: '',
@@ -75,9 +76,14 @@ function App() {
         isDarkMode={isDarkMode} 
         toggleTheme={() => setIsDarkMode(!isDarkMode)} 
         config={config}
+        isCollapsed={isSidebarCollapsed}
+        setCollapsed={setIsSidebarCollapsed}
       />
       
-      <main className="flex-1 flex flex-col h-screen overflow-hidden pl-20 md:pl-64">
+      <main 
+        className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-500 ease-in-out`}
+        style={{ paddingLeft: isSidebarCollapsed ? '6rem' : '18rem' }}
+      >
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {view === 'master-data' ? (
             <MasterData config={config} onSave={handleSaveConfig} />

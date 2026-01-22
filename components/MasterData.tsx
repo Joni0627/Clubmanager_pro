@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ClubConfig, Discipline, Category, Metric } from '../types';
-import { Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, Loader2, Camera, ChevronDown, ChevronUp, Layers, Target } from 'lucide-react';
+import { Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, Loader2, Camera, ChevronDown, ChevronUp, Layers, Target, Palette } from 'lucide-react';
 
 interface MasterDataProps {
   config: ClubConfig;
@@ -105,28 +105,74 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
       {tab === 'identity' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-fade-in">
-          <div className="lg:col-span-2 bg-white dark:bg-[#0f1219] p-12 rounded-[3.5rem] border border-slate-200 dark:border-white/5 space-y-10 shadow-sm">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">Nombre Institucional</label>
-              <input 
-                value={localConfig.name} 
-                onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})} 
-                className="w-full p-8 bg-slate-50 dark:bg-slate-900 rounded-3xl font-black text-3xl outline-none focus:ring-4 focus:ring-primary-500/10 transition-all uppercase tracking-tighter" 
-                placeholder="EJ: PLEGMA FOOTBALL CLUB"
-              />
+          <div className="lg:col-span-2 space-y-10">
+            <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[3.5rem] border border-slate-200 dark:border-white/5 space-y-10 shadow-sm">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">Nombre Institucional</label>
+                <input 
+                  value={localConfig.name} 
+                  onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})} 
+                  className="w-full p-8 bg-slate-50 dark:bg-slate-900 rounded-3xl font-black text-3xl outline-none focus:ring-4 focus:ring-primary-500/10 transition-all uppercase tracking-tighter" 
+                  placeholder="EJ: PLEGMA FOOTBALL CLUB"
+                />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">URL del Escudo (Logo)</label>
+                <input 
+                  value={localConfig.logoUrl} 
+                  onChange={e => setLocalConfig({...localConfig, logoUrl: e.target.value})} 
+                  className="w-full p-8 bg-slate-50 dark:bg-slate-900 rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary-500/10 transition-all text-slate-500" 
+                  placeholder="https://tu-sitio.com/logo.png"
+                />
+              </div>
             </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">URL del Escudo (Logo)</label>
-              <input 
-                value={localConfig.logoUrl} 
-                onChange={e => setLocalConfig({...localConfig, logoUrl: e.target.value})} 
-                className="w-full p-8 bg-slate-50 dark:bg-slate-900 rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary-500/10 transition-all text-slate-500" 
-                placeholder="https://tu-sitio.com/logo.png"
-              />
+
+            <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-sm">
+                <h3 className="text-xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3">
+                  <Palette size={20} className="text-primary-500" /> Colores Institucionales
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">Color Primario</label>
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
+                            <input 
+                                type="color" 
+                                value={localConfig.primaryColor} 
+                                onChange={e => setLocalConfig({...localConfig, primaryColor: e.target.value})}
+                                className="w-12 h-12 rounded-lg cursor-pointer bg-transparent border-none"
+                            />
+                            <input 
+                                value={localConfig.primaryColor} 
+                                onChange={e => setLocalConfig({...localConfig, primaryColor: e.target.value})}
+                                className="bg-transparent font-black text-sm uppercase outline-none flex-1"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-2">Color Secundario</label>
+                        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl">
+                            <input 
+                                type="color" 
+                                value={localConfig.secondaryColor} 
+                                onChange={e => setLocalConfig({...localConfig, secondaryColor: e.target.value})}
+                                className="w-12 h-12 rounded-lg cursor-pointer bg-transparent border-none"
+                            />
+                            <input 
+                                value={localConfig.secondaryColor} 
+                                onChange={e => setLocalConfig({...localConfig, secondaryColor: e.target.value})}
+                                className="bg-transparent font-black text-sm uppercase outline-none flex-1"
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[3.5rem] border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center shadow-sm text-center">
-            <div className="w-48 h-48 rounded-[3rem] bg-slate-50 dark:bg-slate-900 flex items-center justify-center border-4 border-dashed border-slate-200 dark:border-white/10 relative overflow-hidden group">
+
+          <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[3.5rem] border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center shadow-sm text-center sticky top-12 h-fit">
+            <div 
+              className="w-48 h-48 rounded-[3rem] bg-slate-50 dark:bg-slate-900 flex items-center justify-center border-4 border-dashed border-slate-200 dark:border-white/10 relative overflow-hidden group shadow-2xl"
+              style={{ borderColor: `${localConfig.primaryColor}20` }}
+            >
                {localConfig.logoUrl ? (
                  <img src={localConfig.logoUrl} className="w-full h-full object-contain p-8 group-hover:scale-110 transition-transform duration-500" />
                ) : (
@@ -134,6 +180,21 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                )}
             </div>
             <h4 className="mt-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">Vista Previa Escudo</h4>
+            
+            <div className="mt-12 w-full space-y-4">
+                <div 
+                  className="w-full h-12 rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-[0.3em] text-white shadow-xl"
+                  style={{ backgroundColor: localConfig.primaryColor }}
+                >
+                  Botón Primario
+                </div>
+                <div 
+                  className="w-full h-12 rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-[0.3em] text-white shadow-xl"
+                  style={{ backgroundColor: localConfig.secondaryColor }}
+                >
+                  Fondo Secundario
+                </div>
+            </div>
           </div>
         </div>
       )}
@@ -150,7 +211,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                   className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 cursor-pointer select-none"
                 >
                   <div className="flex items-center gap-6 w-full md:w-auto">
-                    <div className={`p-5 rounded-[1.5rem] text-white transition-all shadow-xl ${isExpanded ? 'bg-primary-600 scale-110' : 'bg-slate-800 dark:bg-slate-700'}`}>
+                    <div 
+                        className={`p-5 rounded-[1.5rem] text-white transition-all shadow-xl ${isExpanded ? 'scale-110' : 'bg-slate-800 dark:bg-slate-700'}`}
+                        style={isExpanded ? { backgroundColor: localConfig.primaryColor } : {}}
+                    >
                       <Trophy size={24}/>
                     </div>
                     <div className="flex-1">
