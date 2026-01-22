@@ -5,7 +5,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn("Advertencia: Las credenciales de Supabase no están definidas en el entorno.");
+  console.warn("Advertencia: Las credenciales de Supabase no están definidas.");
 }
 
 export const supabase = createClient(
@@ -16,11 +16,16 @@ export const supabase = createClient(
 export const db = {
   players: {
     getAll: () => supabase.from('players').select('*').order('name', { ascending: true }),
-    upsert: (data: any) => supabase.from('players').upsert(data),
+    upsert: (data: any) => {
+      // Limpiamos el objeto para asegurar que no enviamos campos calculados o temporales
+      const { ...payload } = data;
+      return supabase.from('players').upsert(payload);
+    },
     delete: (id: string) => supabase.from('players').delete().eq('id', id)
   },
   clubConfig: {
-    get: () => supabase.from('club_config').select('*').single(),
+    // Usamos id fijo 1 para la configuración global del club
+    get: () => supabase.from('club_config').select('*').eq('id', 1).maybeSingle(),
     update: (data: any) => supabase.from('club_config').upsert({ id: 1, ...data })
   },
   fees: {
