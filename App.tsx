@@ -48,9 +48,7 @@ function App() {
   }, []);
 
   const handleSaveConfig = async (newConfig: ClubConfig) => {
-    // Actualizamos estado local inmediatamente para UI fluida
     setConfig(newConfig);
-    
     const { error } = await db.config.update({
       name: newConfig.name,
       logo_url: newConfig.logoUrl,
@@ -61,7 +59,7 @@ function App() {
     });
 
     if (error) {
-      console.error('Error de Supabase:', error.message, error.details);
+      console.error('Error de Supabase:', error.message);
       alert(`Error al guardar: ${error.message}`);
     }
   };
@@ -69,7 +67,7 @@ function App() {
   if (isLoading) return <SplashScreen />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 flex transition-colors duration-500 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 flex transition-colors duration-500 font-sans overflow-hidden">
       <Sidebar 
         currentView={view} 
         setView={setView} 
@@ -80,17 +78,22 @@ function App() {
         setCollapsed={setIsSidebarCollapsed}
       />
       
+      {/* 
+          Ajuste Crítico: En móvil (inferior a md), el paddingLeft es 0 o mínimo (20px si el sidebar colapsado es visible). 
+          Usamos clases de Tailwind para manejar los breakpoints en lugar de styles inline fijos.
+      */}
       <main 
-        className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-500 ease-in-out`}
-        style={{ paddingLeft: isSidebarCollapsed ? '6rem' : '18rem' }}
+        className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-500 ease-in-out 
+          ${isSidebarCollapsed ? 'md:pl-24 pl-0' : 'md:pl-72 pl-0'}
+        `}
       >
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {view === 'master-data' ? (
             <MasterData config={config} onSave={handleSaveConfig} />
           ) : (
             <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
-               <h1 className="text-6xl font-black uppercase tracking-tighter italic">Próximamente</h1>
-               <p className="text-xs font-black uppercase tracking-[1em] mt-4">Configura los Datos Maestros primero</p>
+               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic text-center">Próximamente</h1>
+               <p className="text-[10px] font-black uppercase tracking-[1em] mt-4 text-center">Configura los Datos Maestros primero</p>
             </div>
           )}
         </div>
