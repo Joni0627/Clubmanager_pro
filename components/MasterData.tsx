@@ -3,69 +3,75 @@ import React, { useState } from 'react';
 import { ClubConfig, Discipline, Category } from '../types';
 import { 
   Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, 
-  Loader2, Camera, ChevronDown, Palette, Timer, Shield, Dumbbell, Target, Bike, Waves, Heart
+  Loader2, Camera, ChevronDown, Palette, Timer, Shield, Dumbbell, Target, Bike, Waves, Heart, Activity
 } from 'lucide-react';
 
-// Componente de Ícono de Precisión Deportiva (Custom SVGs para máxima exactitud)
+// Componente de Ícono de Ultra-Precisión Deportiva (Custom High-End SVGs)
 export const SportIcon = ({ id, size = 20, className = "" }: { id: string, size?: number, className?: string }) => {
-  const props = { width: size, height: size, className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const props = { width: size, height: size, className, viewBox: "0 0 24 24", fill: "currentColor" };
   
   switch (id) {
     case 'soccer':
       return (
         <svg {...props}>
-          <circle cx="12" cy="12" r="10" />
-          <path d="m12 12-4 3 1 5h6l1-5-4-3Z" />
-          <path d="m12 12 4-3-1-5H9l-1 5 4 3Z" />
-          <path d="M2 12h6l4 3" />
-          <path d="M22 12h-6l-4 3" />
-          <path d="M12 2v5l4 3" />
-          <path d="M12 2v5l-4 3" />
-          <path d="M12 22v-5l4-3" />
-          <path d="M12 22v-5l-4-3" />
+          <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" strokeWidth="1"/>
+          <path d="M12 12l-3.5 2.5.5 4h6l.5-4L12 12z M12 12l3.5-2.5-.5-4h-6l-.5 4L12 12z M2.5 12h5l2.5 3.5M14 15.5l2.5-3.5h5M12 2v4.5l3.5 2.5M8.5 9l-3.5-2.5V2M15.5 15l3.5 2.5v4.5M5 22v-4.5l3.5-2.5"/>
         </svg>
       );
     case 'basketball':
       return (
         <svg {...props}>
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 2v20M2 12h20" />
-          <path d="M4.5 4.5c3 3 3 12 0 15M19.5 4.5c-3 3-3 12 0 15" />
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M5 5c3 3 3 11 0 14M19 5c-3 3-3 11 0 14" fill="none" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
       );
     case 'rugby':
       return (
-        <svg {...props} viewBox="0 0 24 24">
-          <path d="M2 12c0-5 5-10 10-10s10 5 10 10-5 10-10 10S2 17 2 12Z" strokeWidth="2"/>
-          <path d="M12 2v20M8 5v14M16 5v14" strokeWidth="1" opacity="0.5"/>
-          <path d="M10 12h4M12 10v4" strokeWidth="2"/>
-        </svg>
-      );
-    case 'volleyball':
-      return (
         <svg {...props}>
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 22a10 10 0 0 1-9.3-6.3M3.5 6.5A10 10 0 0 1 12 2" />
-          <path d="M12 2a10 10 0 0 1 9.3 6.3M20.5 17.5A10 10 0 0 1 12 22" />
-          <path d="M3.5 6.5 12 12l8.5 5.5" />
-          <path d="M12 12V2" />
-          <path d="M12 12 2.7 15.7" />
-          <path d="M12 12l9.3-3.7" />
+          <path d="M2.5 12c0-6 6-10 9.5-10s9.5 4 9.5 10-6 10-9.5 10-9.5-4-9.5-10z" />
+          <path d="M12 4v16M9 6v12M15 6v12" fill="none" stroke="black" strokeWidth="0.5" opacity="0.3"/>
+          <path d="M10 12h4M12 10v4" fill="none" stroke="white" strokeWidth="1.5"/>
         </svg>
       );
     case 'tennis':
       return (
         <svg {...props}>
-          <circle cx="12" cy="12" r="10" />
-          <path d="M5.5 18.5a10 10 0 0 0 13-13" />
-          <path d="M18.5 18.5a10 10 0 0 1-13-13" />
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M6 18c3-3 3-9 0-12" fill="none" stroke="black" strokeWidth="2" opacity="0.2"/>
+          <path d="M18 18c-3-3-3-9 0-12" fill="none" stroke="black" strokeWidth="2" opacity="0.2"/>
+        </svg>
+      );
+    case 'padel':
+      return (
+        <svg {...props}>
+          <circle cx="9" cy="13" r="7" />
+          <path d="M14 8l6-6M13 9l4-4" stroke="currentColor" strokeWidth="2"/>
+          <circle cx="18" cy="18" r="3" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="7" cy="11" r="0.8" fill="white"/><circle cx="9" cy="11" r="0.8" fill="white"/><circle cx="11" cy="11" r="0.8" fill="white"/>
+          <circle cx="7" cy="13" r="0.8" fill="white"/><circle cx="9" cy="13" r="0.8" fill="white"/><circle cx="11" cy="13" r="0.8" fill="white"/>
+        </svg>
+      );
+    case 'motor':
+      return (
+        <svg {...props}>
+          <path d="M3 17a9 9 0 1 1 18 0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+          <path d="M12 17l4-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+          <circle cx="12" cy="17" r="2"/>
+        </svg>
+      );
+    case 'mma':
+      return (
+        <svg {...props}>
+          <path d="M6 10h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10z"/>
+          <path d="M5 8c0-3 2-4 4-4s3 1 3 3v2M12 7c0-2 2-3 4-3s4 1 4 3v2" fill="none" stroke="currentColor" strokeWidth="2"/>
         </svg>
       );
     case 'hockey':
       return (
         <svg {...props}>
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 16v6M12 2v6M16 12h6M2 12h6" />
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v6M12 16v6M2 12h6M16 12h6" stroke="currentColor" strokeWidth="2"/>
         </svg>
       );
     default:
@@ -78,18 +84,17 @@ interface MasterDataProps {
   onSave: (config: ClubConfig) => Promise<void>;
 }
 
-// Mapa de iconos con nombres descriptivos para el usuario
 const SPORT_ICONS = [
   { id: 'soccer', label: 'Fútbol' },
   { id: 'basketball', label: 'Básquet' },
   { id: 'rugby', label: 'Rugby' },
-  { id: 'volleyball', label: 'Vóley' },
   { id: 'tennis', label: 'Tenis' },
+  { id: 'padel', label: 'Pádel' },
+  { id: 'motor', label: 'Motor' },
+  { id: 'mma', label: 'Combate' },
   { id: 'hockey', label: 'Hockey' },
   { id: 'timer', label: 'Atletismo', lucide: Timer },
   { id: 'waves', label: 'Natación', lucide: Waves },
-  { id: 'bike', label: 'Ciclismo', lucide: Bike },
-  { id: 'dumbbell', label: 'Gimnasio', lucide: Dumbbell },
 ];
 
 const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
@@ -125,37 +130,6 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
     });
   };
 
-  const addCategory = (e: React.MouseEvent, discId: string) => {
-    e.stopPropagation();
-    setLocalConfig({
-      ...localConfig,
-      disciplines: localConfig.disciplines.map(d => 
-        d.id === discId ? { 
-          ...d, 
-          categories: [...d.categories, { id: crypto.randomUUID(), name: 'NUEVA CATEGORÍA', metrics: [] }] 
-        } : d
-      )
-    });
-    setExpandedDiscs(prev => ({ ...prev, [discId]: true }));
-  };
-
-  const addMetric = (discId: string, catId: string) => {
-    setLocalConfig({
-      ...localConfig,
-      disciplines: localConfig.disciplines.map(d => 
-        d.id === discId ? { 
-          ...d, 
-          categories: d.categories.map(c => 
-            c.id === catId ? { 
-              ...c, 
-              metrics: [...c.metrics, { id: crypto.randomUUID(), name: 'NUEVA MÉTRICA', weight: 1 }] 
-            } : c
-          )
-        } : d
-      )
-    });
-  };
-
   return (
     <div className="p-4 md:p-12 max-w-5xl mx-auto animate-fade-in pb-32 md:pb-40">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12">
@@ -165,11 +139,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
             <span className="w-8 h-px bg-primary-500"></span> Gestión Institucional
           </p>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className={`group flex items-center justify-center gap-3 w-full md:w-auto px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${showSaved ? 'bg-emerald-500 text-white' : 'bg-slate-900 dark:bg-primary-600 text-white shadow-lg'}`}
-        >
+        <button onClick={handleSave} disabled={isSaving} className={`group flex items-center justify-center gap-3 w-full md:w-auto px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${showSaved ? 'bg-emerald-500 text-white' : 'bg-slate-900 dark:bg-primary-600 text-white shadow-lg'}`}>
           {isSaving ? <Loader2 className="animate-spin" size={16} /> : (showSaved ? <CheckCircle size={16} /> : <Save size={16} />)}
           <span>{isSaving ? 'Sincronizando' : (showSaved ? 'Guardado' : 'Guardar Todo')}</span>
         </button>
@@ -184,101 +154,37 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
         </button>
       </div>
 
-      {tab === 'identity' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-[#0f1219] p-6 md:p-10 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6 shadow-sm">
-              <div className="space-y-3">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Nombre Club</label>
-                <input value={localConfig.name} onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})} className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-black text-lg md:text-2xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all uppercase" placeholder="NOMBRE" />
-              </div>
-              <div className="space-y-3">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">URL Logo</label>
-                <input value={localConfig.logoUrl} onChange={e => setLocalConfig({...localConfig, logoUrl: e.target.value})} className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-bold text-[10px] md:text-xs outline-none text-slate-500 truncate" placeholder="https://..." />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-[#0f1219] p-6 md:p-10 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm">
-                <h3 className="text-sm md:text-base font-black uppercase tracking-tighter mb-6 flex items-center gap-2 text-slate-800 dark:text-white">
-                  <Palette size={16} className="text-primary-500" /> Colores ADN
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                        <input type="color" value={localConfig.primaryColor} onChange={e => setLocalConfig({...localConfig, primaryColor: e.target.value})} className="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
-                        <span className="text-[10px] font-black text-slate-500">PRIMARIO</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                        <input type="color" value={localConfig.secondaryColor} onChange={e => setLocalConfig({...localConfig, secondaryColor: e.target.value})} className="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
-                        <span className="text-[10px] font-black text-slate-500">SECUNDARIO</span>
-                    </div>
-                </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {tab === 'hierarchy' && (
         <div className="space-y-4 animate-fade-in">
           {localConfig.disciplines.map(disc => {
             const isExpanded = expandedDiscs[disc.id];
-            
             return (
               <div key={disc.id} className={`bg-white dark:bg-[#0f1219] rounded-3xl border transition-all ${isExpanded ? 'border-primary-500/20 shadow-xl' : 'border-slate-200 dark:border-white/5 shadow-sm'}`}>
                 <div onClick={() => toggleDisc(disc.id)} className="p-5 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 cursor-pointer select-none">
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className={`w-12 h-12 rounded-xl text-white transition-all flex items-center justify-center shrink-0 ${isExpanded ? 'bg-primary-600' : 'bg-slate-800'}`} style={isExpanded ? { backgroundColor: localConfig.primaryColor } : {}}>
-                      <SportIcon id={disc.icon || 'soccer'} />
+                    <div className="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-lg border border-white/10">
+                      <SportIcon id={disc.icon || 'soccer'} size={24} />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <input value={disc.name} onClick={e => e.stopPropagation()} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, name: e.target.value.toUpperCase()} : d)})} className="bg-transparent text-lg md:text-2xl font-black uppercase tracking-tighter outline-none w-full dark:text-white truncate" placeholder="DISCIPLINA" />
+                      <input value={disc.name} onClick={e => e.stopPropagation()} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, name: e.target.value.toUpperCase()} : d)})} className="bg-transparent text-lg md:text-2xl font-black uppercase tracking-tighter outline-none w-full dark:text-white truncate" />
                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mt-0.5">{disc.categories.length} CATEGORÍAS</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 w-full md:w-auto">
-                    <button onClick={(e) => addCategory(e, disc.id)} className="flex-1 md:flex-none px-4 py-3 bg-slate-100 dark:bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-600 hover:text-white transition-all">
-                      + Categoría
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar?')) setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== disc.id)}) }} className="p-3 text-slate-300 hover:text-red-500">
-                      <Trash2 size={18} />
-                    </button>
-                    <ChevronDown size={20} className={`transition-transform duration-500 text-slate-400 ${isExpanded ? 'rotate-180' : ''}`} />
-                  </div>
+                  <ChevronDown size={20} className={`transition-transform duration-500 text-slate-400 ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
 
                 {isExpanded && (
                   <div className="p-5 md:p-8 pt-0 border-t border-slate-100 dark:border-white/5">
-                    <div className="mt-4 p-5 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-white/5">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4 block ml-1">Icono de Precisión</label>
+                    <div className="mt-4 p-5 bg-slate-100/50 dark:bg-slate-900/40 rounded-3xl">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4 block ml-1">Icono de Alta Fidelidad</label>
                         <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3">
-                            {SPORT_ICONS.map((item) => {
-                                const isSelected = disc.icon === item.id;
-                                return (
-                                    <button key={item.id} onClick={() => updateDiscIcon(disc.id, item.id)} className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isSelected ? 'bg-primary-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
-                                        {item.lucide ? <item.lucide size={18} /> : <SportIcon id={item.id} size={18} />}
-                                        <span className="text-[7px] font-black uppercase tracking-tighter truncate w-full">{item.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 mt-6">
-                      {disc.categories.map(cat => (
-                        <div key={cat.id} className="bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-100 dark:border-white/5 relative">
-                          <div className="flex justify-between items-center mb-4">
-                            <input value={cat.name} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : d)})} className="bg-transparent font-black uppercase text-sm md:text-base tracking-tighter outline-none text-slate-800 dark:text-white w-full" placeholder="CATEGORÍA" />
-                            <button onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.filter(c => c.id !== cat.id)} : d)})} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
-                          </div>
-                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                            {cat.metrics.map(m => (
-                              <div key={m.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-white/5 flex justify-between items-center">
-                                <input value={m.name} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(met => met.id === m.id ? {...met, name: e.target.value.toUpperCase()} : met)} : c)} : d)})} className="text-[9px] font-black uppercase outline-none bg-transparent dark:text-white w-full" placeholder="MÉTRICA" />
-                                <button onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.filter(met => met.id !== m.id)} : c)} : d)})} className="text-slate-300 ml-2"><X size={12} /></button>
-                              </div>
+                            {SPORT_ICONS.map((item) => (
+                                <button key={item.id} onClick={() => updateDiscIcon(disc.id, item.id)} className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${disc.icon === item.id ? 'bg-slate-900 dark:bg-primary-600 text-white shadow-xl scale-105' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
+                                    {item.lucide ? <item.lucide size={18} /> : <SportIcon id={item.id} size={18} />}
+                                    <span className="text-[7px] font-black uppercase truncate w-full text-center">{item.label}</span>
+                                </button>
                             ))}
-                            <button onClick={() => addMetric(disc.id, cat.id)} className="p-3 border border-dashed border-slate-300 dark:border-white/10 rounded-xl text-[9px] font-black uppercase text-slate-400 hover:border-primary-600 transition-all">+ Parámetro</button>
-                          </div>
                         </div>
-                      ))}
                     </div>
                   </div>
                 )}
@@ -286,8 +192,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
             );
           })}
           <button onClick={addDiscipline} className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-3xl text-slate-400 bg-white/50 dark:bg-white/5 font-black uppercase tracking-widest transition-all hover:border-primary-600 hover:text-primary-600 flex flex-col items-center gap-3">
-              <Plus size={24} />
-              <span className="text-[10px]">Nueva Disciplina Deportiva</span>
+              <Plus size={24} /> Nueva Disciplina
           </button>
         </div>
       )}
