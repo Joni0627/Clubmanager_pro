@@ -1,23 +1,96 @@
 
 import React, { useState } from 'react';
 import { ClubConfig, Discipline, Category } from '../types';
-import { Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, Loader2, Camera, ChevronDown, Layers, Target, Palette, Dribbble, Activity, Flame, Timer, Shield, Dumbbell } from 'lucide-react';
+import { 
+  Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, 
+  Loader2, Camera, ChevronDown, Palette, Timer, Shield, Dumbbell, Target, Bike, Waves, Heart
+} from 'lucide-react';
+
+// Componente de Ícono de Precisión Deportiva (Custom SVGs para máxima exactitud)
+export const SportIcon = ({ id, size = 20, className = "" }: { id: string, size?: number, className?: string }) => {
+  const props = { width: size, height: size, className, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  
+  switch (id) {
+    case 'soccer':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="m12 12-4 3 1 5h6l1-5-4-3Z" />
+          <path d="m12 12 4-3-1-5H9l-1 5 4 3Z" />
+          <path d="M2 12h6l4 3" />
+          <path d="M22 12h-6l-4 3" />
+          <path d="M12 2v5l4 3" />
+          <path d="M12 2v5l-4 3" />
+          <path d="M12 22v-5l4-3" />
+          <path d="M12 22v-5l-4-3" />
+        </svg>
+      );
+    case 'basketball':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2v20M2 12h20" />
+          <path d="M4.5 4.5c3 3 3 12 0 15M19.5 4.5c-3 3-3 12 0 15" />
+        </svg>
+      );
+    case 'rugby':
+      return (
+        <svg {...props} viewBox="0 0 24 24">
+          <path d="M2 12c0-5 5-10 10-10s10 5 10 10-5 10-10 10S2 17 2 12Z" strokeWidth="2"/>
+          <path d="M12 2v20M8 5v14M16 5v14" strokeWidth="1" opacity="0.5"/>
+          <path d="M10 12h4M12 10v4" strokeWidth="2"/>
+        </svg>
+      );
+    case 'volleyball':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 22a10 10 0 0 1-9.3-6.3M3.5 6.5A10 10 0 0 1 12 2" />
+          <path d="M12 2a10 10 0 0 1 9.3 6.3M20.5 17.5A10 10 0 0 1 12 22" />
+          <path d="M3.5 6.5 12 12l8.5 5.5" />
+          <path d="M12 12V2" />
+          <path d="M12 12 2.7 15.7" />
+          <path d="M12 12l9.3-3.7" />
+        </svg>
+      );
+    case 'tennis':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M5.5 18.5a10 10 0 0 0 13-13" />
+          <path d="M18.5 18.5a10 10 0 0 1-13-13" />
+        </svg>
+      );
+    case 'hockey':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 16v6M12 2v6M16 12h6M2 12h6" />
+        </svg>
+      );
+    default:
+      return <Trophy size={size} className={className} />;
+  }
+};
 
 interface MasterDataProps {
   config: ClubConfig;
   onSave: (config: ClubConfig) => Promise<void>;
 }
 
-const ICON_MAP = {
-  'Trophy': Trophy,
-  'Dribbble': Dribbble,
-  'Activity': Activity,
-  'Target': Target,
-  'Flame': Flame,
-  'Timer': Timer,
-  'Dumbbell': Dumbbell,
-  'Shield': Shield
-};
+// Mapa de iconos con nombres descriptivos para el usuario
+const SPORT_ICONS = [
+  { id: 'soccer', label: 'Fútbol' },
+  { id: 'basketball', label: 'Básquet' },
+  { id: 'rugby', label: 'Rugby' },
+  { id: 'volleyball', label: 'Vóley' },
+  { id: 'tennis', label: 'Tenis' },
+  { id: 'hockey', label: 'Hockey' },
+  { id: 'timer', label: 'Atletismo', lucide: Timer },
+  { id: 'waves', label: 'Natación', lucide: Waves },
+  { id: 'bike', label: 'Ciclismo', lucide: Bike },
+  { id: 'dumbbell', label: 'Gimnasio', lucide: Dumbbell },
+];
 
 const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
   const [tab, setTab] = useState<'hierarchy' | 'identity'>('hierarchy');
@@ -40,7 +113,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
   const addDiscipline = () => {
     const id = crypto.randomUUID();
-    const newDisc: Discipline = { id, name: 'NUEVA DISCIPLINA', categories: [], icon: 'Trophy' };
+    const newDisc: Discipline = { id, name: 'NUEVA DISCIPLINA', categories: [], icon: 'soccer' };
     setLocalConfig({ ...localConfig, disciplines: [...localConfig.disciplines, newDisc] });
     setExpandedDiscs(prev => ({ ...prev, [id]: true }));
   };
@@ -88,8 +161,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 md:mb-12">
         <div className="w-full">
           <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white">Configuración</h2>
-          <div className="h-1 w-12 bg-primary-600 mt-2 rounded-full md:hidden"></div>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] mt-2 hidden md:flex items-center gap-2">
+          <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] mt-2 flex items-center gap-2">
             <span className="w-8 h-px bg-primary-500"></span> Gestión Institucional
           </p>
         </div>
@@ -104,16 +176,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
       </header>
 
       <div className="flex gap-2 p-1.5 bg-slate-200/50 dark:bg-white/5 rounded-2xl w-full md:w-fit mb-8 backdrop-blur-sm">
-        <button 
-          onClick={() => setTab('hierarchy')} 
-          className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all ${tab === 'hierarchy' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-md' : 'text-slate-500'}`}
-        >
+        <button onClick={() => setTab('hierarchy')} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all ${tab === 'hierarchy' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-md' : 'text-slate-500'}`}>
           <LayoutGrid size={14} /> Estructura
         </button>
-        <button 
-          onClick={() => setTab('identity')} 
-          className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all ${tab === 'identity' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-md' : 'text-slate-500'}`}
-        >
+        <button onClick={() => setTab('identity')} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black uppercase text-[9px] tracking-wider transition-all ${tab === 'identity' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-md' : 'text-slate-500'}`}>
           <Settings size={14} /> Identidad
         </button>
       </div>
@@ -124,24 +190,13 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
             <div className="bg-white dark:bg-[#0f1219] p-6 md:p-10 rounded-[2rem] border border-slate-200 dark:border-white/5 space-y-6 shadow-sm">
               <div className="space-y-3">
                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">Nombre Club</label>
-                <input 
-                  value={localConfig.name} 
-                  onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})} 
-                  className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-black text-lg md:text-2xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all uppercase" 
-                  placeholder="NOMBRE"
-                />
+                <input value={localConfig.name} onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})} className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-black text-lg md:text-2xl outline-none focus:ring-2 focus:ring-primary-500/20 transition-all uppercase" placeholder="NOMBRE" />
               </div>
               <div className="space-y-3">
                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">URL Logo</label>
-                <input 
-                  value={localConfig.logoUrl} 
-                  onChange={e => setLocalConfig({...localConfig, logoUrl: e.target.value})} 
-                  className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-bold text-[10px] md:text-xs outline-none text-slate-500 truncate" 
-                  placeholder="https://..."
-                />
+                <input value={localConfig.logoUrl} onChange={e => setLocalConfig({...localConfig, logoUrl: e.target.value})} className="w-full p-4 md:p-6 bg-slate-50 dark:bg-slate-900 rounded-xl font-bold text-[10px] md:text-xs outline-none text-slate-500 truncate" placeholder="https://..." />
               </div>
             </div>
-
             <div className="bg-white dark:bg-[#0f1219] p-6 md:p-10 rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-sm">
                 <h3 className="text-sm md:text-base font-black uppercase tracking-tighter mb-6 flex items-center gap-2 text-slate-800 dark:text-white">
                   <Palette size={16} className="text-primary-500" /> Colores ADN
@@ -158,16 +213,6 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                 </div>
             </div>
           </div>
-
-          <div className="bg-white dark:bg-[#0f1219] p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 flex flex-col items-center justify-center shadow-sm text-center h-fit">
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-white/10 relative overflow-hidden shadow-xl" style={{ borderColor: `${localConfig.primaryColor}40` }}>
-               {localConfig.logoUrl ? <img src={localConfig.logoUrl} className="w-full h-full object-contain p-4" /> : <Camera size={24} className="text-slate-300" />}
-            </div>
-            <div className="mt-6 w-full flex gap-2">
-                <div className="h-8 flex-1 rounded-lg shadow-sm" style={{ backgroundColor: localConfig.primaryColor }}></div>
-                <div className="h-8 flex-1 rounded-lg shadow-sm" style={{ backgroundColor: localConfig.secondaryColor }}></div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -175,41 +220,24 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
         <div className="space-y-4 animate-fade-in">
           {localConfig.disciplines.map(disc => {
             const isExpanded = expandedDiscs[disc.id];
-            const ActiveIcon = ICON_MAP[disc.icon as keyof typeof ICON_MAP] || Trophy;
             
             return (
               <div key={disc.id} className={`bg-white dark:bg-[#0f1219] rounded-3xl border transition-all ${isExpanded ? 'border-primary-500/20 shadow-xl' : 'border-slate-200 dark:border-white/5 shadow-sm'}`}>
-                <div 
-                  onClick={() => toggleDisc(disc.id)}
-                  className="p-5 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 cursor-pointer select-none"
-                >
+                <div onClick={() => toggleDisc(disc.id)} className="p-5 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 cursor-pointer select-none">
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className={`w-12 h-12 rounded-xl text-white transition-all flex items-center justify-center shrink-0 ${isExpanded ? 'bg-primary-600' : 'bg-slate-800'}`} style={isExpanded ? { backgroundColor: localConfig.primaryColor } : {}}>
-                      <ActiveIcon size={20}/>
+                      <SportIcon id={disc.icon || 'soccer'} />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <input 
-                        value={disc.name} 
-                        onClick={e => e.stopPropagation()}
-                        onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, name: e.target.value.toUpperCase()} : d)})} 
-                        className="bg-transparent text-lg md:text-2xl font-black uppercase tracking-tighter outline-none w-full dark:text-white truncate"
-                        placeholder="DISCIPLINA"
-                      />
+                      <input value={disc.name} onClick={e => e.stopPropagation()} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, name: e.target.value.toUpperCase()} : d)})} className="bg-transparent text-lg md:text-2xl font-black uppercase tracking-tighter outline-none w-full dark:text-white truncate" placeholder="DISCIPLINA" />
                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mt-0.5">{disc.categories.length} CATEGORÍAS</span>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2 w-full md:w-auto">
-                    <button 
-                      onClick={(e) => addCategory(e, disc.id)} 
-                      className="flex-1 md:flex-none px-4 py-3 bg-slate-100 dark:bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-600 hover:text-white transition-all"
-                    >
+                    <button onClick={(e) => addCategory(e, disc.id)} className="flex-1 md:flex-none px-4 py-3 bg-slate-100 dark:bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary-600 hover:text-white transition-all">
                       + Categoría
                     </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar?')) setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== disc.id)}) }} 
-                      className="p-3 text-slate-300 hover:text-red-500"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar?')) setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== disc.id)}) }} className="p-3 text-slate-300 hover:text-red-500">
                       <Trash2 size={18} />
                     </button>
                     <ChevronDown size={20} className={`transition-transform duration-500 text-slate-400 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -218,19 +246,18 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
                 {isExpanded && (
                   <div className="p-5 md:p-8 pt-0 border-t border-slate-100 dark:border-white/5">
-                    {/* Icon Selection Row */}
-                    <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-white/5">
-                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Icono de Disciplina</label>
-                        <div className="flex flex-wrap gap-2">
-                            {Object.entries(ICON_MAP).map(([name, Icon]) => (
-                                <button 
-                                    key={name}
-                                    onClick={() => updateDiscIcon(disc.id, name)}
-                                    className={`p-3 rounded-xl transition-all ${disc.icon === name ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-primary-500'}`}
-                                >
-                                    <Icon size={18} />
-                                </button>
-                            ))}
+                    <div className="mt-4 p-5 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-white/5">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4 block ml-1">Icono de Precisión</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3">
+                            {SPORT_ICONS.map((item) => {
+                                const isSelected = disc.icon === item.id;
+                                return (
+                                    <button key={item.id} onClick={() => updateDiscIcon(disc.id, item.id)} className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isSelected ? 'bg-primary-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
+                                        {item.lucide ? <item.lucide size={18} /> : <SportIcon id={item.id} size={18} />}
+                                        <span className="text-[7px] font-black uppercase tracking-tighter truncate w-full">{item.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -238,15 +265,9 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                       {disc.categories.map(cat => (
                         <div key={cat.id} className="bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-100 dark:border-white/5 relative">
                           <div className="flex justify-between items-center mb-4">
-                            <input 
-                              value={cat.name} 
-                              onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : d)})} 
-                              className="bg-transparent font-black uppercase text-sm md:text-base tracking-tighter outline-none text-slate-800 dark:text-white w-full"
-                              placeholder="CATEGORÍA"
-                            />
+                            <input value={cat.name} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : d)})} className="bg-transparent font-black uppercase text-sm md:text-base tracking-tighter outline-none text-slate-800 dark:text-white w-full" placeholder="CATEGORÍA" />
                             <button onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, categories: d.categories.filter(c => c.id !== cat.id)} : d)})} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
                           </div>
-                          
                           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                             {cat.metrics.map(m => (
                               <div key={m.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-white/5 flex justify-between items-center">
@@ -264,7 +285,6 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
               </div>
             );
           })}
-          
           <button onClick={addDiscipline} className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-3xl text-slate-400 bg-white/50 dark:bg-white/5 font-black uppercase tracking-widest transition-all hover:border-primary-600 hover:text-primary-600 flex flex-col items-center gap-3">
               <Plus size={24} />
               <span className="text-[10px]">Nueva Disciplina Deportiva</span>
