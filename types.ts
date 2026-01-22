@@ -15,6 +15,7 @@ export interface Discipline {
   id: string;
   name: string;
   categories: Category[];
+  icon?: string; // Icon name from a predefined list
 }
 
 export interface ClubConfig {

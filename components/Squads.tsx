@@ -1,13 +1,24 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, ClubConfig, Discipline } from '../types';
-import { Trophy, Users, Shield, Sparkles, ChevronRight, User, Hash, Info, Loader2, Star, Zap } from 'lucide-react';
+import { Trophy, Users, Shield, Sparkles, ChevronRight, User, Hash, Info, Loader2, Star, Zap, Dribbble, Activity, Flame, Timer, Dumbbell, Target } from 'lucide-react';
 import { db } from '../lib/supabase';
 import { GoogleGenAI } from '@google/genai';
 
 interface SquadsProps {
   clubConfig: ClubConfig;
 }
+
+const ICON_MAP = {
+  'Trophy': Trophy,
+  'Dribbble': Dribbble,
+  'Activity': Activity,
+  'Target': Target,
+  'Flame': Flame,
+  'Timer': Timer,
+  'Dumbbell': Dumbbell,
+  'Shield': Shield
+};
 
 const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
   const [selectedDiscId, setSelectedDiscId] = useState<string>(clubConfig.disciplines[0]?.id || '');
@@ -94,6 +105,8 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
         <div className="flex gap-4 md:gap-8 overflow-x-auto pb-6 px-4 no-scrollbar items-center">
             {clubConfig.disciplines.map((disc) => {
                 const isActive = disc.id === selectedDiscId;
+                const DiscIcon = ICON_MAP[disc.icon as keyof typeof ICON_MAP] || Trophy;
+                
                 return (
                     <button 
                         key={disc.id}
@@ -104,7 +117,7 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
                             className={`w-20 h-20 md:w-32 md:h-32 rounded-[2.5rem] md:rounded-[3.5rem] flex items-center justify-center transition-all duration-500 shadow-2xl ${isActive ? 'bg-primary-600 text-white shadow-primary-500/30 rotate-12' : 'bg-white dark:bg-slate-900 text-slate-400'}`}
                             style={isActive ? { backgroundColor: clubConfig.primaryColor } : {}}
                         >
-                            <Trophy size={isActive ? 48 : 32} />
+                            <DiscIcon size={isActive ? 48 : 32} />
                         </div>
                         <span className={`text-[10px] md:text-xs font-black uppercase tracking-[0.2em] ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500'}`}>{disc.name}</span>
                     </button>

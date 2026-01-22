@@ -1,12 +1,23 @@
 
 import React, { useState } from 'react';
 import { ClubConfig, Discipline, Category } from '../types';
-import { Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, Loader2, Camera, ChevronDown, Layers, Target, Palette } from 'lucide-react';
+import { Save, Plus, Trash2, Trophy, Settings, LayoutGrid, X, CheckCircle, Loader2, Camera, ChevronDown, Layers, Target, Palette, Dribbble, Activity, Flame, Timer, Shield, Dumbbell } from 'lucide-react';
 
 interface MasterDataProps {
   config: ClubConfig;
   onSave: (config: ClubConfig) => Promise<void>;
 }
+
+const ICON_MAP = {
+  'Trophy': Trophy,
+  'Dribbble': Dribbble,
+  'Activity': Activity,
+  'Target': Target,
+  'Flame': Flame,
+  'Timer': Timer,
+  'Dumbbell': Dumbbell,
+  'Shield': Shield
+};
 
 const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
   const [tab, setTab] = useState<'hierarchy' | 'identity'>('hierarchy');
@@ -29,9 +40,16 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
   const addDiscipline = () => {
     const id = crypto.randomUUID();
-    const newDisc: Discipline = { id, name: 'NUEVA DISCIPLINA', categories: [] };
+    const newDisc: Discipline = { id, name: 'NUEVA DISCIPLINA', categories: [], icon: 'Trophy' };
     setLocalConfig({ ...localConfig, disciplines: [...localConfig.disciplines, newDisc] });
     setExpandedDiscs(prev => ({ ...prev, [id]: true }));
+  };
+
+  const updateDiscIcon = (discId: string, iconName: string) => {
+    setLocalConfig({
+      ...localConfig,
+      disciplines: localConfig.disciplines.map(d => d.id === discId ? { ...d, icon: iconName } : d)
+    });
   };
 
   const addCategory = (e: React.MouseEvent, discId: string) => {
@@ -157,6 +175,8 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
         <div className="space-y-4 animate-fade-in">
           {localConfig.disciplines.map(disc => {
             const isExpanded = expandedDiscs[disc.id];
+            const ActiveIcon = ICON_MAP[disc.icon as keyof typeof ICON_MAP] || Trophy;
+            
             return (
               <div key={disc.id} className={`bg-white dark:bg-[#0f1219] rounded-3xl border transition-all ${isExpanded ? 'border-primary-500/20 shadow-xl' : 'border-slate-200 dark:border-white/5 shadow-sm'}`}>
                 <div 
@@ -165,7 +185,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                 >
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className={`w-12 h-12 rounded-xl text-white transition-all flex items-center justify-center shrink-0 ${isExpanded ? 'bg-primary-600' : 'bg-slate-800'}`} style={isExpanded ? { backgroundColor: localConfig.primaryColor } : {}}>
-                      <Trophy size={20}/>
+                      <ActiveIcon size={20}/>
                     </div>
                     <div className="flex-1 overflow-hidden">
                       <input 
@@ -198,6 +218,22 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
                 {isExpanded && (
                   <div className="p-5 md:p-8 pt-0 border-t border-slate-100 dark:border-white/5">
+                    {/* Icon Selection Row */}
+                    <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-white/5">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Icono de Disciplina</label>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(ICON_MAP).map(([name, Icon]) => (
+                                <button 
+                                    key={name}
+                                    onClick={() => updateDiscIcon(disc.id, name)}
+                                    className={`p-3 rounded-xl transition-all ${disc.icon === name ? 'bg-primary-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-400 hover:text-primary-500'}`}
+                                >
+                                    <Icon size={18} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-4 mt-6">
                       {disc.categories.map(cat => (
                         <div key={cat.id} className="bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-100 dark:border-white/5 relative">
