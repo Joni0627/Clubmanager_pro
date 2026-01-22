@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, ClubConfig, Discipline } from '../types';
 import { 
-  Users, Shield, Sparkles, Loader2, Star, Zap
+  Users, Shield, Sparkles, Loader2, Star, Zap, Image as ImageIcon
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import { GoogleGenAI } from '@google/genai';
@@ -47,33 +47,47 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
 
   return (
     <div className="p-4 md:p-12 max-w-7xl mx-auto animate-fade-in pb-40">
-      <header className="mb-12">
-        <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white mb-4">Deportes</h2>
+      <header className="mb-16">
+        <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white mb-4">Estructura</h2>
+        <div className="w-24 h-2 bg-primary-600 rounded-full"></div>
       </header>
 
-      {/* ESPN PREMIUM WHEEL */}
-      <div className="relative mb-20 overflow-hidden">
-        <div className="flex gap-8 md:gap-12 overflow-x-auto pb-8 px-4 no-scrollbar items-center">
+      {/* CUSTOM AVATAR WHEEL */}
+      <div className="relative mb-24 overflow-hidden">
+        <div className="flex gap-10 md:gap-14 overflow-x-auto pb-10 px-4 no-scrollbar items-center">
             {clubConfig.disciplines.map((disc) => {
                 const isActive = disc.id === selectedDiscId;
+                const isCustomImage = disc.icon && (disc.icon.startsWith('data:') || disc.icon.startsWith('http'));
+
                 return (
                     <button 
                         key={disc.id}
                         onClick={() => { setSelectedDiscId(disc.id); setSelectedCatId(''); }}
-                        className={`shrink-0 flex flex-col items-center gap-5 transition-all duration-500 ${isActive ? 'scale-110' : 'opacity-30 grayscale hover:opacity-60'}`}
+                        className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-700 ${isActive ? 'scale-110' : 'opacity-30 grayscale hover:opacity-70 scale-90'}`}
                     >
                         <div 
-                            className={`w-28 h-28 md:w-40 md:h-40 rounded-full flex items-center justify-center transition-all duration-500 shadow-3xl relative border-4 ${isActive ? 'bg-[#1a1d23] text-white' : 'bg-[#1a1d23]/40 text-slate-500 border-transparent'}`}
+                            className={`w-32 h-32 md:w-44 md:h-44 rounded-full flex items-center justify-center transition-all duration-700 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative border-4 ${isActive ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-500 border-transparent'}`}
                             style={isActive ? { borderColor: clubConfig.primaryColor } : {}}
                         >
-                            <SportIcon id={disc.icon || 'soccer'} size={isActive ? 64 : 40} />
+                            {isCustomImage ? (
+                                <img src={disc.icon} className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                                <SportIcon id={disc.icon || 'soccer'} size={isActive ? 64 : 40} />
+                            )}
+                            
                             {isActive && (
-                                <div className="absolute inset-0 rounded-full animate-pulse ring-8 ring-white/10"></div>
+                                <>
+                                    <div className="absolute -inset-4 rounded-full border border-white/10 animate-ping"></div>
+                                    <div className="absolute inset-0 rounded-full ring-8 ring-white/5"></div>
+                                </>
                             )}
                         </div>
-                        <span className={`text-[10px] md:text-xs font-black uppercase tracking-[0.25em] ${isActive ? 'text-slate-900 dark:text-white underline decoration-4 underline-offset-8' : 'text-slate-500'}`} style={isActive ? { textDecorationColor: clubConfig.primaryColor } : {}}>
-                            {disc.name}
-                        </span>
+                        <div className="text-center">
+                            <span className={`text-[11px] md:text-xs font-black uppercase tracking-[0.3em] block transition-all ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
+                                {disc.name}
+                            </span>
+                            {isActive && <div className="w-8 h-1 bg-primary-600 mx-auto mt-2 rounded-full"></div>}
+                        </div>
                     </button>
                 );
             })}
@@ -82,12 +96,12 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
 
       {/* CATEGORY SELECTOR PILLS */}
       {activeDisc && (
-          <div className="flex flex-wrap gap-3 mb-16">
+          <div className="flex flex-wrap gap-4 mb-20 bg-white/50 dark:bg-white/5 p-3 rounded-[2.5rem] backdrop-blur-xl w-fit border border-slate-100 dark:border-white/5 shadow-inner">
               {activeDisc.categories.map((cat) => (
                   <button 
                       key={cat.id}
                       onClick={() => setSelectedCatId(cat.id)}
-                      className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-900 dark:bg-primary-600 text-white shadow-2xl scale-105' : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-100 dark:border-white/5'}`}
+                      className={`px-12 py-5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-950 dark:bg-primary-600 text-white shadow-2xl scale-105' : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10'}`}
                   >
                       {cat.name}
                   </button>
@@ -96,34 +110,35 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
       )}
 
       {/* SQUAD GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
           {isLoading ? (
-              [...Array(4)].map((_, i) => <div key={i} className="h-96 bg-slate-200 dark:bg-white/5 rounded-[4rem] animate-pulse"></div>)
+              [...Array(4)].map((_, i) => <div key={i} className="h-[450px] bg-slate-200 dark:bg-white/5 rounded-[4rem] animate-pulse"></div>)
           ) : filteredPlayers.length > 0 ? (
               filteredPlayers.map((player) => (
-                  <div key={player.id} className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 p-8 shadow-xl hover:shadow-2xl transition-all group overflow-hidden">
-                      <div className="flex flex-col items-center">
-                          <div className="w-32 h-32 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1 mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <div key={player.id} className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 p-10 shadow-xl hover:shadow-3xl transition-all group overflow-hidden relative">
+                      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                         <Shield size={120} />
+                      </div>
+                      
+                      <div className="flex flex-col items-center relative z-10">
+                          <div className="w-36 h-36 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-8 group-hover:scale-110 transition-transform duration-700 shadow-2xl">
                               <img src={player.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
                           </div>
-                          <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center">{player.name}</h3>
-                          <div className="flex items-center gap-3 mt-2">
-                             <span className="text-primary-600 font-black text-xs uppercase tracking-widest">{player.position}</span>
-                             <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                             <span className="text-slate-400 font-black text-xs">#{player.number}</span>
+                          <h3 className="font-black uppercase tracking-tighter text-3xl text-slate-800 dark:text-white text-center leading-none mb-3">{player.name}</h3>
+                          <div className="flex items-center gap-4">
+                             <span className="text-primary-600 font-black text-xs uppercase tracking-widest bg-primary-500/10 px-4 py-1.5 rounded-full">{player.position}</span>
+                             <span className="text-slate-400 font-black text-lg italic">#{player.number}</span>
                           </div>
-                          <div className="mt-8 text-5xl font-black italic text-slate-100 dark:text-slate-800/50 group-hover:text-primary-600/20 transition-colors">
+                          <div className="mt-12 text-7xl font-black italic text-slate-100 dark:text-slate-800/40 group-hover:text-primary-600/10 transition-colors">
                               {player.overallRating}
                           </div>
                       </div>
                   </div>
               ))
           ) : (
-              <div className="col-span-full py-32 text-center opacity-40">
-                  <div className="w-24 h-24 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Users size={40} />
-                  </div>
-                  <h3 className="font-black uppercase tracking-widest text-[10px]">No hay atletas registrados</h3>
+              <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[5rem]">
+                  <Users size={64} className="mx-auto mb-6 text-slate-200" />
+                  <h3 className="font-black uppercase tracking-[0.5em] text-[10px]">Sin atletas en este plantel</h3>
               </div>
           )}
       </div>
