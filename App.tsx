@@ -10,7 +10,7 @@ import MedicalDashboard from './components/MedicalDashboard.tsx';
 import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
 import { Player, Position, ClubConfig } from './types.ts';
-import { Filter, Search, Grid, List as ListIcon, Plus, Loader2, Users, Trophy, Layers } from 'lucide-react';
+import { Filter, Search, Grid, List as ListIcon, Plus, Loader2, Users, Trophy, Layers, Settings, ArrowRight } from 'lucide-react';
 import { db } from './lib/supabase.ts';
 
 function App() {
@@ -38,13 +38,6 @@ function App() {
       const { data: configData, error: configError } = await db.clubConfig.get();
       if (!configError && configData) {
         setClubConfig(configData);
-        // Set default tabs if available
-        if (configData.disciplines?.length > 0) {
-          setActiveDiscipline(configData.disciplines[0].name);
-          if (configData.disciplines[0].categories?.length > 0) {
-            setActiveCategory(configData.disciplines[0].categories[0].name);
-          }
-        }
       }
 
       const { data: playersData, error: playersError } = await db.players.getAll();
@@ -56,6 +49,28 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  // Efecto para asegurar que siempre haya una disciplina/categoría seleccionada si existen
+  useEffect(() => {
+    if (clubConfig.disciplines.length > 0) {
+      if (!activeDiscipline || !clubConfig.disciplines.find(d => d.name === activeDiscipline)) {
+        setActiveDiscipline(clubConfig.disciplines[0].name);
+        if (clubConfig.disciplines[0].categories.length > 0) {
+          setActiveCategory(clubConfig.disciplines[0].categories[0].name);
+        }
+      } else {
+        // Si la disciplina es válida pero la categoría no, resetear categoría
+        const currentDisc = clubConfig.disciplines.find(d => d.name === activeDiscipline);
+        if (currentDisc && (!activeCategory || !currentDisc.categories.find(c => c.name === activeCategory))) {
+          if (currentDisc.categories.length > 0) {
+            setActiveCategory(currentDisc.categories[0].name);
+          } else {
+            setActiveCategory(null);
+          }
+        }
+      }
+    }
+  }, [clubConfig, activeDiscipline, activeCategory]);
 
   useEffect(() => {
     loadInitialData().then(() => {
@@ -76,11 +91,25 @@ function App() {
 
   const updateClubConfig = async (newConfig: ClubConfig) => {
       setClubConfig(newConfig);
-      try { await db.clubConfig.update(newConfig); } 
-      catch (e) { console.error("Error persistiendo config:", e); }
+      try { 
+        await db.clubConfig.update(newConfig); 
+        // Forzar actualización de tabs si estaban vacías
+        if (!activeDiscipline && newConfig.disciplines.length > 0) {
+            setActiveDiscipline(newConfig.disciplines[0].name);
+            if (newConfig.disciplines[0].categories.length > 0) {
+                setActiveCategory(newConfig.disciplines[0].categories[0].name);
+            }
+        }
+      } catch (e) { console.error("Error persistiendo config:", e); }
   };
 
   const handleNewPlayer = () => {
+      if (!activeDiscipline || !activeCategory) {
+          alert("Primero debes crear una Disciplina y Categoría en Datos Maestros.");
+          setCurrentView('master-data');
+          return;
+      }
+
       const newPlayer: Player = {
           id: `new-${Date.now()}`,
           name: '',
@@ -92,9 +121,9 @@ function App() {
           stats: {}, 
           overallRating: 0,
           status: 'Active',
-          discipline: activeDiscipline || 'Fútbol',
+          discipline: activeDiscipline,
           division: 'Masculino',
-          category: activeCategory || 'Primera',
+          category: activeCategory,
           marketValue: '-',
           dni: '',
           email: '',
@@ -111,7 +140,6 @@ function App() {
       if (!error && data) setPlayers(data);
   };
 
-  // Filtrado reactivo basado en las tabs activas
   const filteredPlayers = useMemo(() => {
       return players.filter(p => p.discipline === activeDiscipline && p.category === activeCategory);
   }, [players, activeDiscipline, activeCategory]);
@@ -120,7 +148,7 @@ function App() {
     if (isLoading) return (
         <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
             <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-            <p className="text-slate-500 font-medium animate-pulse uppercase tracking-widest text-xs">Conectando con PlegmaSport...</p>
+            <p className="text-slate-500 font-medium animate-pulse uppercase tracking-widest text-xs">Sincronizando Nube Plegma...</p>
         </div>
     );
 
@@ -137,94 +165,125 @@ function App() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
                <div>
                   <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestión de Planteles</h2>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Control Centralizado por Disciplina</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Filtro Activo: {activeDiscipline || 'Ninguno'} • {activeCategory || 'Sin Categoría'}</p>
                </div>
-               <button onClick={handleNewPlayer} className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all active:scale-95">
+               <button 
+                onClick={handleNewPlayer} 
+                className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 transition-all active:scale-95 disabled:opacity-50"
+                disabled={!activeDiscipline || !activeCategory}
+               >
                     <Plus size={18} /> Inscribir Jugador
                </button>
             </div>
 
-            {/* TABS NIVEL 1: DISCIPLINAS (MADRE) */}
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-6 p-1">
-                {clubConfig.disciplines.map((disc) => (
+            {clubConfig.disciplines.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-white/5 p-12 text-center">
+                    <Settings size={80} className="text-slate-200 dark:text-slate-800 mb-6" />
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">Configuración Requerida</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-md mb-8 font-medium">No has definido ninguna disciplina o categoría todavía. Para gestionar planteles, primero debes parametrizar la estructura del club.</p>
                     <button 
-                        key={disc.id}
-                        onClick={() => {
-                            setActiveDiscipline(disc.name);
-                            if (disc.categories.length > 0) setActiveCategory(disc.categories[0].name);
-                            else setActiveCategory(null);
-                        }}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeDiscipline === disc.name ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600'}`}
+                        onClick={() => setCurrentView('master-data')}
+                        className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all"
                     >
-                        <Trophy size={16} /> {disc.name}
+                        Ir a Datos Maestros <ArrowRight size={16} />
                     </button>
-                ))}
-                {clubConfig.disciplines.length === 0 && (
-                    <div className="text-xs font-bold text-slate-400 uppercase">Sin disciplinas configuradas. Vaya a Datos Maestros.</div>
-                )}
-            </div>
-
-            {/* TABS NIVEL 2: CATEGORÍAS (HIJA) */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-8">
-                {clubConfig.disciplines.find(d => d.name === activeDiscipline)?.categories.map((cat) => (
-                    <button 
-                        key={cat.id}
-                        onClick={() => setActiveCategory(cat.name)}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 hover:bg-slate-300'}`}
-                    >
-                        {cat.name}
-                    </button>
-                ))}
-            </div>
-
-            {/* CONTENIDO JUGADORES */}
-            <div className="flex-1 overflow-y-auto pr-2 pb-10">
-                {filteredPlayers.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-white dark:bg-slate-900/50 rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-white/5">
-                        <Users className="mb-4 opacity-10" size={80} />
-                        <p className="font-black uppercase tracking-widest text-xs">No hay jugadores en {activeCategory}</p>
-                        <button onClick={handleNewPlayer} className="mt-4 text-primary-500 font-black hover:underline uppercase text-[10px]">Añadir el primero</button>
-                    </div>
-                ) : (
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" : "space-y-3"}>
-                        {filteredPlayers.map(player => (
-                            <div 
-                                key={player.id} 
-                                onClick={() => setSelectedPlayer(player)} 
-                                className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-2 transition-all group relative"
+                </div>
+            ) : (
+                <>
+                    {/* TABS NIVEL 1: DISCIPLINAS */}
+                    <div className="flex gap-4 overflow-x-auto scrollbar-hide mb-6 p-1">
+                        {clubConfig.disciplines.map((disc) => (
+                            <button 
+                                key={disc.id}
+                                onClick={() => {
+                                    setActiveDiscipline(disc.name);
+                                    if (disc.categories.length > 0) setActiveCategory(disc.categories[0].name);
+                                    else setActiveCategory(null);
+                                }}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeDiscipline === disc.name ? 'bg-primary-600 text-white shadow-xl shadow-primary-500/20' : 'bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-600'}`}
                             >
-                                <div className="h-48 overflow-hidden relative bg-slate-950">
-                                    <div className="absolute top-4 right-4 z-10 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                                        <span className="text-[10px] font-black text-primary-400">#{player.number}</span>
-                                    </div>
-                                    <div className="absolute top-4 left-4 z-10 bg-primary-600 px-3 py-1 rounded-full text-[10px] font-black text-white shadow-lg">
-                                        {player.overallRating}
-                                    </div>
-                                    {player.photoUrl ? (
-                                        <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-slate-800"><Users size={64}/></div>
-                                    )}
-                                    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-slate-950 to-transparent">
-                                        <h3 className="font-black text-white uppercase text-lg leading-none truncate">{player.name}</h3>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{player.position}</p>
-                                    </div>
-                                </div>
-                                <div className="p-6 bg-white dark:bg-slate-900">
-                                    <div className="flex gap-2">
-                                        <div className={`flex-1 h-1.5 rounded-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                        <div className={`flex-1 h-1.5 rounded-full ${player.status === 'Active' ? 'bg-primary-500' : 'bg-slate-700'}`}></div>
-                                    </div>
-                                    <div className="flex justify-between mt-3 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                                        <span>Médico</span>
-                                        <span>Estado</span>
-                                    </div>
-                                </div>
-                            </div>
+                                <Trophy size={16} /> {disc.name}
+                            </button>
                         ))}
                     </div>
-                )}
-            </div>
+
+                    {/* TABS NIVEL 2: CATEGORÍAS */}
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-8">
+                        {clubConfig.disciplines.find(d => d.name === activeDiscipline)?.categories.map((cat) => (
+                            <button 
+                                key={cat.id}
+                                onClick={() => setActiveCategory(cat.name)}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat.name ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 hover:bg-slate-300'}`}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
+                        {activeDiscipline && clubConfig.disciplines.find(d => d.name === activeDiscipline)?.categories.length === 0 && (
+                            <button 
+                                onClick={() => setCurrentView('master-data')}
+                                className="px-4 py-2 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            >
+                                + Agregar Categoría a {activeDiscipline}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* CONTENIDO JUGADORES */}
+                    <div className="flex-1 overflow-y-auto pr-2 pb-10">
+                        {filteredPlayers.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white dark:bg-slate-900/50 rounded-[3rem] border-4 border-dashed border-slate-200 dark:border-white/5">
+                                <Users className="mb-4 opacity-10" size={80} />
+                                <p className="font-black uppercase tracking-widest text-xs mb-1">Sin registros en esta división</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-6">{activeDiscipline} • {activeCategory}</p>
+                                <button onClick={handleNewPlayer} className="px-8 py-3 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-primary-500 hover:text-white transition-all">Inscribir Jugador</button>
+                            </div>
+                        ) : (
+                            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" : "space-y-3"}>
+                                {filteredPlayers.map(player => (
+                                    <div 
+                                        key={player.id} 
+                                        onClick={() => setSelectedPlayer(player)} 
+                                        className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden cursor-pointer hover:shadow-2xl hover:-translate-y-2 transition-all group relative"
+                                    >
+                                        <div className="h-52 overflow-hidden relative bg-slate-950">
+                                            <div className="absolute top-4 right-4 z-10 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                                                <span className="text-[10px] font-black text-primary-400">#{player.number}</span>
+                                            </div>
+                                            <div className="absolute top-4 left-4 z-10 bg-primary-600 px-3 py-1 rounded-full text-[10px] font-black text-white shadow-lg">
+                                                {player.overallRating}
+                                            </div>
+                                            {player.photoUrl ? (
+                                                <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-800 bg-slate-900"><Users size={64} className="opacity-20" /></div>
+                                            )}
+                                            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
+                                                <h3 className="font-black text-white uppercase text-lg leading-none truncate mb-1">{player.name || 'Sin Nombre'}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[9px] text-primary-500 font-black uppercase tracking-widest">{player.position}</span>
+                                                    <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+                                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{player.division}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5">
+                                            <div className="flex gap-1.5 mb-3">
+                                                <div className={`flex-1 h-1 rounded-full ${player.medical?.isFit ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                <div className={`flex-1 h-1 rounded-full ${player.status === 'Active' ? 'bg-primary-500' : (player.status === 'Injured' ? 'bg-amber-500' : 'bg-slate-700')}`}></div>
+                                                <div className="flex-1 h-1 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+                                            </div>
+                                            <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                                                <span>Apto Médico</span>
+                                                <span>Disponibilidad</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
           </div>
         );
       default: return <Dashboard />;
