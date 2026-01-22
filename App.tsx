@@ -60,7 +60,6 @@ function App() {
 
     if (error) {
       console.error('Error de Supabase:', error.message);
-      alert(`Error al guardar: ${error.message}`);
     }
   };
 
@@ -78,22 +77,18 @@ function App() {
         setCollapsed={setIsSidebarCollapsed}
       />
       
-      {/* 
-          Ajuste Crítico: En móvil (inferior a md), el paddingLeft es 0 o mínimo (20px si el sidebar colapsado es visible). 
-          Usamos clases de Tailwind para manejar los breakpoints en lugar de styles inline fijos.
-      */}
       <main 
         className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-500 ease-in-out 
-          ${isSidebarCollapsed ? 'md:pl-24 pl-0' : 'md:pl-72 pl-0'}
+          ${isSidebarCollapsed ? 'md:pl-24' : 'md:pl-72'} pl-0
         `}
       >
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-0">
           {view === 'master-data' ? (
             <MasterData config={config} onSave={handleSaveConfig} />
           ) : (
             <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
-               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic text-center">Próximamente</h1>
-               <p className="text-[10px] font-black uppercase tracking-[1em] mt-4 text-center">Configura los Datos Maestros primero</p>
+               <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter italic text-center">En Desarrollo</h1>
+               <p className="text-[10px] font-black uppercase tracking-[0.5em] mt-4 text-center">Módulo administrativo</p>
             </div>
           )}
         </div>
