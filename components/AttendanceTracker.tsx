@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { Player, DisciplineConfig } from '../types';
+// Fix: Corrected import from types to use Discipline instead of non-existent DisciplineConfig
+import { Player, Discipline } from '../types';
 import { Calendar as CalendarIcon, Save, Check, X, Clock, AlertCircle, Users, Settings, Plus, LayoutGrid, Loader2 } from 'lucide-react';
 
 interface AttendanceTrackerProps {

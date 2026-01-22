@@ -25,10 +25,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentMetrics = useMemo(() => {
+    // Fix: Corrected property access. Discipline has branches, which contain categories.
     const discipline = clubConfig.disciplines.find(d => d.name === player.discipline);
-    const category = discipline?.categories.find(c => c.name === player.category);
+    const branch = discipline?.branches.find(b => b.gender === player.gender);
+    const category = branch?.categories.find(c => c.name === player.category);
     return category?.metrics || [];
-  }, [clubConfig, player.discipline, player.category]);
+  }, [clubConfig, player.discipline, player.category, player.gender]);
 
   const calculateOverall = (stats: Record<string, number>, metrics: MetricDefinition[]) => {
     if (metrics.length === 0) return 0;
