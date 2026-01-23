@@ -26,10 +26,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   const [editingTeam, setEditingTeam] = useState<TeamStructure | null>(null); // Creating/Editing
 
   // Mock Structure Data
+  // Fix: Added missing gender property to mock teams to satisfy TeamStructure interface
   const [teams, setTeams] = useState<TeamStructure[]>([
-      { id: 't1', discipline: 'Fútbol', category: 'Primera', coach: 'Carlo Ancelotti', physicalTrainer: 'Antonio Pintus', medicalStaff: 'Dr. House', playersCount: 24 },
-      { id: 't2', discipline: 'Fútbol', category: 'Reserva', coach: 'Marcelo Gallardo', physicalTrainer: 'Pablo Dolce', medicalStaff: 'Dr. Rossi', playersCount: 18 },
-      { id: 't3', discipline: 'Básquet', category: 'Primera', coach: 'Steve Kerr', physicalTrainer: 'Ron Adams', medicalStaff: 'Dr. Smith', playersCount: 12 },
+      { id: 't1', discipline: 'Fútbol', gender: 'Masculino', category: 'Primera', coach: 'Carlo Ancelotti', physicalTrainer: 'Antonio Pintus', medicalStaff: 'Dr. House', playersCount: 24 },
+      { id: 't2', discipline: 'Fútbol', gender: 'Masculino', category: 'Reserva', coach: 'Marcelo Gallardo', physicalTrainer: 'Pablo Dolce', medicalStaff: 'Dr. Rossi', playersCount: 18 },
+      { id: 't3', discipline: 'Básquet', gender: 'Masculino', category: 'Primera', coach: 'Steve Kerr', physicalTrainer: 'Ron Adams', medicalStaff: 'Dr. Smith', playersCount: 12 },
   ]);
 
   const handleFixtureEdit = (fixture: Fixture) => {
@@ -165,4 +166,88 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
         {/* --- TAB: FIXTURES --- */}
         {activeTab === 'fixtures' && (
           <table className="w-full text-left">
-            <thead className="bg-slate-50 dark
+            <thead className="bg-slate-50 dark:bg-slate-950/50 text-slate-400 font-black uppercase tracking-widest text-[10px] border-b border-slate-100 dark:border-white/5">
+              <tr>
+                <th className="p-4">Disciplina</th>
+                <th className="p-4">Categoría</th>
+                <th className="p-4">Rival</th>
+                <th className="p-4">Fecha</th>
+                <th className="p-4">Lugar</th>
+                <th className="p-4">Competición</th>
+                <th className="p-4 text-right">Resultado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {fixtures.filter(f => selectedDiscipline === 'Todas' || f.discipline === selectedDiscipline).map((fixture) => (
+                <tr key={fixture.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                  <td className="p-4 text-sm font-bold text-slate-800 dark:text-white">{fixture.discipline}</td>
+                  <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{fixture.category}</td>
+                  <td className="p-4 text-sm font-black uppercase tracking-tighter text-slate-800 dark:text-white">{fixture.opponent}</td>
+                  <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{fixture.date}</td>
+                  <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{fixture.venue}</td>
+                  <td className="p-4 text-sm text-slate-500 dark:text-slate-400">{fixture.competition}</td>
+                  <td className="p-4 text-right">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${fixture.result === 'Pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30'}`}>
+                      {fixture.result === 'Pending' ? 'Pendiente' : fixture.result}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        
+        {/* --- TAB: STAFF --- */}
+        {activeTab === 'staff' && !selectedTeam && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {teams.map(team => (
+              <div 
+                key={team.id} 
+                onClick={() => setSelectedTeam(team)}
+                className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl hover:border-primary-500/30 transition-all cursor-pointer group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-primary-600 group-hover:scale-110 transition-transform">
+                    <Users size={20} />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={(e) => handleEditTeam(team, e)} className="p-2 text-slate-400 hover:text-primary-600 transition-colors">
+                      <Edit2 size={16} />
+                    </button>
+                    <button onClick={(e) => handleDeleteTeam(team.id, e)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <h3 className="font-black text-lg uppercase tracking-tighter text-slate-800 dark:text-white">{team.discipline}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{team.category}</p>
+                <div className="space-y-2">
+                   <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-slate-500">DT:</span>
+                      <span className="text-slate-800 dark:text-slate-200">{team.coach}</span>
+                   </div>
+                   <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-slate-500">Plantel:</span>
+                      <span className="text-primary-600">{team.playersCount} Atletas</span>
+                   </div>
+                </div>
+              </div>
+            ))}
+            <button onClick={handleCreateTeam} className="border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all gap-4">
+               <Plus size={32} />
+               <span className="text-xs font-black uppercase tracking-widest">Añadir Cuerpo Técnico</span>
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'staff' && selectedTeam && (
+          <div className="p-8">
+            <TeamHierarchy team={selectedTeam} onBack={() => setSelectedTeam(null)} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminPanel;

@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar.tsx';
 import MasterData from './components/MasterData.tsx';
 import Squads from './components/Squads.tsx';
+import Dashboard from './components/Dashboard.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
 import { ClubConfig } from './types.ts';
 import { db } from './lib/supabase.ts';
-import { Settings, Shield } from 'lucide-react';
+import { Settings, Shield, PlusCircle } from 'lucide-react';
 
 function App() {
-  const [view, setView] = useState('squads');
+  const [view, setView] = useState('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -32,19 +33,20 @@ function App() {
       try {
         const { data, error } = await db.config.get();
         if (data && !error) {
-          setConfig({
+          const loadedConfig = {
             name: data.name || 'MI CLUB',
             logoUrl: data.logo_url || '',
             primaryColor: data.primary_color || '#ec4899',
             secondaryColor: data.secondary_color || '#0f172a',
             disciplines: data.disciplines || []
-          });
-          // Si no hay disciplinas, sugerimos ir a configuración
-          if (!data.disciplines || data.disciplines.length === 0) {
+          };
+          setConfig(loadedConfig);
+          
+          // Si no hay disciplinas, obligamos a ir a Estructura para empezar
+          if (!loadedConfig.disciplines || loadedConfig.disciplines.length === 0) {
             setView('master-data');
           }
         } else {
-            // Si es la primera vez (no hay data en DB), vamos a config
             setView('master-data');
         }
       } catch (err) {
@@ -93,7 +95,8 @@ function App() {
           ${isSidebarCollapsed ? 'md:pl-24' : 'md:pl-72'} pl-0
         `}
       >
-        <div className="flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-0">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-0 bg-slate-50 dark:bg-[#080a0f]">
+          {view === 'dashboard' && <Dashboard />}
           {view === 'master-data' && <MasterData config={config} onSave={handleSaveConfig} />}
           {view === 'squads' && (
             hasDisciplines ? (
@@ -103,24 +106,24 @@ function App() {
                 <div className="w-32 h-32 rounded-full bg-primary-600/10 flex items-center justify-center mb-8">
                   <Shield size={64} className="text-primary-600 animate-pulse" />
                 </div>
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center mb-4">¡Bienvenido!</h2>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center mb-4">Módulo de Planteles</h2>
                 <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] text-center max-w-xs leading-relaxed">
-                  Para comenzar a gestionar tus planteles, primero debemos configurar la matriz deportiva de tu club.
+                  Para ver tus equipos, primero define qué deportes y categorías tiene tu club en la sección de Estructura.
                 </p>
                 <button 
                   onClick={() => setView('master-data')}
                   className="mt-12 flex items-center gap-3 px-10 py-5 bg-slate-900 dark:bg-primary-600 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:scale-105 transition-all"
                 >
-                  <Settings size={18} /> Configurar Matriz
+                  <Settings size={18} /> Ir a Estructura
                 </button>
               </div>
             )
           )}
           
-          {view !== 'master-data' && view !== 'squads' && (
+          {view !== 'dashboard' && view !== 'master-data' && view !== 'squads' && (
             <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
-               <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter italic text-center">En Desarrollo</h1>
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] mt-4 text-center">Módulo administrativo</p>
+               <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter italic text-center">Módulo en Construcción</h1>
+               <p className="text-[10px] font-black uppercase tracking-[0.5em] mt-4 text-center">Próximamente disponible</p>
             </div>
           )}
         </div>
