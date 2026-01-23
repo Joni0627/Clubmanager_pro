@@ -9,7 +9,6 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   // --- STATES FOR FIXTURES ---
-  // Fix: selectedDiscipline should be a string to match select input value
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('Todas');
   const [showFixtureModal, setShowFixtureModal] = useState(false);
   const [editingFixture, setEditingFixture] = useState<Fixture | null>(null);
@@ -21,12 +20,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
   ]);
 
   // --- STATES FOR STAFF/TEAMS ---
-  const [selectedTeam, setSelectedTeam] = useState<TeamStructure | null>(null); // Viewing specific team details
-  const [showTeamModal, setShowTeamModal] = useState(false); // Creating/Editing
-  const [editingTeam, setEditingTeam] = useState<TeamStructure | null>(null); // Creating/Editing
+  const [selectedTeam, setSelectedTeam] = useState<TeamStructure | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<TeamStructure | null>(null);
 
-  // Mock Structure Data
-  // Fix: Added missing gender property to mock teams to satisfy TeamStructure interface
   const [teams, setTeams] = useState<TeamStructure[]>([
       { id: 't1', discipline: 'Fútbol', gender: 'Masculino', category: 'Primera', coach: 'Carlo Ancelotti', physicalTrainer: 'Antonio Pintus', medicalStaff: 'Dr. House', playersCount: 24 },
       { id: 't2', discipline: 'Fútbol', gender: 'Masculino', category: 'Reserva', coach: 'Marcelo Gallardo', physicalTrainer: 'Pablo Dolce', medicalStaff: 'Dr. Rossi', playersCount: 18 },
@@ -43,7 +40,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
     setShowFixtureModal(true);
   };
 
-  // Team Logic
   const handleCreateTeam = () => {
       setEditingTeam(null);
       setShowTeamModal(true);
@@ -62,7 +58,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
       }
   }
 
-  // --- COMPONENT: TEAM HIERARCHY (Flowchart View) ---
   const TeamHierarchy = ({ team, onBack }: { team: TeamStructure, onBack: () => void }) => (
     <div className="animate-fade-in">
         <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-primary-600 mb-6 font-medium transition-colors">
@@ -70,12 +65,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
         </button>
         
         <div className="flex flex-col items-center space-y-8 relative">
-            {/* Connecting Lines Layer */}
             <div className="absolute inset-0 z-0 flex justify-center pointer-events-none">
                  <div className="w-px h-full bg-slate-300 dark:bg-slate-700"></div>
             </div>
 
-            {/* Level 1: Head Coach */}
             <div className="z-10 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl border-t-4 border-primary-500 w-72 text-center relative">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Director Técnico</div>
                 <div className="w-20 h-20 rounded-full bg-slate-200 mx-auto mb-3 border-4 border-white dark:border-slate-700 shadow-md">
@@ -91,7 +84,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                 </button>
             </div>
 
-            {/* Level 2: Staff */}
             <div className="z-10 w-full flex justify-center gap-8 flex-wrap">
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border-l-4 border-blue-500 w-56 text-center">
                     <div className="flex justify-center mb-2 text-blue-500"><Activity /></div>
@@ -105,7 +97,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                  </div>
             </div>
 
-             {/* Level 3: Squad */}
              <div className="z-10 w-full pt-4">
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-4">
@@ -146,10 +137,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
                     onChange={(e) => setSelectedDiscipline(e.target.value)}
                     className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none dark:text-white"
                  >
-                    <option value="Todas">Todas Disciplinas</option>
-                    <option value="Fútbol">Fútbol</option>
-                    <option value="Básquet">Básquet</option>
-                    <option value="Vóley">Vóley</option>
+                    <option value="Todas" className="dark:bg-slate-800 dark:text-white">Todas Disciplinas</option>
+                    <option value="Fútbol" className="dark:bg-slate-800 dark:text-white">Fútbol</option>
+                    <option value="Básquet" className="dark:bg-slate-800 dark:text-white">Básquet</option>
+                    <option value="Vóley" className="dark:bg-slate-800 dark:text-white">Vóley</option>
                  </select>
                 <button 
                     onClick={handleNewFixture}
@@ -163,7 +154,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[60vh]">
-        {/* --- TAB: FIXTURES --- */}
         {activeTab === 'fixtures' && (
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-950/50 text-slate-400 font-black uppercase tracking-widest text-[10px] border-b border-slate-100 dark:border-white/5">
@@ -197,7 +187,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ activeTab }) => {
           </table>
         )}
         
-        {/* --- TAB: STAFF --- */}
         {activeTab === 'staff' && !selectedTeam && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {teams.map(team => (

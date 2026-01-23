@@ -222,18 +222,33 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                   <div className="w-16 h-16 bg-primary-600/10 rounded-2xl flex items-center justify-center text-primary-600">
                     <LayoutGrid size={24} />
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Disciplina Activa</h4>
-                    <select 
-                      value={selectedDiscId || ''}
-                      onChange={e => setSelectedDiscId(e.target.value)}
-                      className="bg-transparent font-black text-2xl uppercase tracking-tighter dark:text-white outline-none mt-1 cursor-pointer"
-                    >
-                      {localConfig.disciplines.length === 0 && <option value="">No hay disciplinas creadas</option>}
-                      {localConfig.disciplines.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
+                    <div className="relative group">
+                      <select 
+                        value={selectedDiscId || ''}
+                        onChange={e => setSelectedDiscId(e.target.value)}
+                        className="bg-transparent font-black text-2xl uppercase tracking-tighter dark:text-white outline-none mt-1 cursor-pointer pr-8 appearance-none"
+                      >
+                        {localConfig.disciplines.length === 0 && (
+                          <option value="" className="bg-white dark:bg-slate-900 dark:text-white font-sans text-sm p-4">
+                            No hay disciplinas
+                          </option>
+                        )}
+                        {localConfig.disciplines.map(d => (
+                          <option 
+                            key={d.id} 
+                            value={d.id} 
+                            className="bg-white dark:bg-[#1a1f2b] dark:text-white font-sans text-sm p-4 uppercase tracking-widest font-bold"
+                          >
+                            {d.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-primary-600 transition-colors">
+                        <ChevronDown size={20} />
+                      </div>
+                    </div>
                   </div>
               </div>
               {selectedDiscipline && (
