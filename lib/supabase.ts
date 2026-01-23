@@ -18,7 +18,7 @@ export const db = {
       .from('club_config')
       .upsert(
         { id: 1, ...data }, 
-        { onConflict: 'id' } // Forzamos que reconozca el ID 1 como clave de conflicto
+        { onConflict: 'id' }
       )
   },
   players: {

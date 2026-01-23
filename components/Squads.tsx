@@ -1,11 +1,11 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, ClubConfig, Discipline, Branch, Category } from '../types';
 import { 
   Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search, Settings
 } from 'lucide-react';
 import { db } from '../lib/supabase';
-import { SportIcon } from './MasterData.tsx';
 
 interface SquadsProps {
   clubConfig: ClubConfig;
@@ -96,13 +96,13 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                       onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
                       className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-700 ${isActive ? 'scale-110' : 'opacity-20 grayscale scale-90 hover:opacity-50'}`}
                   >
-                      <div className={`w-32 h-32 md:w-44 md:h-44 rounded-full flex items-center justify-center transition-all duration-700 relative border-4 ${isActive ? 'bg-slate-950 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-800 text-slate-500 border-transparent'}`} style={isActive ? { borderColor: clubConfig.primaryColor } : {}}>
-                          {sport.icon ? (
-                              <img src={sport.icon} className="w-full h-full object-cover rounded-full" />
+                      <div className={`w-32 h-32 md:w-44 md:h-44 rounded-[2rem] flex items-center justify-center transition-all duration-700 relative border-4 ${isActive ? 'bg-slate-950 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-800 text-slate-500 border-transparent'}`} style={isActive ? { borderColor: clubConfig.primaryColor } : {}}>
+                          {sport.iconUrl ? (
+                              <img src={sport.iconUrl} className="w-full h-full object-cover rounded-[1.8rem]" />
                           ) : (
-                              <SportIcon id="soccer" size={isActive ? 80 : 50} />
+                              <Shield size={isActive ? 80 : 50} />
                           )}
-                          {isActive && <div className="absolute -inset-4 rounded-full border-2 border-primary-600/30 animate-ping"></div>}
+                          {isActive && <div className="absolute -inset-4 rounded-[2.5rem] border-2 border-primary-600/30 animate-ping"></div>}
                       </div>
                       <span className={`text-[11px] font-black uppercase tracking-[0.4em] ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{sport.name}</span>
                   </button>
@@ -111,7 +111,6 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12">
-          {/* SIDEBAR FILTERS (Gender & Category) */}
           <aside className="w-full lg:w-80 shrink-0 space-y-10">
               <div className="bg-white dark:bg-[#0f1219] rounded-[3rem] p-8 shadow-2xl border border-slate-200 dark:border-white/5">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8 border-b border-slate-100 dark:border-white/5 pb-4">Rama</h4>
@@ -140,15 +139,15 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                       ))}
                       {(!activeBranch || !activeBranch.categories || activeBranch.categories.length === 0) && (
                           <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl mt-4">
+                             {/* Fix: Changed Settings2 to Settings */}
                              <Settings size={24} className="mx-auto text-slate-300 mb-2" />
-                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Sin categorías configuradas en esta rama</p>
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Sin categorías configuradas</p>
                           </div>
                       )}
                   </div>
               </div>
           </aside>
 
-          {/* PLAYER GRID */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {isLoading ? (
                   [...Array(6)].map((_, i) => <div key={i} className="h-96 bg-slate-200 dark:bg-white/5 rounded-[4rem] animate-pulse"></div>)
@@ -168,15 +167,12 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                                  <span className="text-slate-400 font-black text-lg italic">#{player.number}</span>
                               </div>
                           </div>
-                          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                             <Shield size={140} />
-                          </div>
                       </div>
                   ))
               ) : (
                   <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[5rem]">
                       <Users size={64} className="mx-auto mb-6 text-slate-300" />
-                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas registrados en esta categoría</h3>
+                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas registrados</h3>
                   </div>
               )}
           </div>

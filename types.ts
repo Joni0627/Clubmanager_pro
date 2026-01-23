@@ -1,4 +1,5 @@
 
+
 export interface Metric {
   id: string;
   name: string;
@@ -13,14 +14,15 @@ export interface Category {
 
 export interface Branch {
   gender: 'Masculino' | 'Femenino';
+  enabled: boolean;
   categories: Category[];
 }
 
 export interface Discipline {
   id: string;
   name: string;
-  type: 'Fútbol' | 'Básquet' | 'Rugby' | 'Vóley' | 'Hockey' | 'Otro';
-  icon?: string;
+  sportType: 'Fútbol' | 'Básquet' | 'Rugby' | 'Vóley' | 'Hockey' | 'Tenis' | 'Otro';
+  iconUrl: string; // Logo específico de la disciplina
   branches: Branch[];
 }
 
@@ -32,7 +34,6 @@ export interface ClubConfig {
   disciplines: Discipline[];
 }
 
-// Added missing MedicalRecord interface
 export interface MedicalRecord {
   isFit: boolean;
   lastCheckup?: string;
@@ -43,32 +44,32 @@ export interface MedicalRecord {
 export interface Player {
   id: string;
   name: string;
+  dni: string;
   number: string;
   position: string;
-  category: string;
   discipline: string;
-  gender: 'Masculino' | 'Femenino';
-  overallRating: number;
+  gender: string;
+  category: string;
   photoUrl: string;
-  dni: string;
   email: string;
+  overallRating: number;
   stats: Record<string, number>;
-  // Updated to use MedicalRecord interface
   medical: MedicalRecord;
-  status?: 'Active' | 'Injured' | 'Suspended';
+  status: 'Active' | 'Injured' | 'Suspended';
 }
 
 export interface MemberFee {
   id: string;
   player_id: string;
   amount: number;
-  status: string;
+  status: 'Pending' | 'UpToDate' | 'Late';
   due_date: string;
   payment_method: string;
   reference?: string;
+  player?: Player;
 }
 
-// Added missing Fixture interface
+// Added missing interfaces for AdminPanel
 export interface Fixture {
   id: string;
   discipline: string;
@@ -80,14 +81,13 @@ export interface Fixture {
   result: string;
 }
 
-// Added missing TeamStructure interface
 export interface TeamStructure {
   id: string;
   discipline: string;
   gender: 'Masculino' | 'Femenino';
   category: string;
   coach: string;
-  physicalTrainer?: string;
-  medicalStaff?: string;
+  physicalTrainer: string;
+  medicalStaff: string;
   playersCount: number;
 }
