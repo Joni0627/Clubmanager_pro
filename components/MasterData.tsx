@@ -156,7 +156,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
               {isEditingEnabled && (
                 <button 
                   onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== disc.id)})}
-                  className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors animate-fade-in"
+                  className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors animate-fade-in z-10"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -172,19 +172,23 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                 />
                 <div 
                   onClick={() => isEditingEnabled && discIconRefs.current[disc.id]?.click()}
-                  className={`w-32 h-32 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border-2 border-slate-200 dark:border-white/10 transition-all shadow-inner ${isEditingEnabled ? 'cursor-pointer border-dashed hover:border-primary-600' : 'cursor-default border-solid opacity-80'}`}
+                  className={`w-32 h-32 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border-2 border-slate-200 dark:border-white/10 transition-all shadow-inner relative ${isEditingEnabled ? 'cursor-pointer border-dashed hover:border-primary-600' : 'cursor-default border-solid opacity-80'}`}
                 >
                   {disc.iconUrl ? (
                     <img src={disc.iconUrl} className="w-full h-full object-cover" />
                   ) : (
                     <ImageIcon size={40} className="text-slate-300" />
                   )}
-                  {isEditingEnabled && !disc.iconUrl && <div className="absolute inset-0 bg-primary-600/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"><Camera size={24} className="text-primary-600" /></div>}
+                  {isEditingEnabled && (
+                    <div className="absolute inset-0 bg-primary-600/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Camera size={24} className="text-primary-600" />
+                    </div>
+                  )}
                 </div>
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-4">Identidad Visual</p>
               </div>
 
-              <div className="w-full">
+              <div className="w-full relative z-10">
                 {isEditingEnabled ? (
                   <input 
                     value={disc.name}
