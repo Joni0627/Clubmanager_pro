@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Player, ClubConfig, Discipline, Branch, Category } from '../types';
 import { 
-  Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search, Settings
+  Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search, Settings, ChevronLeft
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -18,6 +18,10 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   const activeSport = useMemo(() => 
     clubConfig.disciplines.find(s => s.id === selectedSportId), 
@@ -42,6 +46,24 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
     };
     fetchPlayers();
   }, []);
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const filteredPlayers = useMemo(() => {
     if (!activeSport || !activeBranch) return [];
@@ -85,16 +107,43 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
         </div>
       </header>
 
-      {/* SPORT SELECTION WHEEL - overflow-y-hidden forzado y py incrementado */}
-      <div className="relative mb-16">
-        <div className="flex gap-12 overflow-x-auto overflow-y-hidden py-12 px-8 no-scrollbar items-center">
+      {/* SPORT SELECTION WHEEL - Interactive Carousel */}
+      <div className="relative mb-16 group/carousel">
+        {/* Navigation Arrows */}
+        {showLeftArrow && (
+          <button 
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-full shadow-xl border border-slate-200 dark:border-white/10 text-primary-600 hover:scale-110 transition-all active:scale-95 hidden md:flex items-center justify-center"
+          >
+            <ChevronLeft size={24} strokeWidth={3} />
+          </button>
+        )}
+        
+        {showRightArrow && (
+          <button 
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-full shadow-xl border border-slate-200 dark:border-white/10 text-primary-600 hover:scale-110 transition-all active:scale-95 hidden md:flex items-center justify-center"
+          >
+            <ChevronRight size={24} strokeWidth={3} />
+          </button>
+        )}
+
+        {/* Edge Faders */}
+        <div className={`absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-slate-50 dark:from-[#080a0f] to-transparent z-10 pointer-events-none transition-opacity duration-500 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`}></div>
+        <div className={`absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-slate-50 dark:from-[#080a0f] to-transparent z-10 pointer-events-none transition-opacity duration-500 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`}></div>
+
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex gap-12 overflow-x-auto overflow-y-hidden py-12 px-12 no-scrollbar items-center snap-x snap-mandatory"
+        >
             {clubConfig.disciplines.map((sport) => {
                 const isActive = sport.id === selectedSportId;
                 return (
                     <button 
                         key={sport.id}
                         onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
-                        className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-500 ${isActive ? 'scale-105' : 'opacity-30 grayscale scale-90 hover:opacity-60'}`}
+                        className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-500 snap-center ${isActive ? 'scale-105' : 'opacity-30 grayscale scale-90 hover:opacity-60'}`}
                     >
                         <div 
                           className={`w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 relative border-4 ${isActive ? 'bg-slate-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`} 
@@ -108,7 +157,6 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                               )}
                             </div>
                             
-                            {/* Efecto Ping con margen interno mayor para evitar disparar el scroll vertical */}
                             {isActive && (
                               <div 
                                 className="absolute -inset-1 rounded-[2.8rem] border-2 animate-ping pointer-events-none opacity-40"
