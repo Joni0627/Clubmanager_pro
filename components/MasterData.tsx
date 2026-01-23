@@ -313,14 +313,17 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                                 
                                 {isEditingEnabled && (
                                   <div className="flex items-center gap-4 ml-4">
-                                    <button onClick={() => addMetric(selectedDiscipline.id, branch.gender, cat.id)} className="flex items-center gap-2 text-[9px] font-black uppercase text-slate-400 hover:text-primary-600 transition-colors">
-                                      <Activity size={12} /> + KPI
+                                    <button 
+                                      onClick={() => addMetric(selectedDiscipline.id, branch.gender, cat.id)} 
+                                      className="flex items-center gap-2 px-5 py-2.5 bg-primary-600/10 hover:bg-primary-600 text-primary-600 hover:text-white rounded-full text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-sm border border-primary-600/20 active:scale-95 group/kpi"
+                                    >
+                                      <Activity size={14} className="group-hover/kpi:animate-pulse" /> + KPI
                                     </button>
                                     <button 
                                       onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.filter(c => c.id !== cat.id)} : b)} : d)})}
-                                      className="text-slate-300 hover:text-red-500"
+                                      className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
                                     >
-                                      <X size={16} />
+                                      <X size={18} />
                                     </button>
                                   </div>
                                 )}
