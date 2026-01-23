@@ -2,16 +2,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, ClubConfig, Discipline, Branch, Category } from '../types';
 import { 
-  Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search
+  Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search, Settings
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 import { SportIcon } from './MasterData.tsx';
 
 interface SquadsProps {
   clubConfig: ClubConfig;
+  onGoToSettings?: () => void;
 }
 
-const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
+const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
   const [selectedSportId, setSelectedSportId] = useState<string>(clubConfig.disciplines[0]?.id || '');
   const [selectedGender, setSelectedGender] = useState<'Masculino' | 'Femenino'>('Masculino');
   const [selectedCatId, setSelectedCatId] = useState<string>('');
@@ -24,11 +25,11 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
   [selectedSportId, clubConfig]);
 
   const activeBranch = useMemo(() => 
-    activeSport?.branches.find(b => b.gender === selectedGender),
+    activeSport?.branches?.find(b => b.gender === selectedGender),
   [activeSport, selectedGender]);
 
   useEffect(() => {
-    if (activeBranch && activeBranch.categories.length > 0 && !selectedCatId) {
+    if (activeBranch && activeBranch.categories?.length > 0 && !selectedCatId) {
         setSelectedCatId(activeBranch.categories[0].id);
     }
   }, [activeBranch]);
@@ -44,14 +45,25 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
   }, []);
 
   const filteredPlayers = useMemo(() => {
-    const activeCatName = activeBranch?.categories.find(c => c.id === selectedCatId)?.name;
+    if (!activeSport || !activeBranch) return [];
+    const activeCatName = activeBranch.categories?.find(c => c.id === selectedCatId)?.name;
     return players.filter(p => 
-        p.discipline === activeSport?.name && 
+        p.discipline === activeSport.name && 
         p.gender === selectedGender &&
         p.category === activeCatName &&
         (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a, b) => b.overallRating - a.overallRating);
   }, [players, activeSport, selectedGender, selectedCatId, searchTerm, activeBranch]);
+
+  if (clubConfig.disciplines.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-10 animate-fade-in">
+          <Shield size={64} className="text-slate-200 mb-8" />
+          <h2 className="text-3xl font-black uppercase text-center mb-4">No hay disciplinas</h2>
+          <button onClick={onGoToSettings} className="bg-primary-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs">Configurar Ahora</button>
+        </div>
+      );
+  }
 
   return (
     <div className="p-4 md:p-12 max-w-7xl mx-auto animate-fade-in pb-40">
@@ -117,7 +129,7 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
 
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-12 mb-8 border-b border-slate-100 dark:border-white/5 pb-4">Categoría</h4>
                   <div className="flex flex-col gap-3">
-                      {activeBranch?.categories.map((cat) => (
+                      {activeBranch?.categories?.map((cat) => (
                           <button 
                             key={cat.id} 
                             onClick={() => setSelectedCatId(cat.id)}
@@ -126,8 +138,11 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig }) => {
                               {cat.name} <Star size={12} className={selectedCatId === cat.id ? 'fill-primary-500 text-primary-500' : 'opacity-0'} />
                           </button>
                       ))}
-                      {activeBranch?.categories.length === 0 && (
-                          <p className="text-[9px] font-bold text-slate-400 uppercase italic">No hay categorías configuradas</p>
+                      {(!activeBranch || !activeBranch.categories || activeBranch.categories.length === 0) && (
+                          <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl mt-4">
+                             <Settings size={24} className="mx-auto text-slate-300 mb-2" />
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Sin categorías configuradas en esta rama</p>
+                          </div>
                       )}
                   </div>
               </div>
