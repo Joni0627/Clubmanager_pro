@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, ClubConfig, Discipline, Branch, Category } from '../types';
 import { 
@@ -86,28 +85,44 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
         </div>
       </header>
 
-      {/* SPORT SELECTION WHEEL */}
-      <div className="flex gap-12 overflow-x-auto pb-12 px-4 no-scrollbar items-center mb-16">
-          {clubConfig.disciplines.map((sport) => {
-              const isActive = sport.id === selectedSportId;
-              return (
-                  <button 
-                      key={sport.id}
-                      onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
-                      className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-700 ${isActive ? 'scale-110' : 'opacity-20 grayscale scale-90 hover:opacity-50'}`}
-                  >
-                      <div className={`w-32 h-32 md:w-44 md:h-44 rounded-[2rem] flex items-center justify-center transition-all duration-700 relative border-4 ${isActive ? 'bg-slate-950 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-800 text-slate-500 border-transparent'}`} style={isActive ? { borderColor: clubConfig.primaryColor } : {}}>
-                          {sport.iconUrl ? (
-                              <img src={sport.iconUrl} className="w-full h-full object-cover rounded-[1.8rem]" />
-                          ) : (
-                              <Shield size={isActive ? 80 : 50} />
-                          )}
-                          {isActive && <div className="absolute -inset-4 rounded-[2.5rem] border-2 border-primary-600/30 animate-ping"></div>}
-                      </div>
-                      <span className={`text-[11px] font-black uppercase tracking-[0.4em] ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{sport.name}</span>
-                  </button>
-              );
-          })}
+      {/* SPORT SELECTION WHEEL - Con padding extra para evitar scrollbar flickering por el ping */}
+      <div className="relative overflow-hidden mb-16">
+        <div className="flex gap-12 overflow-x-auto py-8 px-8 no-scrollbar items-center">
+            {clubConfig.disciplines.map((sport) => {
+                const isActive = sport.id === selectedSportId;
+                return (
+                    <button 
+                        key={sport.id}
+                        onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
+                        className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-500 ${isActive ? 'scale-105' : 'opacity-30 grayscale scale-90 hover:opacity-60'}`}
+                    >
+                        <div 
+                          className={`w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 relative border-4 ${isActive ? 'bg-slate-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`} 
+                          style={isActive ? { borderColor: clubConfig.primaryColor } : {}}
+                        >
+                            <div className="w-full h-full rounded-[2.1rem] overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900">
+                              {sport.iconUrl ? (
+                                  <img src={sport.iconUrl} className="w-full h-full object-cover p-1" />
+                              ) : (
+                                  <Shield size={isActive ? 60 : 40} className="text-slate-300" />
+                              )}
+                            </div>
+                            
+                            {/* Efecto Ping corregido para no romper el layout */}
+                            {isActive && (
+                              <div 
+                                className="absolute -inset-2 rounded-[2.8rem] border-2 animate-ping pointer-events-none opacity-40"
+                                style={{ borderColor: clubConfig.primaryColor }}
+                              ></div>
+                            )}
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${isActive ? 'text-primary-600' : 'text-slate-400'}`}>
+                          {sport.name}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12">
@@ -139,7 +154,6 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                       ))}
                       {(!activeBranch || !activeBranch.categories || activeBranch.categories.length === 0) && (
                           <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl mt-4">
-                             {/* Fix: Changed Settings2 to Settings */}
                              <Settings size={24} className="mx-auto text-slate-300 mb-2" />
                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Sin categorías configuradas</p>
                           </div>
