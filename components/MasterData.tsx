@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ClubConfig, Discipline, Branch, Category, Metric } from '../types';
 import { 
@@ -12,8 +11,6 @@ interface MasterDataProps {
   config: ClubConfig;
   onSave: (config: ClubConfig) => Promise<void>;
 }
-
-const SPORT_TYPES = ['Fútbol', 'Básquet', 'Rugby', 'Vóley', 'Hockey', 'Tenis', 'Otro'];
 
 const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
   const [activeTab, setActiveTab] = useState<'disciplines' | 'matrix' | 'identity'>('disciplines');
@@ -48,7 +45,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
     const newDisc: Discipline = {
       id,
       name: 'NUEVA DISCIPLINA',
-      sportType: 'Otro',
+      sportType: 'Otro', // Hardcoded ya que se quita del UI
       iconUrl: '',
       branches: [
         { gender: 'Masculino', enabled: true, categories: [] },
@@ -142,18 +139,17 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
       {activeTab === 'disciplines' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-fade-in">
           {localConfig.disciplines.map(disc => (
-            <div key={disc.id} className="bg-white dark:bg-[#0f1219] rounded-[3rem] border border-slate-200 dark:border-white/5 p-10 shadow-sm relative group hover:border-primary-500/30 transition-all">
+            <div key={disc.id} className="bg-white dark:bg-[#0f1219] rounded-[3rem] border border-slate-200 dark:border-white/5 p-10 shadow-sm relative group hover:border-primary-500/30 transition-all flex flex-col items-center">
               <button 
                 onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== disc.id)})}
-                className="absolute top-6 right-6 text-slate-300 hover:text-red-500 transition-colors"
+                className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"
               >
                 <Trash2 size={20} />
               </button>
               
-              <div className="flex flex-col items-center mb-8">
+              <div className="flex flex-col items-center mb-10 w-full">
                 <input 
                   type="file" 
-                  // Fix: Wrapped Ref callback to return void
                   ref={(el) => { discIconRefs.current[disc.id] = el; }}
                   onChange={(e) => updateDiscIcon(disc.id, e)}
                   className="hidden" 
@@ -161,36 +157,31 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                 />
                 <div 
                   onClick={() => discIconRefs.current[disc.id]?.click()}
-                  className="w-24 h-24 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-primary-600 transition-all group/icon"
+                  className="w-32 h-32 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center cursor-pointer overflow-hidden border-2 border-dashed border-slate-200 dark:border-white/10 hover:border-primary-600 transition-all group/icon shadow-inner"
                 >
                   {disc.iconUrl ? (
                     <img src={disc.iconUrl} className="w-full h-full object-cover" />
                   ) : (
-                    <ImageIcon size={32} className="text-slate-300 group-hover/icon:text-primary-600" />
+                    <ImageIcon size={40} className="text-slate-300 group-hover/icon:text-primary-600" />
                   )}
                 </div>
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-4">Logo Disciplina</p>
               </div>
 
-              <div className="space-y-4">
+              <div className="w-full">
                 <input 
                   value={disc.name}
                   onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, name: e.target.value.toUpperCase()} : d)})}
                   placeholder="NOMBRE"
-                  className="w-full bg-transparent font-black text-2xl uppercase tracking-tighter text-center dark:text-white outline-none border-b border-transparent focus:border-primary-600/30 pb-2"
+                  className="w-full bg-transparent font-black text-3xl uppercase tracking-tighter text-center dark:text-white outline-none border-b-2 border-transparent focus:border-primary-600/30 pb-3 transition-all"
                 />
-                <select 
-                  value={disc.sportType}
-                  onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === disc.id ? {...d, sportType: e.target.value as any} : d)})}
-                  className="w-full bg-slate-50 dark:bg-white/5 py-3 px-4 rounded-xl text-[10px] font-black uppercase text-slate-500 tracking-widest outline-none text-center"
-                >
-                  {SPORT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
               </div>
             </div>
           ))}
-          <button onClick={addDiscipline} className="border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[3rem] p-16 flex flex-col items-center justify-center gap-6 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition-all bg-white/5">
-             <Plus size={48} />
+          <button onClick={addDiscipline} className="border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[3rem] p-16 flex flex-col items-center justify-center gap-6 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition-all bg-white/5 group">
+             <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Plus size={40} />
+             </div>
              <span className="font-black uppercase text-[10px] tracking-widest">Añadir Disciplina</span>
           </button>
         </div>
@@ -224,7 +215,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white">
                       <img src={selectedDiscipline.iconUrl || ''} className="w-full h-full object-contain" />
                    </div>
-                   <span className="font-black text-xs uppercase tracking-widest text-primary-600">{selectedDiscipline.sportType}</span>
+                   <span className="font-black text-xs uppercase tracking-widest text-primary-600">Matriz Técnica</span>
                 </div>
               )}
           </div>
