@@ -85,9 +85,9 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
         </div>
       </header>
 
-      {/* SPORT SELECTION WHEEL - Con padding extra para evitar scrollbar flickering por el ping */}
-      <div className="relative overflow-hidden mb-16">
-        <div className="flex gap-12 overflow-x-auto py-8 px-8 no-scrollbar items-center">
+      {/* SPORT SELECTION WHEEL - overflow-y-hidden forzado y py incrementado */}
+      <div className="relative mb-16">
+        <div className="flex gap-12 overflow-x-auto overflow-y-hidden py-12 px-8 no-scrollbar items-center">
             {clubConfig.disciplines.map((sport) => {
                 const isActive = sport.id === selectedSportId;
                 return (
@@ -100,18 +100,18 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                           className={`w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 relative border-4 ${isActive ? 'bg-slate-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`} 
                           style={isActive ? { borderColor: clubConfig.primaryColor } : {}}
                         >
-                            <div className="w-full h-full rounded-[2.1rem] overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900">
+                            <div className="w-full h-full rounded-[2.1rem] overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900 relative">
                               {sport.iconUrl ? (
-                                  <img src={sport.iconUrl} className="w-full h-full object-cover p-1" />
+                                  <img src={sport.iconUrl} className="w-full h-full object-cover p-1 scale-[1.02]" />
                               ) : (
                                   <Shield size={isActive ? 60 : 40} className="text-slate-300" />
                               )}
                             </div>
                             
-                            {/* Efecto Ping corregido para no romper el layout */}
+                            {/* Efecto Ping con margen interno mayor para evitar disparar el scroll vertical */}
                             {isActive && (
                               <div 
-                                className="absolute -inset-2 rounded-[2.8rem] border-2 animate-ping pointer-events-none opacity-40"
+                                className="absolute -inset-1 rounded-[2.8rem] border-2 animate-ping pointer-events-none opacity-40"
                                 style={{ borderColor: clubConfig.primaryColor }}
                               ></div>
                             )}

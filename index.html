@@ -39,6 +39,15 @@
       .dark ::-webkit-scrollbar-thumb { background: #475569; }
       .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
       
+      /* Utility to hide scrollbars but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
       @keyframes shine {
         from { background-position: -200% center; }
         to { background-position: 200% center; }
