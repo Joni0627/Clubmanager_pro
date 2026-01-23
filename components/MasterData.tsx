@@ -4,7 +4,8 @@ import { ClubConfig, Discipline, Branch, Category, Metric } from '../types';
 import { 
   Save, Plus, Trash2, Shield, Palette, Database, ChevronDown, 
   User, Users, Activity, CheckCircle, Loader2, Camera, Sparkles, 
-  X, Image as ImageIcon, LayoutGrid, Settings2, Search, Lock, Unlock, Edit3
+  X, Image as ImageIcon, LayoutGrid, Settings2, Search, Lock, Unlock, Edit3,
+  ChevronUp, BarChart3, Target
 } from 'lucide-react';
 
 interface MasterDataProps {
@@ -18,6 +19,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [isEditingEnabled, setIsEditingEnabled] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   
   // States for Matrix View
   const [selectedDiscId, setSelectedDiscId] = useState<string | null>(null);
@@ -37,8 +39,15 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
     await onSave(localConfig);
     setIsSaving(false);
     setShowSaved(true);
-    setIsEditingEnabled(false); // Bloquear después de guardar
+    setIsEditingEnabled(false);
     setTimeout(() => setShowSaved(false), 3000);
+  };
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
 
   // --- DISCIPLINE ACTIONS ---
@@ -74,16 +83,18 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
 
   // --- MATRIX ACTIONS ---
   const addCategory = (discId: string, gender: string) => {
+    const newId = crypto.randomUUID();
     setLocalConfig({
       ...localConfig,
       disciplines: localConfig.disciplines.map(d => d.id === discId ? {
         ...d,
         branches: d.branches.map(b => b.gender === gender ? {
           ...b,
-          categories: [...b.categories, { id: crypto.randomUUID(), name: 'NUEVA CAT', metrics: [] }]
+          categories: [...b.categories, { id: newId, name: 'NUEVA CATEGORÍA', metrics: [] }]
         } : b)
       } : d)
     });
+    setExpandedCategories(prev => ({ ...prev, [newId]: true }));
   };
 
   const addMetric = (discId: string, gender: string, catId: string) => {
@@ -162,7 +173,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                 </button>
               )}
               
-              <div className="flex flex-col items-center mb-8 w-full">
+              <div className="flex flex-col items-center mb-8 w-full relative">
                 <input 
                   type="file" 
                   ref={(el) => { discIconRefs.current[disc.id] = el; }}
@@ -185,7 +196,7 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                     </div>
                   )}
                 </div>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-4">Identidad Visual</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-4">Logo Disciplina</p>
               </div>
 
               <div className="w-full relative z-10">
@@ -217,9 +228,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
       {/* --- TAB 2: MATRIZ DEPORTIVA --- */}
       {activeTab === 'matrix' && (
         <div className="space-y-12 animate-fade-in">
+          {/* Header de selección de disciplina */}
           <div className="bg-white dark:bg-[#0f1219] p-8 rounded-[3rem] border border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
               <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-primary-600/10 rounded-2xl flex items-center justify-center text-primary-600">
+                  <div className="w-16 h-16 bg-primary-600/10 rounded-2xl flex items-center justify-center text-primary-600 shadow-inner">
                     <LayoutGrid size={24} />
                   </div>
                   <div className="flex flex-col">
@@ -228,10 +240,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                       <select 
                         value={selectedDiscId || ''}
                         onChange={e => setSelectedDiscId(e.target.value)}
-                        className="bg-transparent font-black text-2xl uppercase tracking-tighter dark:text-white outline-none mt-1 cursor-pointer pr-8 appearance-none"
+                        className="bg-transparent font-black text-2xl uppercase tracking-tighter dark:text-white outline-none mt-1 cursor-pointer pr-10 appearance-none"
                       >
                         {localConfig.disciplines.length === 0 && (
-                          <option value="" className="bg-white dark:bg-slate-900 dark:text-white font-sans text-sm p-4">
+                          <option value="" className="bg-white dark:bg-slate-900 dark:text-white font-sans text-sm p-4 text-slate-500">
                             No hay disciplinas
                           </option>
                         )}
@@ -246,17 +258,24 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                         ))}
                       </select>
                       <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-primary-600 transition-colors">
-                        <ChevronDown size={20} />
+                        <ChevronDown size={22} />
                       </div>
                     </div>
                   </div>
               </div>
               {selectedDiscipline && (
                 <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 p-4 rounded-3xl border border-slate-100 dark:border-white/5">
-                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-sm">
-                      <img src={selectedDiscipline.iconUrl || ''} className="w-full h-full object-contain" />
+                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-sm border border-slate-100 p-1 flex items-center justify-center">
+                      {selectedDiscipline.iconUrl ? (
+                        <img src={selectedDiscipline.iconUrl} className="w-full h-full object-contain" />
+                      ) : (
+                        <Shield size={20} className="text-slate-300" />
+                      )}
                    </div>
-                   <span className="font-bold text-[10px] uppercase tracking-widest text-primary-600">Configuración Técnica</span>
+                   <div className="flex flex-col">
+                      <span className="font-bold text-[10px] uppercase tracking-widest text-primary-600 leading-none">Configuración Técnica</span>
+                      <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest mt-1">Sincronizado</span>
+                   </div>
                 </div>
               )}
           </div>
@@ -264,10 +283,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
           {selectedDiscipline ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                {selectedDiscipline.branches.map(branch => (
-                 <div key={branch.gender} className={`rounded-[3.5rem] p-12 border transition-all ${branch.enabled ? 'bg-white dark:bg-[#0f1219] border-slate-200 dark:border-white/5' : 'bg-slate-100/30 dark:bg-white/5 border-transparent opacity-40 grayscale'}`}>
+                 <div key={branch.gender} className={`rounded-[3.5rem] p-8 md:p-12 border transition-all ${branch.enabled ? 'bg-white dark:bg-[#0f1219] border-slate-200 dark:border-white/5' : 'bg-slate-100/30 dark:bg-white/5 border-transparent opacity-40 grayscale pointer-events-none'}`}>
                     <div className="flex justify-between items-center mb-10">
                         <label className={`flex items-center gap-4 ${isEditingEnabled ? 'cursor-pointer' : 'cursor-default'}`}>
-                          <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${branch.enabled ? 'bg-primary-600 border-primary-600' : 'border-slate-300'}`}>
+                          <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all ${branch.enabled ? 'bg-primary-600 border-primary-600 shadow-lg shadow-primary-500/30' : 'border-slate-300'}`}>
                               <input 
                                 type="checkbox" 
                                 checked={branch.enabled} 
@@ -281,92 +300,141 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
                                 })}
                                 className="hidden"
                               />
-                              {branch.enabled && <CheckCircle size={14} className="text-white" />}
+                              {branch.enabled && <CheckCircle size={16} className="text-white" />}
                           </div>
-                          <h4 className="font-black uppercase text-xl tracking-tighter dark:text-white flex items-center gap-3">
-                             <User size={20} className={branch.gender === 'Masculino' ? 'text-blue-500' : 'text-pink-500'} />
+                          <h4 className="font-black uppercase text-2xl tracking-tighter dark:text-white flex items-center gap-3 italic">
+                             <User size={24} className={branch.gender === 'Masculino' ? 'text-blue-500' : 'text-pink-500'} />
                              Rama {branch.gender}
                           </h4>
                         </label>
                         {branch.enabled && isEditingEnabled && (
-                          <button onClick={() => addCategory(selectedDiscipline.id, branch.gender)} className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-[9px] font-bold uppercase tracking-widest hover:scale-105 transition-all">
+                          <button onClick={() => addCategory(selectedDiscipline.id, branch.gender)} className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl">
                              <Plus size={14} /> Nueva Categoría
                           </button>
                         )}
                     </div>
 
                     {branch.enabled && (
-                      <div className="space-y-8">
-                        {branch.categories.map(cat => (
-                          <div key={cat.id} className="bg-slate-50 dark:bg-white/5 p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5">
-                             <div className="flex justify-between items-center mb-6">
-                                {isEditingEnabled ? (
-                                  <input 
-                                    value={cat.name}
-                                    onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : b)} : d)})}
-                                    placeholder="NOMBRE CATEGORÍA"
-                                    className="bg-white dark:bg-slate-800 p-3 rounded-xl font-bold uppercase text-xs tracking-widest text-primary-600 outline-none flex-1 shadow-sm"
-                                  />
-                                ) : (
-                                  <span className="font-black uppercase text-sm tracking-widest text-primary-600">{cat.name}</span>
-                                )}
-                                
-                                {isEditingEnabled && (
-                                  <div className="flex items-center gap-4 ml-4">
-                                    <button 
-                                      onClick={() => addMetric(selectedDiscipline.id, branch.gender, cat.id)} 
-                                      className="flex items-center gap-2 px-5 py-2.5 bg-primary-600/10 hover:bg-primary-600 text-primary-600 hover:text-white rounded-full text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-sm border border-primary-600/20 active:scale-95 group/kpi"
-                                    >
-                                      <Activity size={14} className="group-hover/kpi:animate-pulse" /> + KPI
-                                    </button>
-                                    <button 
-                                      onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.filter(c => c.id !== cat.id)} : b)} : d)})}
-                                      className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
-                                    >
-                                      <X size={18} />
-                                    </button>
-                                  </div>
-                                )}
-                             </div>
-
-                             <div className="grid grid-cols-1 gap-3">
-                                {cat.metrics.map(metric => (
-                                  <div key={metric.id} className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-transparent">
-                                     {isEditingEnabled ? (
-                                       <input 
-                                          value={metric.name}
-                                          onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(m => m.id === metric.id ? {...m, name: e.target.value.toUpperCase()} : m)} : c)} : b)} : d)})}
-                                          className="bg-transparent text-[10px] font-bold uppercase tracking-widest dark:text-slate-200 outline-none flex-1 border-b border-slate-100 dark:border-white/5"
-                                          placeholder="EJ: VELOCIDAD"
-                                       />
-                                     ) : (
-                                       <span className="text-[10px] font-bold uppercase tracking-widest dark:text-slate-400 flex-1">{metric.name}</span>
-                                     )}
-                                     
-                                     <div className="flex items-center gap-3">
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Peso</span>
-                                        <input 
-                                          type="number" 
-                                          disabled={!isEditingEnabled}
-                                          value={metric.weight}
-                                          onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(m => m.id === metric.id ? {...m, weight: parseInt(e.target.value) || 1} : m)} : c)} : b)} : d)})}
-                                          className={`w-12 text-center font-black text-[10px] py-2 rounded-xl outline-none transition-colors ${isEditingEnabled ? 'bg-slate-100 dark:bg-slate-800' : 'bg-transparent'}`} 
-                                        />
+                      <div className="space-y-4">
+                        {branch.categories.map(cat => {
+                          const isExpanded = expandedCategories[cat.id];
+                          return (
+                            <div key={cat.id} className={`group/cat transition-all duration-500 ${isExpanded ? 'bg-slate-50 dark:bg-white/[0.03] rounded-[2.5rem] p-6' : 'bg-transparent'}`}>
+                              {/* Header Acordeón */}
+                              <div className="flex items-center gap-4">
+                                <button 
+                                  onClick={() => toggleCategory(cat.id)}
+                                  className={`flex-1 flex items-center justify-between p-6 rounded-3xl transition-all border ${isExpanded ? 'bg-white dark:bg-slate-800 border-primary-600/30 shadow-xl' : 'bg-slate-50 dark:bg-white/5 border-transparent hover:border-slate-300 dark:hover:border-white/10'}`}
+                                >
+                                  <div className="flex items-center gap-6">
+                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${isExpanded ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+                                        <Target size={20} />
+                                     </div>
+                                     <div className="flex flex-col items-start">
+                                        {isEditingEnabled ? (
+                                          <input 
+                                            value={cat.name}
+                                            onClick={e => e.stopPropagation()}
+                                            onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : b)} : d)})}
+                                            className="bg-transparent font-black uppercase text-lg tracking-tighter text-slate-900 dark:text-white outline-none focus:border-b-2 border-primary-600"
+                                          />
+                                        ) : (
+                                          <span className="font-black uppercase text-lg tracking-tighter text-slate-900 dark:text-white leading-none">{cat.name}</span>
+                                        )}
+                                        <span className="text-[9px] font-bold uppercase text-slate-400 tracking-[0.3em] mt-2">{cat.metrics.length} Parámetros Técnicos</span>
                                      </div>
                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                        ))}
+                                  
+                                  <div className="flex items-center gap-4">
+                                     {isEditingEnabled && (
+                                       <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if(confirm('¿Eliminar categoría y sus métricas?')) {
+                                              setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.filter(c => c.id !== cat.id)} : b)} : d)});
+                                            }
+                                          }}
+                                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                       >
+                                          <Trash2 size={16} />
+                                       </button>
+                                     )}
+                                     <div className={`transition-transform duration-500 ${isExpanded ? 'rotate-180 text-primary-600' : 'text-slate-400'}`}>
+                                        <ChevronDown size={20} />
+                                     </div>
+                                  </div>
+                                </button>
+                              </div>
+
+                              {/* Body Acordeón (Métricas) */}
+                              <div className={`grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0 pointer-events-none overflow-hidden'}`}>
+                                <div className="overflow-hidden">
+                                   <div className="space-y-3 mb-6">
+                                      {cat.metrics.map(metric => (
+                                        <div key={metric.id} className="flex items-center gap-4 bg-white dark:bg-[#1a1f2b] p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 group/row">
+                                           <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover/row:text-primary-600 transition-colors">
+                                              <BarChart3 size={14} />
+                                           </div>
+                                           {isEditingEnabled ? (
+                                             <input 
+                                                value={metric.name}
+                                                onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(m => m.id === metric.id ? {...m, name: e.target.value.toUpperCase()} : m)} : c)} : b)} : d)})}
+                                                className="bg-transparent text-[11px] font-bold uppercase tracking-widest dark:text-slate-200 outline-none flex-1"
+                                                placeholder="EJ: VELOCIDAD"
+                                             />
+                                           ) : (
+                                             <span className="text-[11px] font-bold uppercase tracking-widest dark:text-slate-300 flex-1">{metric.name}</span>
+                                           )}
+                                           
+                                           <div className="flex items-center gap-4">
+                                              <div className="flex flex-col items-end">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Impacto</span>
+                                                <input 
+                                                  type="number" 
+                                                  disabled={!isEditingEnabled}
+                                                  value={metric.weight}
+                                                  onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(m => m.id === metric.id ? {...m, weight: parseInt(e.target.value) || 1} : m)} : c)} : b)} : d)})}
+                                                  className={`w-12 text-center font-black text-xs py-1.5 rounded-lg outline-none transition-colors ${isEditingEnabled ? 'bg-slate-100 dark:bg-slate-700' : 'bg-transparent'}`} 
+                                                />
+                                              </div>
+                                              {isEditingEnabled && (
+                                                <button 
+                                                  onClick={() => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(d => d.id === selectedDiscipline.id ? {...d, branches: d.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.filter(m => m.id !== metric.id)} : c)} : b)} : d)})}
+                                                  className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-all"
+                                                >
+                                                  <X size={14} />
+                                                </button>
+                                              )}
+                                           </div>
+                                        </div>
+                                      ))}
+                                   </div>
+
+                                   {isEditingEnabled && (
+                                      <button 
+                                        onClick={() => addMetric(selectedDiscipline.id, branch.gender, cat.id)}
+                                        className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl flex items-center justify-center gap-3 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition-all group/addkpi"
+                                      >
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover/addkpi:bg-primary-600 group-hover/addkpi:text-white transition-all">
+                                          <Activity size={16} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Agregar Métrica KPI</span>
+                                      </button>
+                                   )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                  </div>
                ))}
             </div>
           ) : (
-            <div className="py-32 text-center opacity-20">
-               <Shield size={64} className="mx-auto mb-6" />
-               <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sin estructura técnica definida</p>
+            <div className="py-32 text-center bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-inner">
+               <Shield size={64} className="mx-auto mb-6 text-slate-100 dark:text-white/5" />
+               <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Selecciona una disciplina para gestionar su matriz</p>
             </div>
           )}
         </div>
