@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-// Fix: Removed non-existent PlayerStats and MetricDefinition from types.ts was actually added, but kept it clean
-import { Player, Position, ClubConfig, MetricDefinition } from '../types.ts';
+// Fix: Removed non-existent Position and MetricDefinition, using Metric instead
+import { Player, ClubConfig, Metric } from '../types.ts';
 import { X, Activity, Save, Edit3, User, FileText, AlertTriangle, Sparkles, Loader2, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, Users, Shield, Hash, Camera, Link as LinkIcon, Upload, TrendingUp } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { generatePlayerReport } from '../services/geminiService.ts';
@@ -32,7 +32,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
     return category?.metrics || [];
   }, [clubConfig, player.discipline, player.category, player.gender]);
 
-  const calculateOverall = (stats: Record<string, number>, metrics: MetricDefinition[]) => {
+  // Fix: Changed MetricDefinition to Metric
+  const calculateOverall = (stats: Record<string, number>, metrics: Metric[]) => {
     if (metrics.length === 0) return 0;
     let totalWeight = 0;
     let weightedSum = 0;

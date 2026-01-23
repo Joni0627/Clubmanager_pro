@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ClubConfig, Discipline, Branch, Category, Metric } from '../types';
 import { 
-  Save, Plus, Trash2, LayoutGrid, X, CheckCircle, 
-  Loader2, Camera, ChevronDown, Upload, Image as ImageIcon,
-  User, Users, Settings2, Activity, Shield, Sparkles, PlusCircle
+  Save, Plus, Trash2, CheckCircle, Loader2, Camera, ChevronDown, 
+  Image as ImageIcon, User, Users, Settings2, Activity, Shield, 
+  Palette, Database, Globe, ChevronRight
 } from 'lucide-react';
 
 interface MasterDataProps {
@@ -12,19 +12,21 @@ interface MasterDataProps {
   onSave: (config: ClubConfig) => Promise<void>;
 }
 
+// Added SportIcon component for export as required by Squads.tsx
 export const SportIcon: React.FC<{ id: string; size: number }> = ({ id, size }) => {
   return <Shield size={size} />;
 };
 
+const PREDEFINED_SPORTS = ['Fútbol', 'Básquet', 'Rugby', 'Vóley', 'Hockey', 'Otro'];
+
 const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
+  const [activeTab, setActiveTab] = useState<'matrix' | 'identity'>('matrix');
   const [localConfig, setLocalConfig] = useState<ClubConfig>(config);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [expandedSport, setExpandedSport] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentSportForUpload, setCurrentSportForUpload] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // Sincronizar localConfig si config cambia (ej: cuando carga de DB)
   useEffect(() => {
     setLocalConfig(config);
   }, [config]);
@@ -41,49 +43,15 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
     const id = crypto.randomUUID();
     const newSport: Discipline = { 
       id, 
-      name: 'NUEVO DEPORTE', 
-      icon: '', 
+      name: 'NUEVA DISCIPLINA', 
+      type: 'Otro',
       branches: [
-        { 
-          gender: 'Masculino', 
-          categories: [{ id: crypto.randomUUID(), name: 'PRIMERA', metrics: [] }] 
-        },
-        { 
-          gender: 'Femenino', 
-          categories: [{ id: crypto.randomUUID(), name: 'PRIMERA', metrics: [] }] 
-        }
+        { gender: 'Masculino', categories: [] },
+        { gender: 'Femenino', categories: [] }
       ] 
     };
-    const updated = { ...localConfig, disciplines: [...localConfig.disciplines, newSport] };
-    setLocalConfig(updated);
+    setLocalConfig({ ...localConfig, disciplines: [...localConfig.disciplines, newSport] });
     setExpandedSport(id);
-  };
-
-  const removeSport = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('¿Estás seguro de eliminar este deporte y toda su configuración?')) {
-      setLocalConfig({
-        ...localConfig,
-        disciplines: localConfig.disciplines.filter(d => d.id !== id)
-      });
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && currentSportForUpload) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setLocalConfig({
-          ...localConfig,
-          disciplines: localConfig.disciplines.map(d => 
-            d.id === currentSportForUpload ? { ...d, icon: base64String } : d
-          )
-        });
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const addCategory = (sportId: string, gender: string) => {
@@ -93,32 +61,10 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
         if (s.id !== sportId) return s;
         return {
           ...s,
-          branches: s.branches.map(b => {
-            if (b.gender !== gender) return b;
-            return {
-              ...b,
-              categories: [...b.categories, { id: crypto.randomUUID(), name: 'NUEVA CAT', metrics: [] }]
-            };
-          })
-        };
-      })
-    });
-  };
-
-  const removeCategory = (sportId: string, gender: string, catId: string) => {
-    setLocalConfig({
-      ...localConfig,
-      disciplines: localConfig.disciplines.map(s => {
-        if (s.id !== sportId) return s;
-        return {
-          ...s,
-          branches: s.branches.map(b => {
-            if (b.gender !== gender) return b;
-            return {
-              ...b,
-              categories: b.categories.filter(c => c.id !== catId)
-            };
-          })
+          branches: s.branches.map(b => b.gender === gender ? {
+            ...b,
+            categories: [...b.categories, { id: crypto.randomUUID(), name: 'NUEVA CAT', metrics: [] }]
+          } : b)
         };
       })
     });
@@ -131,202 +77,207 @@ const MasterData: React.FC<MasterDataProps> = ({ config, onSave }) => {
         if (s.id !== sportId) return s;
         return {
           ...s,
-          branches: s.branches.map(b => {
-            if (b.gender !== gender) return b;
-            return {
-              ...b,
-              categories: b.categories.map(c => {
-                if (c.id !== catId) return c;
-                return {
-                  ...c,
-                  metrics: [...c.metrics, { id: crypto.randomUUID(), name: 'NUEVA MÉTRICA', weight: 1 }]
-                };
-              })
-            };
-          })
+          branches: s.branches.map(b => b.gender === gender ? {
+            ...b,
+            categories: b.categories.map(c => c.id === catId ? {
+              ...c,
+              metrics: [...c.metrics, { id: crypto.randomUUID(), name: 'MÉTRICA', weight: 1 }]
+            } : c)
+          } : b)
         };
       })
     });
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLocalConfig({ ...localConfig, logoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="p-4 md:p-12 max-w-6xl mx-auto animate-fade-in pb-40">
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-      
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
         <div>
-          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white">Matriz Deportiva</h2>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mt-4 flex items-center gap-3">
-            <span className="w-12 h-1 bg-primary-600"></span> Configuración de Disciplinas y Ramas
-          </p>
+          <h2 className="text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">Configuración</h2>
+          <div className="flex gap-6 mt-6">
+            <button 
+              onClick={() => setActiveTab('matrix')}
+              className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'matrix' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <Database size={14} /> Matriz Deportiva
+            </button>
+            <button 
+              onClick={() => setActiveTab('identity')}
+              className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'identity' ? 'text-primary-600' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <Palette size={14} /> Identidad Club
+            </button>
+          </div>
         </div>
         <button 
           onClick={handleSave} 
-          disabled={isSaving || localConfig.disciplines.length === 0} 
-          className={`flex items-center gap-3 px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest transition-all ${showSaved ? 'bg-emerald-500 text-white' : 'bg-slate-950 dark:bg-primary-600 text-white shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100'}`}
+          disabled={isSaving} 
+          className={`flex items-center gap-3 px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest transition-all ${showSaved ? 'bg-emerald-500 text-white' : 'bg-primary-600 text-white shadow-2xl hover:scale-105 active:scale-95'}`}
         >
           {isSaving ? <Loader2 className="animate-spin" size={18} /> : (showSaved ? <CheckCircle size={18} /> : <Save size={18} />)}
-          <span>{isSaving ? 'Sincronizando' : (showSaved ? 'Guardado' : 'Guardar Matriz')}</span>
+          <span>{isSaving ? 'Guardando' : (showSaved ? 'Sincronizar' : 'Guardar Todo')}</span>
         </button>
       </header>
 
-      <div className="space-y-6">
-        {localConfig.disciplines.length === 0 ? (
-          <div className="bg-white dark:bg-[#0f1219] border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[4rem] p-20 flex flex-col items-center text-center animate-fade-in">
-             <div className="w-24 h-24 bg-primary-600/10 rounded-full flex items-center justify-center mb-8">
-                <Sparkles size={48} className="text-primary-600 animate-pulse" />
-             </div>
-             <h3 className="text-3xl font-black uppercase tracking-tighter dark:text-white mb-4">Empieza tu Legado</h3>
-             <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] max-w-md leading-relaxed mb-10">
-               Tu club está vacío. Define los deportes, géneros y métricas de rendimiento para habilitar el resto de los módulos.
-             </p>
-             <button onClick={addSport} className="flex items-center gap-3 px-12 py-6 bg-primary-600 text-white rounded-full font-black uppercase text-xs tracking-widest shadow-2xl hover:bg-primary-700 transition-all">
-               <PlusCircle size={20} /> Crear Primer Deporte
-             </button>
-          </div>
-        ) : (
-          localConfig.disciplines.map(sport => (
-            <div key={sport.id} className={`bg-white dark:bg-[#0f1219] rounded-[3rem] border transition-all overflow-hidden ${expandedSport === sport.id ? 'border-primary-500/30 shadow-3xl' : 'border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl'}`}>
-              <div onClick={() => setExpandedSport(expandedSport === sport.id ? null : sport.id)} className="p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 cursor-pointer group">
-                <div className="flex items-center gap-8 w-full md:w-auto">
-                  <div className="relative">
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl">
-                      {sport.icon ? <img src={sport.icon} className="w-full h-full object-cover" /> : <ImageIcon size={40} className="text-slate-300" />}
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); setCurrentSportForUpload(sport.id); fileInputRef.current?.click(); }} className="absolute -bottom-1 -right-1 bg-primary-600 text-white p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform border-4 border-white dark:border-[#0f1219]">
-                      <Camera size={14} />
-                    </button>
+      {activeTab === 'matrix' && (
+        <div className="space-y-6 animate-fade-in">
+          {localConfig.disciplines.map(sport => (
+            <div key={sport.id} className="bg-white dark:bg-[#0f1219] rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden transition-all">
+              <div 
+                onClick={() => setExpandedSport(expandedSport === sport.id ? null : sport.id)}
+                className="p-8 flex items-center justify-between cursor-pointer group"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-primary-500">
+                    <Shield size={28} />
                   </div>
                   <div>
-                    <input value={sport.name} onClick={e => e.stopPropagation()} onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, name: e.target.value.toUpperCase()} : s)})} className="bg-transparent text-2xl md:text-4xl font-black uppercase tracking-tighter outline-none w-full dark:text-white" placeholder="NOMBRE DEL DEPORTE" />
-                    <div className="flex gap-4 mt-2">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
-                        {sport.branches.reduce((acc, b) => acc + b.categories.length, 0)} CATEGORÍAS
-                      </span>
-                    </div>
+                    <input 
+                      value={sport.name} 
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, name: e.target.value.toUpperCase()} : s)})}
+                      className="bg-transparent font-black text-2xl uppercase tracking-tighter dark:text-white outline-none"
+                    />
+                    <select 
+                      value={sport.type}
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, type: e.target.value as any} : s)})}
+                      className="block mt-1 bg-transparent text-[9px] font-black uppercase text-slate-400 tracking-widest outline-none"
+                    >
+                      {PREDEFINED_SPORTS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <button onClick={(e) => removeSport(sport.id, e)} className="p-3 text-slate-300 hover:text-red-500 transition-colors">
-                    <Trash2 size={24} />
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setLocalConfig({...localConfig, disciplines: localConfig.disciplines.filter(d => d.id !== sport.id)}); }}
+                    className="p-3 text-slate-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={20} />
                   </button>
-                  <ChevronDown size={32} className={`transition-all duration-500 text-slate-400 ${expandedSport === sport.id ? 'rotate-180 text-primary-600' : ''}`} />
+                  <ChevronDown className={`transition-transform duration-500 ${expandedSport === sport.id ? 'rotate-180 text-primary-500' : 'text-slate-600'}`} />
                 </div>
               </div>
 
               {expandedSport === sport.id && (
-                <div className="p-10 pt-0 border-t border-slate-100 dark:border-white/5 animate-fade-in">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-10">
-                    {sport.branches.map(branch => (
-                      <div key={branch.gender} className="bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5">
-                        <div className="flex justify-between items-center mb-8">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-3 rounded-2xl ${branch.gender === 'Masculino' ? 'bg-blue-500/10 text-blue-500' : 'bg-pink-500/10 text-pink-500'}`}>
-                              <User size={20} />
-                            </div>
-                            <h4 className="text-lg font-black uppercase tracking-tighter dark:text-white">{branch.gender}</h4>
-                          </div>
-                          <button onClick={() => addCategory(sport.id, branch.gender)} className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-primary-600 hover:scale-110 transition-all shadow-sm">
-                            <Plus size={20} />
-                          </button>
-                        </div>
-
-                        <div className="space-y-4">
-                          {branch.categories.map(cat => (
-                            <div key={cat.id} className="bg-white dark:bg-[#0f1219] rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/5">
-                              <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <input 
-                                    value={cat.name} 
-                                    onChange={e => setLocalConfig({
-                                      ...localConfig,
-                                      disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {
-                                        ...s,
-                                        branches: s.branches.map(b => b.gender === branch.gender ? {
-                                          ...b,
-                                          categories: b.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)
-                                        } : b)
-                                      } : s)
-                                    })}
-                                    className="bg-transparent font-black uppercase text-sm tracking-widest outline-none dark:text-white w-full"
-                                  />
-                                  <button onClick={() => removeCategory(sport.id, branch.gender, cat.id)} className="text-slate-300 hover:text-red-500 p-1">
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                                <button onClick={() => addMetric(sport.id, branch.gender, cat.id)} className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-xl text-[9px] font-black uppercase text-slate-500 hover:text-primary-600 transition-colors">
-                                  <Activity size={12} /> + MÉTRICA
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-1 gap-2">
-                                {cat.metrics.map(metric => (
-                                  <div key={metric.id} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/80 p-3 rounded-2xl group/metric">
-                                    <Settings2 size={14} className="text-slate-300" />
-                                    <input 
-                                      value={metric.name}
-                                      onChange={e => setLocalConfig({
-                                        ...localConfig,
-                                        disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {
-                                          ...s,
-                                          branches: s.branches.map(b => b.gender === branch.gender ? {
-                                            ...b,
-                                            categories: b.categories.map(c => c.id === cat.id ? {
-                                              ...c,
-                                              metrics: c.metrics.map(m => m.id === metric.id ? {...m, name: e.target.value.toUpperCase()} : m)
-                                            } : c)
-                                          } : b)
-                                        } : s)
-                                      })}
-                                      className="bg-transparent text-[10px] font-bold uppercase tracking-wider outline-none flex-1 dark:text-slate-300"
-                                      placeholder="MÉTRICA..."
-                                    />
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[8px] font-black text-slate-400">PESO:</span>
-                                      <input 
-                                        type="number" 
-                                        value={metric.weight} 
-                                        onChange={e => setLocalConfig({
-                                          ...localConfig,
-                                          disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {
-                                            ...s,
-                                            branches: s.branches.map(b => b.gender === branch.gender ? {
-                                              ...b,
-                                              categories: b.categories.map(c => c.id === cat.id ? {
-                                                ...c,
-                                                metrics: c.metrics.map(m => m.id === metric.id ? {...m, weight: parseInt(e.target.value) || 1} : m)
-                                              } : c)
-                                            } : b)
-                                          } : s)
-                                        })}
-                                        className="w-12 bg-white dark:bg-slate-800 rounded-lg text-center font-black text-[10px] py-1 dark:text-white" 
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                                {cat.metrics.length === 0 && <p className="text-[8px] font-black text-slate-400 uppercase text-center py-2 opacity-50 tracking-widest">Añade métricas para evaluar</p>}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                <div className="p-10 pt-0 grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
+                  {sport.branches.map(branch => (
+                    <div key={branch.gender} className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-8 border border-slate-100 dark:border-white/5">
+                      <div className="flex justify-between items-center mb-6">
+                        <h4 className="flex items-center gap-3 font-black uppercase text-sm tracking-widest dark:text-white">
+                          <User size={18} className={branch.gender === 'Masculino' ? 'text-blue-500' : 'text-pink-500'} />
+                          {branch.gender}
+                        </h4>
+                        <button onClick={() => addCategory(sport.id, branch.gender)} className="p-2 bg-primary-600/10 text-primary-600 rounded-xl hover:scale-110 transition-all">
+                          <Plus size={18} />
+                        </button>
                       </div>
-                    ))}
-                  </div>
+                      
+                      <div className="space-y-4">
+                        {branch.categories.map(cat => (
+                          <div key={cat.id} className="bg-white dark:bg-[#0f1219] p-6 rounded-2xl shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                              <input 
+                                value={cat.name} 
+                                onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, branches: s.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, name: e.target.value.toUpperCase()} : c)} : b)} : s)})}
+                                className="bg-transparent font-black uppercase text-xs tracking-widest dark:text-white outline-none flex-1"
+                              />
+                              <button onClick={() => addMetric(sport.id, branch.gender, cat.id)} className="ml-4 flex items-center gap-1 text-[8px] font-black uppercase text-primary-500 hover:underline">
+                                <Plus size={10} /> MÉTRICA
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                              {cat.metrics.map(m => (
+                                <div key={m.id} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
+                                  <input 
+                                    value={m.name}
+                                    onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, branches: s.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(met => met.id === m.id ? {...met, name: e.target.value.toUpperCase()} : met)} : c)} : b)} : s)})}
+                                    className="bg-transparent text-[10px] font-bold uppercase tracking-wider dark:text-slate-400 outline-none flex-1"
+                                    placeholder="Nombre"
+                                  />
+                                  <input 
+                                    type="number" 
+                                    value={m.weight} 
+                                    onChange={e => setLocalConfig({...localConfig, disciplines: localConfig.disciplines.map(s => s.id === sport.id ? {...s, branches: s.branches.map(b => b.gender === branch.gender ? {...b, categories: b.categories.map(c => c.id === cat.id ? {...c, metrics: c.metrics.map(met => met.id === m.id ? {...met, weight: parseInt(e.target.value) || 1} : met)} : c)} : b)} : s)})}
+                                    className="w-10 bg-white dark:bg-slate-700 text-center text-[10px] font-black rounded" 
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          ))
-        )}
-
-        {localConfig.disciplines.length > 0 && (
-          <button onClick={addSport} className="w-full py-16 border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[4rem] text-slate-400 bg-white/30 dark:bg-white/5 font-black uppercase tracking-[0.4em] text-xs transition-all hover:border-primary-600 hover:text-primary-600 flex flex-col items-center gap-6 group">
-            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-all">
-              <Plus size={32} />
-            </div>
-            Añadir Otro Deporte
+          ))}
+          <button onClick={addSport} className="w-full py-10 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition-all">
+            <Plus size={32} />
+            <span className="font-black uppercase tracking-[0.3em] text-[10px]">Añadir Disciplina Deportiva</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {activeTab === 'identity' && (
+        <div className="bg-white dark:bg-[#0f1219] rounded-[3rem] p-12 border border-slate-200 dark:border-white/5 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+            <div className="space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Nombre Institucional</label>
+                <input 
+                  value={localConfig.name}
+                  onChange={e => setLocalConfig({...localConfig, name: e.target.value.toUpperCase()})}
+                  className="w-full bg-slate-50 dark:bg-white/5 p-6 rounded-3xl font-black text-2xl uppercase tracking-tighter dark:text-white outline-none border border-transparent focus:border-primary-600/30 transition-all"
+                  placeholder="EJ: CLUB ATLÉTICO EJEMPLO"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Color Primario</label>
+                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 p-4 rounded-3xl">
+                    <input type="color" value={localConfig.primaryColor} onChange={e => setLocalConfig({...localConfig, primaryColor: e.target.value})} className="w-12 h-12 rounded-full border-none cursor-pointer" />
+                    <span className="font-mono text-sm dark:text-slate-400">{localConfig.primaryColor}</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Color Secundario</label>
+                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 p-4 rounded-3xl">
+                    <input type="color" value={localConfig.secondaryColor} onChange={e => setLocalConfig({...localConfig, secondaryColor: e.target.value})} className="w-12 h-12 rounded-full border-none cursor-pointer" />
+                    <span className="font-mono text-sm dark:text-slate-400">{localConfig.secondaryColor}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-12 bg-slate-50 dark:bg-white/5 rounded-[3rem] border border-dashed border-slate-200 dark:border-white/10 relative group">
+              <input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
+              <div className="w-48 h-48 rounded-full bg-white dark:bg-slate-900 shadow-2xl flex items-center justify-center overflow-hidden mb-8 border-4 border-white dark:border-slate-800">
+                {localConfig.logoUrl ? <img src={localConfig.logoUrl} className="w-full h-full object-contain" /> : <Shield size={64} className="text-slate-200" />}
+              </div>
+              <button 
+                onClick={() => logoInputRef.current?.click()}
+                className="flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-primary-600 text-white rounded-full font-black uppercase text-[10px] tracking-widest shadow-xl hover:scale-110 transition-all"
+              >
+                <Camera size={14} /> Cambiar Logo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

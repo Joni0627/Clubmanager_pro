@@ -12,14 +12,15 @@ export interface Category {
 }
 
 export interface Branch {
-  gender: 'Masculino' | 'Femenino' | 'Mixto';
+  gender: 'Masculino' | 'Femenino';
   categories: Category[];
 }
 
 export interface Discipline {
   id: string;
-  name: string; // Ej: "Fútbol"
-  icon?: string; // URL del Avatar/Escudo
+  name: string;
+  type: 'Fútbol' | 'Básquet' | 'Rugby' | 'Vóley' | 'Hockey' | 'Otro';
+  icon?: string;
   branches: Branch[];
 }
 
@@ -31,11 +32,12 @@ export interface ClubConfig {
   disciplines: Discipline[];
 }
 
+// Added missing MedicalRecord interface
 export interface MedicalRecord {
   isFit: boolean;
-  lastCheckup: string;
+  lastCheckup?: string;
   expiryDate: string;
-  notes: string;
+  notes?: string;
 }
 
 export interface Player {
@@ -45,26 +47,25 @@ export interface Player {
   position: string;
   category: string;
   discipline: string;
-  gender: 'Masculino' | 'Femenino' | 'Mixto';
+  gender: 'Masculino' | 'Femenino';
   overallRating: number;
   photoUrl: string;
   dni: string;
   email: string;
   stats: Record<string, number>;
+  // Updated to use MedicalRecord interface
   medical: MedicalRecord;
   status?: 'Active' | 'Injured' | 'Suspended';
 }
 
-export interface TeamStructure {
+export interface MemberFee {
   id: string;
-  discipline: string;
-  gender: string;
-  category: string;
-  coach: string;
-  // Added missing fields to TeamStructure
-  physicalTrainer: string;
-  medicalStaff: string;
-  playersCount: number;
+  player_id: string;
+  amount: number;
+  status: string;
+  due_date: string;
+  payment_method: string;
+  reference?: string;
 }
 
 // Added missing Fixture interface
@@ -74,25 +75,19 @@ export interface Fixture {
   category: string;
   opponent: string;
   date: string;
-  venue: 'Home' | 'Away';
+  venue: string;
   competition: string;
   result: string;
 }
 
-// Added missing MemberFee interface to match FeesManagement.tsx usage
-export interface MemberFee {
+// Added missing TeamStructure interface
+export interface TeamStructure {
   id: string;
-  memberId?: string;
-  player_id?: string;
-  amount: number;
-  status: string;
-  dueDate?: string;
-  due_date?: string;
-  paymentMethod?: string;
-  payment_method?: string;
-  reference?: string;
-  player?: Player;
+  discipline: string;
+  gender: 'Masculino' | 'Femenino';
+  category: string;
+  coach: string;
+  physicalTrainer?: string;
+  medicalStaff?: string;
+  playersCount: number;
 }
-
-export type Position = string;
-export type MetricDefinition = Metric;

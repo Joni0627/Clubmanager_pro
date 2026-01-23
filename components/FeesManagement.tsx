@@ -14,11 +14,12 @@ const FeesManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Form State
+  // Fix: Aligned property names with MemberFee interface (due_date, payment_method)
   const [formData, setFormData] = useState<Partial<MemberFee>>({
     status: 'Pending',
     amount: 0,
-    dueDate: new Date().toISOString().split('T')[0],
-    paymentMethod: 'Efectivo'
+    due_date: new Date().toISOString().split('T')[0],
+    payment_method: 'Efectivo'
   });
 
   const loadData = async () => {
@@ -33,15 +34,16 @@ const FeesManagement: React.FC = () => {
   useEffect(() => { loadData(); }, []);
 
   const handleSave = async () => {
-      if (!formData.memberId) return alert("Selecciona un miembro");
+      // Fix: memberId changed to player_id to match MemberFee interface
+      if (!formData.player_id) return alert("Selecciona un miembro");
       setIsSaving(true);
       try {
           const payload = {
-            player_id: formData.memberId,
+            player_id: formData.player_id,
             amount: formData.amount,
             status: formData.status,
-            due_date: formData.dueDate,
-            payment_method: formData.paymentMethod,
+            due_date: formData.due_date,
+            payment_method: formData.payment_method,
             reference: formData.reference,
           };
           await db.fees.upsert(payload);
@@ -158,8 +160,9 @@ const FeesManagement: React.FC = () => {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Seleccionar Jugador</label>
                         <select 
                             className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none focus:ring-4 focus:ring-primary-500/10"
-                            value={formData.memberId}
-                            onChange={e => setFormData({...formData, memberId: e.target.value})}
+                            // Fix: memberId changed to player_id
+                            value={formData.player_id}
+                            onChange={e => setFormData({...formData, player_id: e.target.value})}
                         >
                             <option value="">-- Seleccionar de la Base de Datos --</option>
                             {players.map(p => <option key={p.id} value={p.id}>{p.name} ({p.discipline} - {p.category})</option>)}
@@ -173,14 +176,16 @@ const FeesManagement: React.FC = () => {
                         </div>
                         <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Fecha Vencimiento</label>
-                             <input type="date" className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none" value={formData.dueDate} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                             {/* Fix: dueDate changed to due_date */}
+                             <input type="date" className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none" value={formData.due_date} onChange={e => setFormData({...formData, due_date: e.target.value})} />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Método de Pago</label>
-                             <select className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white" value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})}>
+                             {/* Fix: paymentMethod changed to payment_method */}
+                             <select className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white" value={formData.payment_method} onChange={e => setFormData({...formData, payment_method: e.target.value})}>
                                  <option>Efectivo</option>
                                  <option>Transferencia</option>
                                  <option>Mercado Pago</option>
