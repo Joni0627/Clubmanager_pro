@@ -36,18 +36,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           ${isCollapsed ? 'w-24' : 'w-72'}
         `}
       >
-        <div className="p-6 flex items-center justify-between border-b border-slate-200 dark:border-white/5 min-h-[100px]">
-          <div className="flex items-center gap-4 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center shrink-0 shadow-lg shadow-primary-600/20">
-              {config.logoUrl ? <img src={config.logoUrl} className="w-full h-full object-contain" /> : <Shield size={20} className="text-white" />}
-            </div>
-            {!isCollapsed && (
-              <div className="animate-fade-in whitespace-nowrap">
-                <h2 className="font-black text-sm uppercase truncate text-slate-800 dark:text-white max-w-[140px]">{config.name}</h2>
-                <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest">Sport Admin</p>
-              </div>
-            )}
+        <div className={`p-6 flex flex-col items-center border-b border-slate-200 dark:border-white/5 transition-all duration-500 ${isCollapsed ? 'min-h-[100px] justify-center' : 'min-h-[180px] justify-center'}`}>
+          <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center shrink-0 shadow-xl shadow-primary-600/30 mb-4 transition-transform hover:scale-105">
+            {config.logoUrl ? <img src={config.logoUrl} className="w-full h-full object-contain p-2" /> : <Shield size={28} className="text-white" />}
           </div>
+          {!isCollapsed && (
+            <div className="animate-fade-in text-center px-4 w-full">
+              <h2 className="font-bold text-xs uppercase tracking-[0.2em] text-slate-800 dark:text-white leading-tight break-words">
+                {config.name || 'MI CLUB'}
+              </h2>
+              <div className="mt-2 inline-block px-3 py-1 bg-primary-500/10 rounded-full">
+                <p className="text-[9px] font-black text-primary-500 uppercase tracking-widest">Sport Admin</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <button 
@@ -57,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
 
-        <nav className="flex-1 p-4 space-y-3 mt-4">
+        <nav className="flex-1 p-4 space-y-2 mt-4">
           {menu.map(item => {
             const Icon = item.icon;
             const active = currentView === item.id;
@@ -65,19 +67,23 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => setView(item.id)}
-                className={`w-full flex items-center gap-4 p-4 rounded-[1.25rem] transition-all group relative ${active ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                className={`w-full flex items-center transition-all group relative rounded-[1.25rem] ${isCollapsed ? 'justify-center p-4' : 'p-4 gap-4'} ${active ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
               >
                 <Icon size={20} className={active ? 'scale-110' : 'group-hover:scale-110 transition-transform'} />
-                {!isCollapsed && <span className="font-black text-[10px] uppercase tracking-widest animate-fade-in">{item.label}</span>}
+                {!isCollapsed && <span className="font-bold text-[11px] uppercase tracking-widest animate-fade-in whitespace-nowrap">{item.label}</span>}
+                {isCollapsed && active && <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full" />}
               </button>
             );
           })}
         </nav>
 
         <div className="p-4 border-t border-slate-200 dark:border-white/5">
-          <button onClick={toggleTheme} className="w-full flex items-center gap-4 p-4 rounded-[1.25rem] text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+          <button 
+            onClick={toggleTheme} 
+            className={`w-full flex items-center transition-all rounded-[1.25rem] text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 ${isCollapsed ? 'justify-center p-4' : 'p-4 gap-4'}`}
+          >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            {!isCollapsed && <span className="font-black text-[10px] uppercase tracking-widest">{isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>}
+            {!isCollapsed && <span className="font-bold text-[11px] uppercase tracking-widest">{isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}</span>}
           </button>
         </div>
       </aside>
@@ -94,13 +100,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 className={`flex flex-col items-center gap-1 p-2 transition-all ${active ? 'text-primary-600 scale-110' : 'text-slate-400'}`}
               >
                 <Icon size={22} strokeWidth={active ? 3 : 2} />
-                <span className="text-[9px] font-black uppercase tracking-tighter">{item.label}</span>
+                <span className="text-[9px] font-bold uppercase tracking-tight">{item.label}</span>
               </button>
             );
           })}
           <button onClick={toggleTheme} className="flex flex-col items-center gap-1 p-2 text-slate-400">
             {isDarkMode ? <Sun size={22} /> : <Moon size={22} />}
-            <span className="text-[9px] font-black uppercase tracking-tighter">Tema</span>
+            <span className="text-[9px] font-bold uppercase tracking-tight">Tema</span>
           </button>
       </nav>
     </>
