@@ -53,24 +53,28 @@ export interface Member {
   id: string;
   name: string;
   dni: string;
+  gender: 'Masculino' | 'Femenino' | 'Otro';
   birthDate: string;
   email: string;
   phone: string;
   photoUrl: string;
   address?: string;
-  tutor?: Tutor; // Solo si es menor
+  bloodType?: string;
+  medicalInsurance?: string;
+  weight?: string;
+  height?: string;
+  tutor?: Tutor;
   assignments: Assignment[];
   status: 'Active' | 'Inactive' | 'Pending';
   createdAt: string;
 }
 
-// Interfaz para el usuario que está logueado en la sesión
 export interface UserSession {
   memberId: string;
   email: string;
-  role: AppRole; // Rol principal de acceso
-  permissions: string[]; // ['READ_ALL', 'WRITE_ATTENDANCE', etc]
-  assignedCategories: string[]; // IDs de categorías que puede gestionar
+  role: AppRole;
+  permissions: string[];
+  assignedCategories: string[];
 }
 
 export interface MedicalRecord {

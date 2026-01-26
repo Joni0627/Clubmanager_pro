@@ -47,7 +47,6 @@ function App() {
       const { data: configData } = await db.config.get();
       const { data: playersData } = await db.players.getAll();
       
-      // Simulación de carga de miembros (en un caso real vendría de db.members)
       const localMembers = localStorage.getItem('club_members');
       if (localMembers) setMembers(JSON.parse(localMembers));
       
@@ -151,13 +150,6 @@ function App() {
                     <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Gestión por Disciplina</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setView('members')}
-                className="flex items-center gap-3 bg-white dark:bg-[#0f1219] px-8 py-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl hover:scale-105 transition-all group"
-              >
-                <UserCog className="text-primary-600 group-hover:rotate-12 transition-transform" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Director de Miembros</span>
-              </button>
             </header>
 
             {config.disciplines.length > 0 ? (
