@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Database, Sun, Moon, Shield, Users, Settings2 } from 'lucide-react';
+import { LayoutDashboard, Database, Sun, Moon, Shield, Users, UserCog } from 'lucide-react';
 import { ClubConfig } from '../types';
 
 interface TopNavProps {
@@ -20,6 +20,7 @@ const TopNav: React.FC<TopNavProps> = ({
 }) => {
   const menu = [
     { id: 'squads', label: 'Planteles', icon: Users },
+    { id: 'members', label: 'Miembros', icon: UserCog },
     { id: 'master-data', label: 'Estructura', icon: Database },
   ];
 
@@ -49,7 +50,7 @@ const TopNav: React.FC<TopNavProps> = ({
                 className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${active ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
               >
                 <item.icon size={16} />
-                <span className="hidden sm:inline">{item.label}</span>
+                <span className="hidden lg:inline">{item.label}</span>
               </button>
             );
           })}

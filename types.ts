@@ -1,4 +1,5 @@
 
+export type AppRole = 'ADMIN' | 'COORDINATOR' | 'COACH' | 'PHYSICAL_TRAINER' | 'MEDICAL' | 'PLAYER' | 'DELEGATE';
 
 export interface Metric {
   id: string;
@@ -22,7 +23,7 @@ export interface Discipline {
   id: string;
   name: string;
   sportType: 'Fútbol' | 'Básquet' | 'Rugby' | 'Vóley' | 'Hockey' | 'Tenis' | 'Otro';
-  iconUrl: string; // Logo específico de la disciplina
+  iconUrl: string;
   branches: Branch[];
 }
 
@@ -32,6 +33,44 @@ export interface ClubConfig {
   primaryColor: string;
   secondaryColor: string;
   disciplines: Discipline[];
+}
+
+export interface Tutor {
+  name: string;
+  relationship: 'Padre' | 'Madre' | 'Tutor Legal' | 'Otro';
+  phone: string;
+  email?: string;
+}
+
+export interface Assignment {
+  id: string;
+  disciplineId: string;
+  categoryId: string;
+  role: AppRole;
+}
+
+export interface Member {
+  id: string;
+  name: string;
+  dni: string;
+  birthDate: string;
+  email: string;
+  phone: string;
+  photoUrl: string;
+  address?: string;
+  tutor?: Tutor; // Solo si es menor
+  assignments: Assignment[];
+  status: 'Active' | 'Inactive' | 'Pending';
+  createdAt: string;
+}
+
+// Interfaz para el usuario que está logueado en la sesión
+export interface UserSession {
+  memberId: string;
+  email: string;
+  role: AppRole; // Rol principal de acceso
+  permissions: string[]; // ['READ_ALL', 'WRITE_ATTENDANCE', etc]
+  assignedCategories: string[]; // IDs de categorías que puede gestionar
 }
 
 export interface MedicalRecord {
@@ -69,7 +108,6 @@ export interface MemberFee {
   player?: Player;
 }
 
-// Added missing interfaces for AdminPanel
 export interface Fixture {
   id: string;
   discipline: string;

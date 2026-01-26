@@ -4,18 +4,30 @@ import TopNav from './components/TopNav.tsx';
 import MasterData from './components/MasterData.tsx';
 import Squads from './components/Squads.tsx';
 import DisciplineConsole from './components/DisciplineConsole.tsx';
+import MemberManagement from './components/MemberManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { ClubConfig, Discipline, Player } from './types.ts';
+import { ClubConfig, Discipline, Player, Member, UserSession } from './types.ts';
 import { db } from './lib/supabase.ts';
-import { Settings, Shield, ArrowRight } from 'lucide-react';
+import { Shield, ArrowRight, Users, UserCog } from 'lucide-react';
 
 function App() {
   const [view, setView] = useState('squads');
   const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [transitioningId, setTransitioningId] = useState<string | null>(null);
+  
+  // Usuario simulado (Para demostrar el sistema de permisos)
+  const [currentUser, setCurrentUser] = useState<UserSession>({
+    memberId: 'admin-1',
+    email: 'admin@clubplegma.com',
+    role: 'ADMIN',
+    permissions: ['FULL_ACCESS'],
+    assignedCategories: []
+  });
+
   const [config, setConfig] = useState<ClubConfig>({
     name: 'MI CLUB',
     logoUrl: '',
@@ -34,6 +46,10 @@ function App() {
     try {
       const { data: configData } = await db.config.get();
       const { data: playersData } = await db.players.getAll();
+      
+      // Simulación de carga de miembros (en un caso real vendría de db.members)
+      const localMembers = localStorage.getItem('club_members');
+      if (localMembers) setMembers(JSON.parse(localMembers));
       
       if (configData) {
         setConfig({
@@ -58,6 +74,21 @@ function App() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleSaveMember = async (member: Member) => {
+    const updatedMembers = members.find(m => m.id === member.id)
+      ? members.map(m => m.id === member.id ? member : m)
+      : [...members, member];
+    
+    setMembers(updatedMembers);
+    localStorage.setItem('club_members', JSON.stringify(updatedMembers));
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    const updatedMembers = members.filter(m => m.id !== id);
+    setMembers(updatedMembers);
+    localStorage.setItem('club_members', JSON.stringify(updatedMembers));
+  };
 
   const handleEnterDiscipline = (disc: Discipline) => {
     setTransitioningId(disc.id);
@@ -98,15 +129,35 @@ function App() {
             <MasterData config={config} onSave={handleSaveConfig} />
           </div>
         )}
+
+        {view === 'members' && (
+          <div className="pt-24">
+            <MemberManagement 
+              members={members} 
+              config={config} 
+              onSaveMember={handleSaveMember}
+              onDeleteMember={handleDeleteMember}
+            />
+          </div>
+        )}
         
         {view === 'squads' && (
           <div className="pt-24 p-12 max-w-7xl mx-auto">
-            <header className="mb-20 animate-fade-in">
-              <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white">Planteles</h2>
-              <div className="flex items-center gap-4 mt-6">
-                  <div className="w-16 h-2 bg-primary-600 rounded-full"></div>
-                  <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Gestión por Disciplina</p>
+            <header className="mb-20 animate-fade-in flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div>
+                <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white">Planteles</h2>
+                <div className="flex items-center gap-4 mt-6">
+                    <div className="w-16 h-2 bg-primary-600 rounded-full"></div>
+                    <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Gestión por Disciplina</p>
+                </div>
               </div>
+              <button 
+                onClick={() => setView('members')}
+                className="flex items-center gap-3 bg-white dark:bg-[#0f1219] px-8 py-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl hover:scale-105 transition-all group"
+              >
+                <UserCog className="text-primary-600 group-hover:rotate-12 transition-transform" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Director de Miembros</span>
+              </button>
             </header>
 
             {config.disciplines.length > 0 ? (
