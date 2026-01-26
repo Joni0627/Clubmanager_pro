@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Discipline, ClubConfig, Player } from '../types';
 import { 
   BarChart3, Users, CalendarCheck2, Stethoscope, ChevronLeft, 
@@ -20,6 +20,11 @@ interface DisciplineConsoleProps {
 const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubConfig, players, onBack }) => {
   const [activeSubTab, setActiveSubTab] = useState<'summary' | 'players' | 'attendance' | 'medical'>('summary');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const disciplinePlayers = players.filter(p => p.discipline === discipline.name);
 
@@ -44,11 +49,16 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
           
           <div className="flex flex-col md:flex-row justify-between items-end gap-8">
             <div className="flex items-center gap-8">
-              <div className="w-24 h-24 rounded-[2rem] bg-slate-950 flex items-center justify-center shadow-2xl border-2 border-primary-600/30 overflow-hidden shrink-0">
-                {discipline.iconUrl ? <img src={discipline.iconUrl} className="w-full h-full object-cover p-1" /> : <Activity size={32} className="text-primary-600" />}
+              {/* Marco Circular con Animación de Entrada */}
+              <div className={`w-28 h-28 rounded-full bg-slate-950 flex items-center justify-center shadow-2xl border-4 border-primary-600/30 overflow-hidden shrink-0 transition-all duration-700 delay-100 ${isLoaded ? 'scale-100 rotate-0' : 'scale-150 -rotate-12'}`}>
+                {discipline.iconUrl ? (
+                  <img src={discipline.iconUrl} className="w-full h-full object-cover rounded-full p-1" />
+                ) : (
+                  <Activity size={32} className="text-primary-600" />
+                )}
               </div>
               <div>
-                <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter dark:text-white leading-none mb-4 italic">{discipline.name}</h2>
+                <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter dark:text-white leading-none mb-4 italic transition-all duration-500 translate-y-0 opacity-100">{discipline.name}</h2>
                 <div className="flex items-center gap-4">
                   <div className="px-4 py-1.5 rounded-full bg-primary-600/10 text-primary-600 text-[10px] font-black uppercase tracking-widest">Consola Deportiva</div>
                   <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">{disciplinePlayers.length} Atletas Activos</span>
@@ -56,12 +66,12 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
               </div>
             </div>
 
-            <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-2 rounded-[2rem] border border-slate-200 dark:border-white/5">
+            <div className="flex gap-2 bg-slate-100 dark:bg-white/5 p-2 rounded-full border border-slate-200 dark:border-white/5">
               {subTabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveSubTab(tab.id as any)}
-                  className={`flex items-center gap-3 px-6 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`flex items-center gap-3 px-6 py-4 rounded-full font-black text-[10px] uppercase tracking-widest transition-all ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-xl scale-105' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <tab.icon size={16} />
                   <span className="hidden lg:inline">{tab.label}</span>
@@ -77,21 +87,21 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
         {activeSubTab === 'summary' && (
           <div className="space-y-12 animate-fade-in">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all">
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Eficiencia Promedio</p>
                    <div className="flex items-end gap-4">
                       <span className="text-6xl font-black dark:text-white leading-none">84.2</span>
                       <TrendingUp className="text-emerald-500 mb-2" size={24} />
                    </div>
                 </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all">
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Partidos Ganados</p>
                    <div className="flex items-end gap-4">
                       <span className="text-6xl font-black dark:text-white leading-none">12</span>
                       <Trophy className="text-yellow-500 mb-2" size={24} />
                    </div>
                 </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all">
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Presentismo</p>
                    <div className="flex items-end gap-4">
                       <span className="text-6xl font-black dark:text-white leading-none">95%</span>
