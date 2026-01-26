@@ -22,7 +22,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -59,9 +58,9 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   ];
 
   return (
-    <div className="animate-fade-in pb-24 pt-24 min-h-screen relative">
-      {/* CABECERA FIJA (COCKPIT) - Se mantiene anclada bajo el TopNav */}
-      <header className="bg-white dark:bg-[#080a0f] border-b border-slate-200 dark:border-white/10 sticky top-24 z-[140] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] transition-all duration-300">
+    <div className="flex flex-col h-[calc(100vh-6rem)] animate-fade-in overflow-hidden bg-slate-50 dark:bg-[#080a0f]">
+      {/* CABECERA FIJA (NO SCROLLABLE) */}
+      <header className="flex-none bg-white dark:bg-[#080a0f] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm">
         <div className="max-w-7xl mx-auto px-6 md:px-12 pt-6 pb-2">
           {/* Fila Superior: Disciplina y Navegación */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-4">
@@ -105,7 +104,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
             </div>
           </div>
 
-          {/* Fila Inferior: Filtros de Categoría (Sticky también) */}
+          {/* Fila Inferior: Filtros de Categoría */}
           <div className="flex items-center gap-4 border-t border-slate-100 dark:border-white/5 pt-4 pb-4">
              <div className="flex items-center gap-2.5 text-slate-400 shrink-0 bg-slate-50 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-100 dark:border-white/5">
                <Filter size={14} className="text-primary-600" />
@@ -131,91 +130,90 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
              </div>
           </div>
         </div>
-        
-        {/* Gradiente sutil de salida para suavizar el scroll del contenido debajo */}
-        <div className="h-4 w-full bg-gradient-to-b from-white dark:from-[#080a0f] to-transparent absolute -bottom-4 left-0 pointer-events-none opacity-50"></div>
       </header>
 
-      {/* ÁREA DE CONTENIDO - Se desliza por debajo del header fijo */}
-      <div className="max-w-7xl mx-auto pt-12 px-6 md:px-12 relative z-0">
-        {activeSubTab === 'summary' && (
-          <div className="space-y-12 animate-fade-in">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-primary-600 transition-colors">Eficiencia Promedio</p>
-                   <div className="flex items-end gap-5">
-                      <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">84.2</span>
-                      <TrendingUp className="text-emerald-500 mb-2" size={28} />
-                   </div>
-                </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-600/5 rounded-bl-full group-hover:bg-yellow-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-yellow-600 transition-colors">Partidos Ganados</p>
-                   <div className="flex items-end gap-5">
-                      <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">12</span>
-                      <Trophy className="text-yellow-500 mb-2" size={28} />
-                   </div>
-                </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-bl-full group-hover:bg-emerald-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-emerald-600 transition-colors">Atletas en Lista</p>
-                   <div className="flex items-end gap-5">
-                      <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">{filteredPlayers.length}</span>
-                      <Users className="text-primary-600 mb-2" size={28} />
-                   </div>
-                </div>
-             </div>
-             
-             <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden">
-                <Dashboard showFilter={false} currentCategory={allCategories.find(c => c.id === selectedCategoryId)?.name || 'General'} />
-             </div>
-          </div>
-        )}
-
-        {activeSubTab === 'players' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
-            {filteredPlayers.map(player => (
-              <div 
-                key={player.id} 
-                onClick={() => setSelectedPlayer(player)}
-                className="bg-white dark:bg-[#0f1219] rounded-[4rem] p-10 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-3xl transition-all cursor-pointer group relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="w-28 h-28 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-700 shadow-xl relative">
-                    <img src={player.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
-                    {player.medical?.isFit && (
-                      <div className="absolute bottom-0 right-0 p-1.5 bg-white dark:bg-slate-900 rounded-full shadow-lg border border-slate-100 dark:border-white/10">
-                        <CheckCircle2 className="text-emerald-500" size={20} />
-                      </div>
-                    )}
+      {/* ÁREA DE CONTENIDO SCROLLABLE (SOLO ESTO SE MUEVE) */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+        <div className="max-w-7xl mx-auto py-12 px-6 md:px-12">
+          {activeSubTab === 'summary' && (
+            <div className="space-y-12 animate-fade-in pb-20">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-primary-600 transition-colors">Eficiencia Promedio</p>
+                     <div className="flex items-end gap-5">
+                        <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">84.2</span>
+                        <TrendingUp className="text-emerald-500 mb-2" size={28} />
+                     </div>
                   </div>
-                  <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center leading-none mb-3">{player.name}</h3>
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest bg-primary-500/10 px-4 py-1.5 rounded-full">{player.position}</span>
-                    <span className="text-slate-300 font-black italic">#{player.number}</span>
+                  <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-600/5 rounded-bl-full group-hover:bg-yellow-600/10 transition-all"></div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-yellow-600 transition-colors">Partidos Ganados</p>
+                     <div className="flex items-end gap-5">
+                        <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">12</span>
+                        <Trophy className="text-yellow-500 mb-2" size={28} />
+                     </div>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
-                    <div className="h-full bg-primary-600 rounded-full" style={{ width: `${player.overallRating}%` }}></div>
+                  <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden hover:shadow-2xl">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-bl-full group-hover:bg-emerald-600/10 transition-all"></div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-emerald-600 transition-colors">Atletas en Lista</p>
+                     <div className="flex items-end gap-5">
+                        <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">{filteredPlayers.length}</span>
+                        <Users className="text-primary-600 mb-2" size={28} />
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="bg-white dark:bg-[#0f1219] p-12 rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl overflow-hidden">
+                  <Dashboard showFilter={false} currentCategory={allCategories.find(c => c.id === selectedCategoryId)?.name || 'General'} />
+               </div>
+            </div>
+          )}
+
+          {activeSubTab === 'players' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in pb-20">
+              {filteredPlayers.map(player => (
+                <div 
+                  key={player.id} 
+                  onClick={() => setSelectedPlayer(player)}
+                  className="bg-white dark:bg-[#0f1219] rounded-[4rem] p-10 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-3xl transition-all cursor-pointer group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="w-28 h-28 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-700 shadow-xl relative">
+                      <img src={player.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
+                      {player.medical?.isFit && (
+                        <div className="absolute bottom-0 right-0 p-1.5 bg-white dark:bg-slate-900 rounded-full shadow-lg border border-slate-100 dark:border-white/10">
+                          <CheckCircle2 className="text-emerald-500" size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center leading-none mb-3">{player.name}</h3>
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest bg-primary-500/10 px-4 py-1.5 rounded-full">{player.position}</span>
+                      <span className="text-slate-300 font-black italic">#{player.number}</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+                      <div className="h-full bg-primary-600 rounded-full" style={{ width: `${player.overallRating}%` }}></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
 
-        {activeSubTab === 'attendance' && (
-          <div className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl p-6 md:p-12 animate-fade-in overflow-hidden">
-             <AttendanceTracker players={filteredPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />
-          </div>
-        )}
+          {activeSubTab === 'attendance' && (
+            <div className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl p-6 md:p-12 animate-fade-in pb-20 overflow-hidden">
+               <AttendanceTracker players={filteredPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />
+            </div>
+          )}
 
-        {activeSubTab === 'medical' && (
-          <div className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl p-6 md:p-12 animate-fade-in overflow-hidden">
-             <MedicalDashboard players={filteredPlayers} />
-          </div>
-        )}
+          {activeSubTab === 'medical' && (
+            <div className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-2xl p-6 md:p-12 animate-fade-in pb-20 overflow-hidden">
+               <MedicalDashboard players={filteredPlayers} />
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedPlayer && (
