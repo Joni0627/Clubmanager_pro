@@ -83,7 +83,7 @@ function App() {
   if (isLoading) return <SplashScreen />;
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden pt-24`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden`}>
       <TopNav 
         currentView={view} 
         setView={setView} 
@@ -92,13 +92,15 @@ function App() {
         config={config}
       />
       
-      <main className="flex-1 min-h-[calc(100vh-6rem)]">
+      <main className="flex-1 min-h-screen">
         {view === 'master-data' && (
-          <MasterData config={config} onSave={handleSaveConfig} />
+          <div className="pt-24">
+            <MasterData config={config} onSave={handleSaveConfig} />
+          </div>
         )}
         
         {view === 'squads' && (
-          <div className="p-12 max-w-7xl mx-auto">
+          <div className="pt-24 p-12 max-w-7xl mx-auto">
             <header className="mb-20 animate-fade-in">
               <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white">Planteles</h2>
               <div className="flex items-center gap-4 mt-6">

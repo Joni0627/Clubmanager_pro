@@ -59,10 +59,10 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   ];
 
   return (
-    <div className="animate-fade-in pb-24">
-      {/* HEADER INTEGRADO - SE PEGA AL TOPNAV (top-24) */}
-      <header className="bg-white/95 dark:bg-[#080a0f]/95 backdrop-blur-3xl border-b border-slate-200 dark:border-white/5 sticky top-24 z-50 shadow-xl transition-all">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-5 pb-1">
+    <div className="animate-fade-in pb-24 pt-24 min-h-screen">
+      {/* HEADER INTEGRADO - FIJO BAJO EL TOPNAV */}
+      <header className="bg-white/95 dark:bg-[#080a0f]/95 backdrop-blur-3xl border-b border-slate-200 dark:border-white/5 sticky top-24 z-[140] shadow-xl transition-all">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-6 pb-2">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4 w-full md:w-auto">
               <button 
@@ -96,14 +96,14 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
             </div>
           </div>
 
-          {/* DIVISIONES / CATEGORÍAS - ESTO RELLENA EL HUECO EN BLANCO */}
+          {/* DIVISIONES / CATEGORÍAS - PARTE INTEGRAL DEL HEADER */}
           <div className="mt-4 flex items-center gap-3 border-t border-slate-100 dark:border-white/5 pt-4 pb-3">
              <div className="flex items-center gap-2 text-slate-400 shrink-0 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5">
                <Filter size={12} className="text-primary-600" />
                <span className="text-[8px] font-black uppercase tracking-widest">Divisiones</span>
              </div>
              
-             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
+             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 flex-1">
                 <button 
                   onClick={() => setSelectedCategoryId('all')}
                   className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedCategoryId === 'all' ? 'bg-slate-950 text-white border-slate-950 shadow-lg' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 hover:border-primary-600/30'}`}
@@ -124,11 +124,10 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL - pt-32 PARA COMPENSAR LA ALTURA DEL STICKY HEADER Y EVITAR SOLAPAMIENTO */}
-      <div className="max-w-7xl mx-auto pt-32 px-6 md:px-12 relative z-10">
+      {/* CONTENIDO PRINCIPAL - AJUSTADO PARA EMPEZAR JUSTO DESPUÉS DEL HEADER STICKY */}
+      <div className="max-w-7xl mx-auto pt-8 px-6 md:px-12 relative z-10">
         {activeSubTab === 'summary' && (
           <div className="space-y-12 animate-fade-in">
-             {/* INDICADORES / BUBBLES - YA NO SE SOLAPAN */}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
@@ -171,7 +170,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                 className="bg-white dark:bg-[#0f1219] rounded-[3.5rem] p-8 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden"
               >
                 <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-700 shadow-xl relative">
                     <img src={player.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
                     {player.medical?.isFit && <CheckCircle2 className="absolute bottom-0 right-0 text-emerald-500 bg-white dark:bg-slate-900 rounded-full" size={22} />}
                   </div>
