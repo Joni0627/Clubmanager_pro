@@ -61,7 +61,6 @@ function App() {
 
   const handleEnterDiscipline = (disc: Discipline) => {
     setTransitioningId(disc.id);
-    // Pequeño delay para permitir que la animación de zoom se vea antes de cambiar el componente
     setTimeout(() => {
       setSelectedDiscipline(disc);
       setView('discipline-console');
@@ -74,9 +73,7 @@ function App() {
     await db.config.update({
       name: newConfig.name,
       logo_url: newConfig.logoUrl,
-      // Fix: Access primaryColor property from newConfig as defined in ClubConfig interface
       primary_color: newConfig.primaryColor || '#ec4899',
-      // Fix: Access secondaryColor property from newConfig as defined in ClubConfig interface
       secondary_color: newConfig.secondaryColor || '#0f172a',
       disciplines: newConfig.disciplines,
       updated_at: new Date().toISOString()
@@ -86,7 +83,7 @@ function App() {
   if (isLoading) return <SplashScreen />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden pt-24">
+    <div className={`min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden ${view === 'discipline-console' ? 'pt-24' : 'pt-24'}`}>
       <TopNav 
         currentView={view} 
         setView={setView} 
@@ -121,8 +118,6 @@ function App() {
                       className={`group bg-white dark:bg-[#0f1219] rounded-[4rem] p-12 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-3xl transition-all duration-500 cursor-pointer relative overflow-hidden ${isTransitioning ? 'scale-110 opacity-0' : 'hover:-translate-y-2'}`}
                     >
                       <div className="absolute top-0 right-0 w-40 h-40 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all duration-700"></div>
-                      
-                      {/* Marco Circular Redondeado */}
                       <div className={`w-24 h-24 rounded-full bg-slate-950 flex items-center justify-center mb-10 shadow-2xl relative z-10 border-4 border-slate-100 dark:border-slate-800 transition-all duration-500 ${isTransitioning ? 'scale-[3] rotate-12' : 'group-hover:scale-110 group-hover:rotate-6'}`}>
                         {disc.iconUrl ? (
                           <img src={disc.iconUrl} className="w-full h-full object-cover rounded-full p-1" />
@@ -131,10 +126,8 @@ function App() {
                         )}
                         <div className="absolute -inset-2 rounded-full border border-primary-600/20 animate-pulse group-hover:border-primary-600/50"></div>
                       </div>
-
                       <h3 className="text-4xl font-black uppercase tracking-tighter dark:text-white leading-none mb-4 italic group-hover:text-primary-600 transition-colors">{disc.name}</h3>
                       <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px] mb-8">Ecosistema Deportivo</p>
-                      
                       <div className="flex items-center gap-3 text-primary-600 font-black uppercase text-[10px] tracking-widest overflow-hidden">
                         <span className="group-hover:translate-x-0 -translate-x-full opacity-0 group-hover:opacity-100 transition-all duration-500">Explorar Consola</span>
                         <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform duration-500" />
@@ -162,12 +155,6 @@ function App() {
           />
         )}
       </main>
-      
-      <div className="fixed bottom-12 right-12 z-[200]">
-         <button className="w-16 h-16 bg-slate-900 dark:bg-primary-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all border-4 border-white dark:border-[#080a0f] group">
-            <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
-         </button>
-      </div>
     </div>
   );
 }
