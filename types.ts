@@ -37,6 +37,7 @@ export interface ClubConfig {
 
 export interface Tutor {
   name: string;
+  dni: string;
   relationship: 'Padre' | 'Madre' | 'Tutor Legal' | 'Otro';
   phone: string;
   email?: string;
@@ -67,6 +68,10 @@ export interface Member {
   assignments: Assignment[];
   status: 'Active' | 'Inactive' | 'Pending';
   createdAt: string;
+  // Perfil de Sistema
+  systemRole: 'STAFF' | 'Socio' | 'Externo';
+  canLogin: boolean;
+  username?: string;
 }
 
 export interface UserSession {
