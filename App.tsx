@@ -83,7 +83,7 @@ function App() {
   if (isLoading) return <SplashScreen />;
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden ${view === 'discipline-console' ? 'pt-24' : 'pt-24'}`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden pt-24`}>
       <TopNav 
         currentView={view} 
         setView={setView} 
