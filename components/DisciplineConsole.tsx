@@ -58,16 +58,16 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] animate-fade-in overflow-hidden bg-slate-50 dark:bg-[#080a0f]">
-      {/* CABECERA FIJA (NO SCROLLABLE) */}
+    <div className="flex flex-col h-[calc(100vh-6rem)] mt-24 animate-fade-in overflow-hidden bg-slate-50 dark:bg-[#080a0f] border-t border-slate-200 dark:border-white/5">
+      {/* CABECERA FIJA (NO SE MUEVE) */}
       <header className="flex-none bg-white dark:bg-[#080a0f] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm">
         <div className="max-w-7xl mx-auto px-6 md:px-12 pt-6 pb-2">
-          {/* Fila Superior: Disciplina y Navegación */}
+          {/* Fila Superior: Disciplina, Nombre y Tabs Principales */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-4">
             <div className="flex items-center gap-5 w-full md:w-auto">
               <button 
                 onClick={onBack}
-                className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 hover:bg-white dark:hover:bg-white/10 transition-all shrink-0 shadow-sm"
+                className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 hover:bg-white dark:hover:bg-white/10 transition-all shrink-0 shadow-sm border border-slate-200 dark:border-white/5"
               >
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
@@ -132,8 +132,8 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
         </div>
       </header>
 
-      {/* ÁREA DE CONTENIDO SCROLLABLE (SOLO ESTO SE MUEVE) */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+      {/* ÁREA DE CONTENIDO (CON SCROLL) */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar bg-slate-50 dark:bg-[#080a0f]">
         <div className="max-w-7xl mx-auto py-12 px-6 md:px-12">
           {activeSubTab === 'summary' && (
             <div className="space-y-12 animate-fade-in pb-20">
