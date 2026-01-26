@@ -4,7 +4,7 @@ import { Member, AppRole, ClubConfig, Tutor, Assignment } from '../types';
 import { 
   UserPlus, Search, Trash2, User, X, Save, Camera, Loader2, PlusCircle, Heart, 
   UserCheck, Fingerprint, ShieldCheck, Briefcase, Ruler, Weight, Activity, 
-  BadgeCheck, Contact2, ShieldAlert, ChevronRight
+  BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin
 } from 'lucide-react';
 
 interface MemberManagementProps {
@@ -26,7 +26,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
   const [formData, setFormData] = useState<Partial<Member>>({
     name: '', dni: '', gender: 'Masculino', birthDate: '', email: '', phone: '',
-    photoUrl: '', address: '', bloodType: '', medicalInsurance: '', weight: '', height: '',
+    photoUrl: '', address: '', city: '', province: '', postalCode: '',
+    bloodType: '', medicalInsurance: '', weight: '', height: '',
     status: 'Active', assignments: [], systemRole: 'Socio', canLogin: false,
     tutor: { name: '', dni: '', relationship: 'Padre', phone: '', email: '' }
   });
@@ -42,7 +43,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
     setSelectedMember(null);
     setFormData({
       name: '', dni: '', gender: 'Masculino', birthDate: '', email: '', phone: '',
-      photoUrl: '', address: '', bloodType: '', medicalInsurance: '', weight: '', height: '',
+      photoUrl: '', address: '', city: '', province: '', postalCode: '',
+      bloodType: '', medicalInsurance: '', weight: '', height: '',
       status: 'Active', assignments: [], systemRole: 'Socio', canLogin: false,
       tutor: { name: '', dni: '', relationship: 'Padre', phone: '', email: '' }
     });
@@ -288,11 +290,35 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Teléfono</label>
-                            <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="+54..." />
+                            <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="+54..." />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Email</label>
-                            <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="ej@mail.com" />
+                            <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="ej@mail.com" />
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="space-y-6">
+                        <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                          <div className="w-1 h-4 bg-emerald-500 rounded-full"></div> Ubicación y Domicilio
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                          <div className="space-y-2 md:col-span-4">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Dirección (Calle y Número)</label>
+                            <input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="AV. SIEMPRE VIVA 123" />
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Ciudad</label>
+                            <input value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="CIUDAD" />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Provincia</label>
+                            <input value={formData.province || ''} onChange={e => setFormData({...formData, province: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="PROVINCIA" />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">C. Postal</label>
+                            <input value={formData.postalCode || ''} onChange={e => setFormData({...formData, postalCode: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="ZIP" />
                           </div>
                         </div>
                       </section>

@@ -60,6 +60,9 @@ export interface Member {
   phone: string;
   photoUrl: string;
   address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
   bloodType?: string;
   medicalInsurance?: string;
   weight?: string;
@@ -72,6 +75,9 @@ export interface Member {
   systemRole: 'STAFF' | 'Socio' | 'Externo';
   canLogin: boolean;
   username?: string;
+  // Campos de rendimiento
+  stats: Record<string, number>;
+  overallRating?: number;
 }
 
 export interface UserSession {
