@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Player, ClubConfig, Discipline, Branch, Category } from '../types';
+import { Member, ClubConfig, Discipline, Category } from '../types';
 import { 
-  Users, Shield, Star, Zap, Image as ImageIcon, ChevronRight, Filter, Search, Settings, ChevronLeft
+  Users, Shield, Star, Search, ChevronRight, ChevronLeft, Settings
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -15,7 +15,7 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
   const [selectedSportId, setSelectedSportId] = useState<string>(clubConfig.disciplines[0]?.id || '');
   const [selectedGender, setSelectedGender] = useState<'Masculino' | 'Femenino'>('Masculino');
   const [selectedCatId, setSelectedCatId] = useState<string>('');
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -38,13 +38,13 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
   }, [activeBranch]);
 
   useEffect(() => {
-    const fetchPlayers = async () => {
+    const fetchMembers = async () => {
       setIsLoading(true);
-      const { data } = await db.players.getAll();
-      if (data) setPlayers(data);
+      const { data } = await db.members.getAll();
+      if (data) setMembers(data);
       setIsLoading(false);
     };
-    fetchPlayers();
+    fetchMembers();
   }, []);
 
   const handleScroll = () => {
@@ -65,16 +65,19 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
     }
   };
 
-  const filteredPlayers = useMemo(() => {
+  const filteredAthletes = useMemo(() => {
     if (!activeSport || !activeBranch) return [];
-    const activeCatName = activeBranch.categories?.find(c => c.id === selectedCatId)?.name;
-    return players.filter(p => 
-        p.discipline === activeSport.name && 
-        p.gender === selectedGender &&
-        p.category === activeCatName &&
-        (searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).sort((a, b) => b.overallRating - a.overallRating);
-  }, [players, activeSport, selectedGender, selectedCatId, searchTerm, activeBranch]);
+    
+    return members.filter(m => {
+        const matchesSearch = searchTerm === '' || m.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const hasAssignment = m.assignments.some(a => 
+            a.disciplineId === activeSport.id && 
+            a.categoryId === selectedCatId &&
+            a.role === 'PLAYER'
+        );
+        return matchesSearch && hasAssignment;
+    }).sort((a, b) => (b.overallRating || 0) - (a.overallRating || 0));
+  }, [members, activeSport, selectedGender, selectedCatId, searchTerm, activeBranch]);
 
   if (clubConfig.disciplines.length === 0) {
       return (
@@ -107,30 +110,17 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
         </div>
       </header>
 
-      {/* SPORT SELECTION WHEEL - Interactive Carousel */}
       <div className="relative mb-16 group/carousel">
-        {/* Navigation Arrows */}
         {showLeftArrow && (
-          <button 
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-full shadow-xl border border-slate-200 dark:border-white/10 text-primary-600 hover:scale-110 transition-all active:scale-95 hidden md:flex items-center justify-center"
-          >
+          <button onClick={() => scroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white dark:bg-slate-900 p-4 rounded-full shadow-xl border border-slate-200 text-primary-600 hidden md:flex items-center justify-center">
             <ChevronLeft size={24} strokeWidth={3} />
           </button>
         )}
-        
         {showRightArrow && (
-          <button 
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-full shadow-xl border border-slate-200 dark:border-white/10 text-primary-600 hover:scale-110 transition-all active:scale-95 hidden md:flex items-center justify-center"
-          >
+          <button onClick={() => scroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white dark:bg-slate-900 p-4 rounded-full shadow-xl border border-slate-200 text-primary-600 hidden md:flex items-center justify-center">
             <ChevronRight size={24} strokeWidth={3} />
           </button>
         )}
-
-        {/* Edge Faders */}
-        <div className={`absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-slate-50 dark:from-[#080a0f] to-transparent z-10 pointer-events-none transition-opacity duration-500 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`}></div>
-        <div className={`absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-slate-50 dark:from-[#080a0f] to-transparent z-10 pointer-events-none transition-opacity duration-500 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`}></div>
 
         <div 
           ref={scrollContainerRef}
@@ -145,24 +135,10 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
                         onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
                         className={`shrink-0 flex flex-col items-center gap-6 transition-all duration-500 snap-center ${isActive ? 'scale-105' : 'opacity-30 grayscale scale-90 hover:opacity-60'}`}
                     >
-                        <div 
-                          className={`w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 relative border-4 ${isActive ? 'bg-slate-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`} 
-                          style={isActive ? { borderColor: clubConfig.primaryColor } : {}}
-                        >
-                            <div className="w-full h-full rounded-[2.1rem] overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900 relative">
-                              {sport.iconUrl ? (
-                                  <img src={sport.iconUrl} className="w-full h-full object-cover p-1 scale-[1.02]" />
-                              ) : (
-                                  <Shield size={isActive ? 60 : 40} className="text-slate-300" />
-                              )}
+                        <div className={`w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] flex items-center justify-center transition-all duration-500 relative border-4 ${isActive ? 'bg-slate-950 shadow-2xl' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`} style={isActive ? { borderColor: clubConfig.primaryColor } : {}}>
+                            <div className="w-full h-full rounded-[2.1rem] overflow-hidden flex items-center justify-center bg-white dark:bg-slate-900">
+                              {sport.iconUrl ? <img src={sport.iconUrl} className="w-full h-full object-cover p-1" /> : <Shield size={isActive ? 60 : 40} className="text-slate-300" />}
                             </div>
-                            
-                            {isActive && (
-                              <div 
-                                className="absolute -inset-1 rounded-[2.8rem] border-2 animate-ping pointer-events-none opacity-40"
-                                style={{ borderColor: clubConfig.primaryColor }}
-                              ></div>
-                            )}
                         </div>
                         <span className={`text-[10px] font-black uppercase tracking-[0.4em] transition-colors ${isActive ? 'text-primary-600' : 'text-slate-400'}`}>
                           {sport.name}
@@ -175,33 +151,25 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
 
       <div className="flex flex-col lg:flex-row gap-12">
           <aside className="w-full lg:w-80 shrink-0 space-y-10">
-              <div className="bg-white dark:bg-[#0f1219] rounded-[3rem] p-8 shadow-2xl border border-slate-200 dark:border-white/5">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8 border-b border-slate-100 dark:border-white/5 pb-4">Rama</h4>
+              <div className="bg-white dark:bg-[#0f1219] rounded-[3rem] p-8 shadow-2xl border border-slate-200">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8 border-b pb-4">Rama</h4>
                   <div className="flex flex-col gap-3">
                       {['Masculino', 'Femenino'].map((g) => (
-                          <button 
-                            key={g} 
-                            onClick={() => { setSelectedGender(g as any); setSelectedCatId(''); }}
-                            className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedGender === g ? 'bg-primary-600 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100'}`}
-                          >
+                          <button key={g} onClick={() => { setSelectedGender(g as any); setSelectedCatId(''); }} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedGender === g ? 'bg-primary-600 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100'}`}>
                               {g} <ChevronRight size={14} className={selectedGender === g ? 'translate-x-1' : 'opacity-0'} />
                           </button>
                       ))}
                   </div>
 
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-12 mb-8 border-b border-slate-100 dark:border-white/5 pb-4">Categoría</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-12 mb-8 border-b pb-4">Categoría</h4>
                   <div className="flex flex-col gap-3">
                       {activeBranch?.categories?.map((cat) => (
-                          <button 
-                            key={cat.id} 
-                            onClick={() => setSelectedCatId(cat.id)}
-                            className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-950 dark:bg-slate-800 text-white shadow-xl border-l-4 border-primary-600' : 'bg-slate-50 dark:bg-white/5 text-slate-500'}`}
-                          >
+                          <button key={cat.id} onClick={() => setSelectedCatId(cat.id)} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-950 dark:bg-slate-800 text-white shadow-xl border-l-4 border-primary-600' : 'bg-slate-50 dark:bg-white/5 text-slate-500'}`}>
                               {cat.name} <Star size={12} className={selectedCatId === cat.id ? 'fill-primary-500 text-primary-500' : 'opacity-0'} />
                           </button>
                       ))}
                       {(!activeBranch || !activeBranch.categories || activeBranch.categories.length === 0) && (
-                          <div className="p-10 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl mt-4">
+                          <div className="p-10 text-center border-2 border-dashed border-slate-100 rounded-3xl mt-4">
                              <Settings size={24} className="mx-auto text-slate-300 mb-2" />
                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Sin categorías configuradas</p>
                           </div>
@@ -213,28 +181,28 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
               {isLoading ? (
                   [...Array(6)].map((_, i) => <div key={i} className="h-96 bg-slate-200 dark:bg-white/5 rounded-[4rem] animate-pulse"></div>)
-              ) : filteredPlayers.length > 0 ? (
-                  filteredPlayers.map((player) => (
-                      <div key={player.id} className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 p-10 shadow-xl hover:shadow-3xl transition-all group overflow-hidden relative">
+              ) : filteredAthletes.length > 0 ? (
+                  filteredAthletes.map((athlete) => (
+                      <div key={athlete.id} className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 p-10 shadow-xl hover:shadow-3xl transition-all group overflow-hidden relative">
                           <div className="flex flex-col items-center relative z-10">
                               <div className="w-36 h-36 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-8 group-hover:scale-110 transition-transform duration-700 shadow-2xl relative">
-                                  <img src={player.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
+                                  <img src={athlete.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
                                   <div className="absolute -bottom-2 -right-2 bg-primary-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-black italic text-xl shadow-lg">
-                                      {player.overallRating}
+                                      {athlete.overallRating || 0}
                                   </div>
                               </div>
-                              <h3 className="font-black uppercase tracking-tighter text-3xl text-slate-800 dark:text-white text-center leading-none mb-3">{player.name}</h3>
+                              <h3 className="font-black uppercase tracking-tighter text-3xl text-slate-800 dark:text-white text-center leading-none mb-3">{athlete.name}</h3>
                               <div className="flex items-center gap-4">
-                                 <span className="text-primary-600 font-black text-[9px] uppercase tracking-widest bg-primary-500/10 px-4 py-2 rounded-full">{player.position}</span>
-                                 <span className="text-slate-400 font-black text-lg italic">#{player.number}</span>
+                                 <span className="text-primary-600 font-black text-[9px] uppercase tracking-widest bg-primary-500/10 px-4 py-2 rounded-full">ATLETA</span>
+                                 <span className="text-slate-400 font-black text-lg italic">DNI: {athlete.dni.slice(-4)}</span>
                               </div>
                           </div>
                       </div>
                   ))
               ) : (
-                  <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[5rem]">
+                  <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-100 rounded-[5rem]">
                       <Users size={64} className="mx-auto mb-6 text-slate-300" />
-                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas registrados</h3>
+                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas en esta división</h3>
                   </div>
               )}
           </div>

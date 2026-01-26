@@ -21,19 +21,41 @@ export const db = {
         { onConflict: 'id' }
       )
   },
+  members: {
+    getAll: () => supabase
+      .from('members')
+      .select('*')
+      .order('name', { ascending: true }),
+    
+    upsert: (member: any) => supabase
+      .from('members')
+      .upsert(member),
+      
+    delete: (id: string) => supabase
+      .from('members')
+      .delete()
+      .eq('id', id)
+  },
+  // Fix: Added players property to db object to fix property missing errors in multiple components
   players: {
     getAll: () => supabase
       .from('players')
-      .select('*'),
+      .select('*')
+      .order('name', { ascending: true }),
     
     upsert: (player: any) => supabase
       .from('players')
-      .upsert(player)
+      .upsert(player),
+      
+    delete: (id: string) => supabase
+      .from('players')
+      .delete()
+      .eq('id', id)
   },
   fees: {
     getAll: () => supabase
       .from('fees')
-      .select('*, player:players(*)'),
+      .select('*, player:players(*)'), // Fix: Changed join from member to player to match FeesManagement expected property name
     
     upsert: (fee: any) => supabase
       .from('fees')

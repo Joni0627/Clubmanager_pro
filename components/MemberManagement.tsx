@@ -91,6 +91,12 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
     }
   };
 
+  const handleDelete = (id: string, name: string) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente a ${name}? Esta acción no se puede deshacer.`)) {
+      onDeleteMember(id);
+    }
+  };
+
   const filteredMembers = members.filter(m => 
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.dni.includes(searchTerm)
   );
@@ -136,8 +142,16 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner shrink-0">
                 <img src={member.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
               </div>
-              <div className="min-w-0">
-                <h3 className="font-black text-lg uppercase tracking-tight text-slate-800 dark:text-white leading-none mb-1 truncate">{member.name}</h3>
+              <div className="min-w-0 flex-1">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-black text-lg uppercase tracking-tight text-slate-800 dark:text-white leading-none mb-1 truncate">{member.name}</h3>
+                  <button 
+                    onClick={() => handleDelete(member.id, member.name)}
+                    className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DNI: {member.dni}</p>
               </div>
             </div>
@@ -152,7 +166,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-10 animate-fade-in">
           <div className="bg-white dark:bg-[#0d1017] w-full max-w-6xl h-full lg:h-[85vh] lg:rounded-[3rem] shadow-2xl flex flex-col border border-slate-200 dark:border-white/10 overflow-hidden ring-1 ring-white/5">
             
-            {/* Header Reducido */}
             <div className="px-10 py-6 flex justify-between items-center border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-slate-900/40">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary-600/10 flex items-center justify-center text-primary-600">
@@ -170,7 +183,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
             <div className="flex flex-1 overflow-hidden">
               
-              {/* Sidebar Lateral Mejorado */}
               <div className="w-64 bg-slate-50/50 dark:bg-[#11141d] border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 overflow-y-auto no-scrollbar">
                 
                 <div className="p-8 flex flex-col items-center border-b border-slate-100 dark:border-white/5">
@@ -187,22 +199,27 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">DNI: {formData.dni || '---'}</p>
                 </div>
 
-                <nav className="p-4 space-y-2">
+                <nav className="p-4 space-y-3">
                   {tabs.map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as ModalTab)}
-                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all relative group ${activeTab === tab.id ? 'bg-white dark:bg-[#1a1f2b] text-slate-800 dark:text-white shadow-md border border-slate-100 dark:border-white/10' : 'text-slate-400 hover:bg-white/5'}`}
+                      className={`w-full flex items-center gap-4 px-5 py-5 rounded-2xl transition-all relative group border ${
+                        activeTab === tab.id 
+                        ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 border-primary-500' 
+                        : 'text-slate-400 border-transparent hover:bg-white/5'
+                      }`}
                     >
-                      <tab.icon size={18} className={activeTab === tab.id ? tab.color : 'opacity-30'} />
+                      <tab.icon size={18} className={activeTab === tab.id ? 'text-white' : 'opacity-30'} />
                       <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
-                      {activeTab === tab.id && <div className="absolute right-3 w-1.5 h-1.5 bg-primary-600 rounded-full shadow-[0_0_8px_#ec4899]"></div>}
+                      {activeTab === tab.id && (
+                        <div className="absolute right-3 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+                      )}
                     </button>
                   ))}
                 </nav>
               </div>
 
-              {/* Contenido Compacto */}
               <div className="flex-1 bg-white dark:bg-[#0d1017] overflow-y-auto p-10 custom-scrollbar">
                 <div className="max-w-3xl">
                   
@@ -400,7 +417,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               </div>
             </div>
 
-            {/* Footer Compacto */}
             <div className="px-10 py-6 border-t border-slate-100 dark:border-white/5 flex justify-end bg-slate-50/50 dark:bg-slate-900/40 shrink-0">
               <button 
                 onClick={handleSave} 

@@ -6,28 +6,18 @@ import Squads from './components/Squads.tsx';
 import DisciplineConsole from './components/DisciplineConsole.tsx';
 import MemberManagement from './components/MemberManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { ClubConfig, Discipline, Player, Member, UserSession } from './types.ts';
+import { ClubConfig, Discipline, Member, UserSession } from './types.ts';
 import { db } from './lib/supabase.ts';
-import { Shield, ArrowRight, Users, UserCog } from 'lucide-react';
+import { Shield, ArrowRight } from 'lucide-react';
 
 function App() {
   const [view, setView] = useState('squads');
   const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [transitioningId, setTransitioningId] = useState<string | null>(null);
   
-  // Usuario simulado (Para demostrar el sistema de permisos)
-  const [currentUser, setCurrentUser] = useState<UserSession>({
-    memberId: 'admin-1',
-    email: 'admin@clubplegma.com',
-    role: 'ADMIN',
-    permissions: ['FULL_ACCESS'],
-    assignedCategories: []
-  });
-
   const [config, setConfig] = useState<ClubConfig>({
     name: 'MI CLUB',
     logoUrl: '',
@@ -45,10 +35,9 @@ function App() {
   const fetchData = async () => {
     try {
       const { data: configData } = await db.config.get();
-      const { data: playersData } = await db.players.getAll();
+      const { data: membersData } = await db.members.getAll();
       
-      const localMembers = localStorage.getItem('club_members');
-      if (localMembers) setMembers(JSON.parse(localMembers));
+      if (membersData) setMembers(membersData);
       
       if (configData) {
         setConfig({
@@ -58,10 +47,6 @@ function App() {
           secondaryColor: configData.secondary_color || '#0f172a',
           disciplines: configData.disciplines || []
         });
-      }
-      
-      if (playersData) {
-        setPlayers(playersData);
       }
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -75,18 +60,22 @@ function App() {
   }, []);
 
   const handleSaveMember = async (member: Member) => {
-    const updatedMembers = members.find(m => m.id === member.id)
-      ? members.map(m => m.id === member.id ? member : m)
-      : [...members, member];
-    
-    setMembers(updatedMembers);
-    localStorage.setItem('club_members', JSON.stringify(updatedMembers));
+    try {
+      await db.members.upsert(member);
+      const { data } = await db.members.getAll();
+      if (data) setMembers(data);
+    } catch (e) {
+      console.error("Error al guardar miembro:", e);
+    }
   };
 
   const handleDeleteMember = async (id: string) => {
-    const updatedMembers = members.filter(m => m.id !== id);
-    setMembers(updatedMembers);
-    localStorage.setItem('club_members', JSON.stringify(updatedMembers));
+    try {
+      await db.members.delete(id);
+      setMembers(prev => prev.filter(m => m.id !== id));
+    } catch (e) {
+      console.error("Error al eliminar miembro:", e);
+    }
   };
 
   const handleEnterDiscipline = (disc: Discipline) => {
@@ -195,7 +184,7 @@ function App() {
           <DisciplineConsole 
             discipline={selectedDiscipline} 
             clubConfig={config} 
-            players={players}
+            members={members}
             onBack={() => setView('squads')}
           />
         )}
