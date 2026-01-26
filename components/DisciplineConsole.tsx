@@ -59,35 +59,35 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   ];
 
   return (
-    <div className="animate-fade-in pb-24 -mt-10">
-      {/* HEADER ULTRA COMPACTO STICKY */}
-      <header className="bg-white/80 dark:bg-[#080a0f]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-24 z-[60] transition-all">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-6 pb-2">
+    <div className="animate-fade-in pb-24">
+      {/* HEADER INTEGRADO - SE PEGA AL TOPNAV (top-24) */}
+      <header className="bg-white/95 dark:bg-[#080a0f]/95 backdrop-blur-3xl border-b border-slate-200 dark:border-white/5 sticky top-24 z-50 shadow-xl transition-all">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-5 pb-1">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4 w-full md:w-auto">
               <button 
                 onClick={onBack}
-                className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-primary-600 transition-all shrink-0"
+                className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-primary-600 transition-all shrink-0"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={18} />
               </button>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-slate-950 flex items-center justify-center shadow-lg border border-primary-600/30 shrink-0">
-                  {discipline.iconUrl ? <img src={discipline.iconUrl} className="w-full h-full object-cover p-1 rounded-full" /> : <Activity size={16} className="text-primary-600" />}
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-full bg-slate-950 flex items-center justify-center shadow-xl border-2 border-primary-600/30 overflow-hidden shrink-0">
+                  {discipline.iconUrl ? <img src={discipline.iconUrl} className="w-full h-full object-cover p-1 rounded-full" /> : <Activity size={18} className="text-primary-600" />}
                 </div>
                 <div className="truncate">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter dark:text-white leading-none italic truncate">{discipline.name}</h2>
-                  <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Console v2.5</p>
+                  <h2 className="text-3xl font-black uppercase tracking-tighter dark:text-white leading-none italic truncate">{discipline.name}</h2>
+                  <p className="text-[8px] font-black text-primary-600 uppercase tracking-widest mt-1">Consola de Alto Rendimiento</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/5 w-full md:w-auto overflow-x-auto no-scrollbar">
+            <div className="flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1 rounded-[1.2rem] border border-slate-200 dark:border-white/5 w-full md:w-auto overflow-x-auto no-scrollbar">
               {subTabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveSubTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <tab.icon size={12} />
                   <span>{tab.label}</span>
@@ -96,17 +96,17 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
             </div>
           </div>
 
-          {/* CARRUSEL DE CATEGORÍAS - RELLENA EL ESPACIO EN BLANCO */}
-          <div className="mt-4 flex items-center gap-2 border-t border-slate-100 dark:border-white/5 pt-3 overflow-x-auto no-scrollbar pb-2">
+          {/* DIVISIONES / CATEGORÍAS - ESTO RELLENA EL HUECO EN BLANCO */}
+          <div className="mt-4 flex items-center gap-3 border-t border-slate-100 dark:border-white/5 pt-4 pb-3">
              <div className="flex items-center gap-2 text-slate-400 shrink-0 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5">
-               <Filter size={10} className="text-primary-600" />
-               <span className="text-[7px] font-black uppercase tracking-widest">Divisiones</span>
+               <Filter size={12} className="text-primary-600" />
+               <span className="text-[8px] font-black uppercase tracking-widest">Divisiones</span>
              </div>
              
-             <div className="flex items-center gap-2 shrink-0 pr-12">
+             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
                 <button 
                   onClick={() => setSelectedCategoryId('all')}
-                  className={`px-4 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedCategoryId === 'all' ? 'bg-slate-950 text-white border-slate-950 shadow-md' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'}`}
+                  className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedCategoryId === 'all' ? 'bg-slate-950 text-white border-slate-950 shadow-lg' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 hover:border-primary-600/30'}`}
                 >
                   Toda la Disciplina
                 </button>
@@ -114,7 +114,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategoryId(cat.id)}
-                    className={`px-4 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedCategoryId === cat.id ? 'bg-primary-600 text-white border-primary-600 shadow-md' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'}`}
+                    className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedCategoryId === cat.id ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 hover:border-primary-600/30 hover:text-primary-600'}`}
                   >
                     {cat.name}
                   </button>
@@ -124,30 +124,31 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
         </div>
       </header>
 
-      {/* CONTENIDO PRINCIPAL - pt-20 PARA EVITAR SOLAPAMIENTO */}
-      <div className="max-w-7xl mx-auto pt-20 px-6 md:px-12 relative z-10">
+      {/* CONTENIDO PRINCIPAL - pt-32 PARA COMPENSAR LA ALTURA DEL STICKY HEADER Y EVITAR SOLAPAMIENTO */}
+      <div className="max-w-7xl mx-auto pt-32 px-6 md:px-12 relative z-10">
         {activeSubTab === 'summary' && (
           <div className="space-y-12 animate-fade-in">
+             {/* INDICADORES / BUBBLES - YA NO SE SOLAPAN */}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/5 rounded-bl-full group-hover:bg-primary-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Eficiencia Promedio</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-primary-600 transition-colors">Eficiencia Promedio</p>
                    <div className="flex items-end gap-5">
                       <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">84.2</span>
                       <TrendingUp className="text-emerald-500 mb-2" size={28} />
                    </div>
                 </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-600/5 rounded-bl-full group-hover:bg-yellow-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Partidos Ganados</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-yellow-600 transition-colors">Partidos Ganados</p>
                    <div className="flex items-end gap-5">
                       <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">12</span>
                       <Trophy className="text-yellow-500 mb-2" size={28} />
                    </div>
                 </div>
-                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3.5rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
+                <div className="bg-white dark:bg-[#0f1219] p-10 rounded-[3rem] shadow-sm border border-slate-200 dark:border-white/5 hover:border-primary-600/20 transition-all group relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-bl-full group-hover:bg-emerald-600/10 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Atletas en Lista</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 group-hover:text-emerald-600 transition-colors">Atletas en Lista</p>
                    <div className="flex items-end gap-5">
                       <span className="text-7xl font-black dark:text-white leading-none tracking-tighter">{filteredPlayers.length}</span>
                       <Users className="text-primary-600 mb-2" size={28} />
