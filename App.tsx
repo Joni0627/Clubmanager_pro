@@ -1,19 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar.tsx';
+import TopNav from './components/TopNav.tsx';
 import MasterData from './components/MasterData.tsx';
 import Squads from './components/Squads.tsx';
-import Dashboard from './components/Dashboard.tsx';
+import DisciplineConsole from './components/DisciplineConsole.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { ClubConfig } from './types.ts';
+import { ClubConfig, Discipline, Player } from './types.ts';
 import { db } from './lib/supabase.ts';
-import { Settings, Shield, PlusCircle } from 'lucide-react';
+import { Settings, Shield } from 'lucide-react';
 
 function App() {
-  const [view, setView] = useState('dashboard');
+  const [view, setView] = useState('squads');
+  const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [config, setConfig] = useState<ClubConfig>({
     name: 'MI CLUB',
     logoUrl: '',
@@ -28,39 +29,43 @@ function App() {
     else root.classList.remove('dark');
   }, [isDarkMode]);
 
-  useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const { data, error } = await db.config.get();
-        if (data && !error) {
-          const loadedConfig = {
-            name: data.name || 'MI CLUB',
-            logoUrl: data.logo_url || '',
-            primaryColor: data.primary_color || '#ec4899',
-            secondaryColor: data.secondary_color || '#0f172a',
-            disciplines: data.disciplines || []
-          };
-          setConfig(loadedConfig);
-          
-          // Si no hay disciplinas, obligamos a ir a Estructura para empezar
-          if (!loadedConfig.disciplines || loadedConfig.disciplines.length === 0) {
-            setView('master-data');
-          }
-        } else {
-            setView('master-data');
-        }
-      } catch (err) {
-        console.error("Error inicializando config:", err);
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    try {
+      const { data: configData } = await db.config.get();
+      const { data: playersData } = await db.players.getAll();
+      
+      if (configData) {
+        setConfig({
+          name: configData.name || 'MI CLUB',
+          logoUrl: configData.logo_url || '',
+          primaryColor: configData.primary_color || '#ec4899',
+          secondaryColor: configData.secondary_color || '#0f172a',
+          disciplines: configData.disciplines || []
+        });
       }
-    };
-    fetchConfig();
+      
+      if (playersData) {
+        setPlayers(playersData);
+      }
+    } catch (err) {
+      console.error("Error cargando datos:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleEnterDiscipline = (disc: Discipline) => {
+    setSelectedDiscipline(disc);
+    setView('discipline-console');
+  };
 
   const handleSaveConfig = async (newConfig: ClubConfig) => {
     setConfig(newConfig);
-    const { error } = await db.config.update({
+    await db.config.update({
       name: newConfig.name,
       logo_url: newConfig.logoUrl,
       primary_color: newConfig.primaryColor,
@@ -68,66 +73,81 @@ function App() {
       disciplines: newConfig.disciplines,
       updated_at: new Date().toISOString()
     });
-
-    if (error) {
-      console.error('Error de Supabase:', error.message);
-    }
   };
 
   if (isLoading) return <SplashScreen />;
 
-  const hasDisciplines = config.disciplines.length > 0;
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 flex transition-colors duration-500 font-sans overflow-hidden">
-      <Sidebar 
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 transition-colors duration-500 font-sans overflow-x-hidden pt-24">
+      <TopNav 
         currentView={view} 
         setView={setView} 
         isDarkMode={isDarkMode} 
         toggleTheme={() => setIsDarkMode(!isDarkMode)} 
         config={config}
-        isCollapsed={isSidebarCollapsed}
-        setCollapsed={setIsSidebarCollapsed}
       />
       
-      <main 
-        className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-500 ease-in-out 
-          ${isSidebarCollapsed ? 'md:pl-24' : 'md:pl-72'} pl-0
-        `}
-      >
-        <div className="flex-1 overflow-y-auto custom-scrollbar pb-24 md:pb-0 bg-slate-50 dark:bg-[#080a0f]">
-          {view === 'dashboard' && <Dashboard />}
-          {view === 'master-data' && <MasterData config={config} onSave={handleSaveConfig} />}
-          {view === 'squads' && (
-            hasDisciplines ? (
-              <Squads clubConfig={config} onGoToSettings={() => setView('master-data')} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full p-10 animate-fade-in">
-                <div className="w-32 h-32 rounded-full bg-primary-600/10 flex items-center justify-center mb-8">
-                  <Shield size={64} className="text-primary-600 animate-pulse" />
-                </div>
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center mb-4">Módulo de Planteles</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] text-center max-w-xs leading-relaxed">
-                  Para ver tus equipos, primero define qué deportes y categorías tiene tu club en la sección de Estructura.
-                </p>
-                <button 
-                  onClick={() => setView('master-data')}
-                  className="mt-12 flex items-center gap-3 px-10 py-5 bg-slate-900 dark:bg-primary-600 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:scale-105 transition-all"
-                >
-                  <Settings size={18} /> Ir a Estructura
-                </button>
+      <main className="flex-1 min-h-[calc(100vh-6rem)]">
+        {view === 'master-data' && (
+          <MasterData config={config} onSave={handleSaveConfig} />
+        )}
+        
+        {view === 'squads' && (
+          <div className="p-12 max-w-7xl mx-auto">
+            <header className="mb-20">
+              <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white">Planteles</h2>
+              <div className="flex items-center gap-4 mt-6">
+                  <div className="w-16 h-2 bg-primary-600 rounded-full"></div>
+                  <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Selección de Disciplina</p>
               </div>
-            )
-          )}
-          
-          {view !== 'dashboard' && view !== 'master-data' && view !== 'squads' && (
-            <div className="p-10 flex flex-col items-center justify-center h-full opacity-20 select-none">
-               <h1 className="text-3xl md:text-6xl font-black uppercase tracking-tighter italic text-center">Módulo en Construcción</h1>
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] mt-4 text-center">Próximamente disponible</p>
-            </div>
-          )}
-        </div>
+            </header>
+
+            {config.disciplines.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+                {config.disciplines.map(disc => (
+                  <div 
+                    key={disc.id}
+                    onClick={() => handleEnterDiscipline(disc)}
+                    className="group bg-white dark:bg-[#0f1219] rounded-[4rem] p-12 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-3xl hover:-translate-y-2 transition-all cursor-pointer relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-600/5 rounded-bl-[4rem] group-hover:bg-primary-600/10 transition-colors"></div>
+                    <div className="w-24 h-24 rounded-[2rem] bg-slate-950 flex items-center justify-center mb-10 shadow-2xl relative z-10">
+                      {disc.iconUrl ? <img src={disc.iconUrl} className="w-full h-full object-cover p-1" /> : <Shield size={32} className="text-primary-600" />}
+                    </div>
+                    <h3 className="text-4xl font-black uppercase tracking-tighter dark:text-white leading-none mb-4 italic">{disc.name}</h3>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px] mb-8">Gestión de Competición</p>
+                    <div className="flex items-center gap-2 text-primary-600 font-black uppercase text-[10px] tracking-widest group-hover:gap-4 transition-all">
+                      Ingresar Consola <Shield size={14} className="fill-primary-600" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-40 text-center">
+                 <Shield size={64} className="mx-auto text-slate-200 mb-8 animate-pulse" />
+                 <h2 className="text-3xl font-black uppercase mb-4">No hay disciplinas configuradas</h2>
+                 <button onClick={() => setView('master-data')} className="bg-primary-600 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl">Ir a Estructura</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {view === 'discipline-console' && selectedDiscipline && (
+          <DisciplineConsole 
+            discipline={selectedDiscipline} 
+            clubConfig={config} 
+            players={players}
+            onBack={() => setView('squads')}
+          />
+        )}
       </main>
+      
+      {/* Botón flotante para ayuda rápida o IA (opcional) */}
+      <div className="fixed bottom-12 right-12 z-[200]">
+         <button className="w-16 h-16 bg-slate-900 dark:bg-primary-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all border-4 border-white dark:border-[#080a0f]">
+            <Settings size={24} />
+         </button>
+      </div>
     </div>
   );
 }
