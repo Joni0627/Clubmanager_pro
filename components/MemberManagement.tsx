@@ -4,7 +4,7 @@ import { Member, AppRole, ClubConfig, Tutor, Assignment, Player } from '../types
 import { 
   UserPlus, Search, Trash2, User, X, Save, Camera, Loader2, PlusCircle, Heart, 
   UserCheck, Fingerprint, ShieldCheck, Briefcase, Ruler, Weight, Activity, 
-  BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin
+  BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin, Phone, Mail, UserCircle
 } from 'lucide-react';
 import { db, supabase } from '../lib/supabase';
 
@@ -40,7 +40,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
   const handleEdit = (member: Member) => {
     setSelectedMember(member);
-    setFormData(member);
+    // Aseguramos que el objeto tutor no sea null para evitar errores en inputs
+    setFormData({
+      ...member,
+      tutor: member.tutor || { name: '', dni: '', relationship: 'Padre', phone: '', email: '' }
+    });
     setActiveTab('identity');
     setShowModal(true);
   };
@@ -106,6 +110,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
   const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700/50 focus:border-primary-600/50 dark:focus:border-primary-500/50 shadow-inner transition-all dark:text-slate-200";
   const selectClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700/50 shadow-inner dark:text-slate-200 cursor-pointer";
+  const labelClasses = "text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-1.5 block";
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in pb-40">
@@ -206,22 +211,112 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                        </h4>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-2 col-span-1 md:col-span-2">
-                          <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Nombre Completo</label>
+                          <label className={labelClasses}>Nombre Completo</label>
                           <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: LIONEL MESSI" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Documento (DNI)</label>
+                          <label className={labelClasses}>Documento (DNI)</label>
                           <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className={inputClasses} placeholder="NÚMERO" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Género</label>
+                          <label className={labelClasses}>Género</label>
                           <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className={selectClasses}>
                             <option>Masculino</option>
                             <option>Femenino</option>
                             <option>Otro</option>
                           </select>
                         </div>
+                        <div className="space-y-2">
+                          <label className={labelClasses}>Fecha de Nacimiento</label>
+                          <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className={inputClasses} />
+                        </div>
                       </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'health' && (
+                    <div className="space-y-6 md:space-y-8 animate-fade-in">
+                       <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                         <div className="w-1 h-4 bg-red-500 rounded-full"></div> Perfil de Salud
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Grupo Sanguíneo</label>
+                             <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className={selectClasses}>
+                                <option value="">No definido</option>
+                                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(t => <option key={t} value={t}>{t}</option>)}
+                             </select>
+                          </div>
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Obra Social / Seguro</label>
+                             <input value={formData.medicalInsurance} onChange={e => setFormData({...formData, medicalInsurance: e.target.value.toUpperCase()})} className={inputClasses} placeholder="NOMBRE PREPAGA" />
+                          </div>
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Peso (kg)</label>
+                             <input value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className={inputClasses} placeholder="00.0" />
+                          </div>
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Altura (cm)</label>
+                             <input value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} className={inputClasses} placeholder="000" />
+                          </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'contacts' && (
+                    <div className="space-y-12 animate-fade-in">
+                       <section className="space-y-6">
+                          <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                            <div className="w-1 h-4 bg-emerald-500 rounded-full"></div> Datos de Contacto
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="space-y-2">
+                                <label className={labelClasses}>Teléfono</label>
+                                <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputClasses} placeholder="+54 9..." />
+                             </div>
+                             <div className="space-y-2">
+                                <label className={labelClasses}>Email</label>
+                                <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClasses} placeholder="correo@ejemplo.com" />
+                             </div>
+                             <div className="space-y-2 col-span-1 md:col-span-2">
+                                <label className={labelClasses}>Dirección</label>
+                                <input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value.toUpperCase()})} className={inputClasses} placeholder="CALLE, NÚMERO, DPTO" />
+                             </div>
+                             <div className="space-y-2">
+                                <label className={labelClasses}>Ciudad</label>
+                                <input value={formData.city} onChange={e => setFormData({...formData, city: e.target.value.toUpperCase()})} className={inputClasses} />
+                             </div>
+                             <div className="space-y-2">
+                                <label className={labelClasses}>Provincia</label>
+                                <input value={formData.province} onChange={e => setFormData({...formData, province: e.target.value.toUpperCase()})} className={inputClasses} />
+                             </div>
+                          </div>
+                       </section>
+
+                       <section className="space-y-6">
+                          <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                            <div className="w-1 h-4 bg-emerald-500 rounded-full"></div> Responsable / Tutor
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
+                             <div className="space-y-2 col-span-1 md:col-span-2">
+                                <label className={labelClasses}>Nombre Tutor</label>
+                                <input value={formData.tutor?.name} onChange={e => setFormData({...formData, tutor: {...formData.tutor!, name: e.target.value.toUpperCase()}})} className={inputClasses} />
+                             </div>
+                             <div className="space-y-2">
+                                <label className={labelClasses}>Relación</label>
+                                <select value={formData.tutor?.relationship} onChange={e => setFormData({...formData, tutor: {...formData.tutor!, relationship: e.target.value as any}})} className={selectClasses}>
+                                   <option>Padre</option>
+                                   <option>Madre</option>
+                                   <option>Tutor Legal</option>
+                                   <option>Otro</option>
+                                </select>
+                             </div>
+                             <div className="space-y-2">
+                                <label className={labelClasses}>DNI Tutor</label>
+                                <input value={formData.tutor?.dni} onChange={e => setFormData({...formData, tutor: {...formData.tutor!, dni: e.target.value}})} className={inputClasses} />
+                             </div>
+                          </div>
+                       </section>
                     </div>
                   )}
 
@@ -271,6 +366,53 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'system' && (
+                    <div className="space-y-10 animate-fade-in">
+                       <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                         <div className="w-1 h-4 bg-slate-900 dark:bg-white rounded-full"></div> Configuración de Sistema
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Estado del Miembro</label>
+                             <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})} className={selectClasses}>
+                                <option value="Active">Activo</option>
+                                <option value="Inactive">Inactivo</option>
+                                <option value="Pending">Pendiente</option>
+                             </select>
+                          </div>
+                          <div className="space-y-2">
+                             <label className={labelClasses}>Rol Institucional</label>
+                             <select value={formData.systemRole} onChange={e => setFormData({...formData, systemRole: e.target.value as any})} className={selectClasses}>
+                                <option value="STAFF">Personal / Staff</option>
+                                <option value="Socio">Socio / Miembro</option>
+                                <option value="Externo">Externo / Invitado</option>
+                             </select>
+                          </div>
+                          <div className="col-span-1 md:col-span-2 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-100 dark:border-white/5">
+                             <div className="flex items-center justify-between mb-6">
+                                <div>
+                                   <h5 className="font-black text-sm uppercase dark:text-white">Acceso a Plataforma</h5>
+                                   <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Permitir login en app móvil / web</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input type="checkbox" checked={formData.canLogin} onChange={e => setFormData({...formData, canLogin: e.target.checked})} className="sr-only peer" />
+                                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                                </label>
+                             </div>
+                             {formData.canLogin && (
+                               <div className="space-y-2 animate-fade-in">
+                                  <label className={labelClasses}>Nombre de Usuario</label>
+                                  <div className="relative">
+                                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-600" size={18} />
+                                    <input value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className={inputClasses + " pl-12"} placeholder="user.name" />
+                                  </div>
+                               </div>
+                             )}
+                          </div>
+                       </div>
                     </div>
                   )}
                 </div>
