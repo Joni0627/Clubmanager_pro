@@ -25,10 +25,26 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   const [player, setPlayer] = useState<Player>(initialPlayer);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Resolución robusta de métricas desde la matriz
   const currentMetrics = useMemo(() => {
-    const discipline = clubConfig.disciplines.find(d => d.name === player.discipline);
-    const branch = discipline?.branches.find(b => b.gender === player.gender);
-    const category = branch?.categories.find(c => c.name === player.category);
+    if (!clubConfig.disciplines) return [];
+    
+    const discipline = clubConfig.disciplines.find(d => 
+      d.name.toLowerCase() === player.discipline.toLowerCase()
+    );
+    
+    if (!discipline) return [];
+
+    const branch = discipline.branches.find(b => 
+      b.gender.toLowerCase() === player.gender.toLowerCase()
+    );
+    
+    if (!branch) return [];
+
+    const category = branch.categories.find(c => 
+      c.name.toLowerCase() === player.category.toLowerCase()
+    );
+    
     return category?.metrics || [];
   }, [clubConfig, player.discipline, player.category, player.gender]);
 
@@ -45,7 +61,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   };
 
   useEffect(() => {
-    const overall = calculateOverall(player.stats, currentMetrics);
+    const overall = calculateOverall(player.stats || {}, currentMetrics);
     if (overall !== player.overallRating) {
         setPlayer(prev => ({ ...prev, overallRating: overall }));
     }
@@ -53,7 +69,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
 
   const radarData = currentMetrics.map(m => ({
     subject: m.name,
-    A: player.stats[m.name] || 0,
+    A: (player.stats && player.stats[m.name]) || 0,
     fullMark: 100
   }));
 
@@ -61,7 +77,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
     const numValue = parseInt(value) || 0;
     setPlayer(prev => ({
       ...prev,
-      stats: { ...prev.stats, [metricName]: Math.min(100, Math.max(0, numValue)) }
+      stats: { ...(prev.stats || {}), [metricName]: Math.min(100, Math.max(0, numValue)) }
     }));
   };
 
@@ -73,7 +89,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
       if (onSaveSuccess) onSaveSuccess();
     } catch (err) {
       console.error(err);
-      alert("Error al guardar los cambios.");
+      alert("Error al guardar los cambios en la tabla de jugadores.");
     } finally {
       setIsSaving(false);
     }
@@ -89,7 +105,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
     { id: 'medical_record', label: 'Ficha Médica', icon: Heart },
   ];
 
-  const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700/50 focus:border-primary-600/50 dark:focus:border-primary-500/50 shadow-inner transition-all dark:text-slate-200 disabled:opacity-50";
+  const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700 focus:border-primary-600/50 dark:focus:border-primary-500 shadow-inner transition-all dark:text-slate-200 disabled:opacity-50";
   const labelClasses = "text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-2 block";
 
   return (
@@ -188,7 +204,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                           </RadarChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="flex items-center justify-center h-full text-slate-400 font-black uppercase text-[10px] text-center p-12 tracking-widest">Requiere al menos 3 métricas configuradas</div>
+                        <div className="flex items-center justify-center h-full text-slate-400 font-black uppercase text-[10px] text-center p-12 tracking-widest">Requiere al menos 3 métricas configuradas en la matriz</div>
                       )}
                     </div>
                     
@@ -200,19 +216,24 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                             {isEditing ? (
                               <input 
                                 type="number" 
-                                value={player.stats[m.name] || 0}
+                                value={(player.stats && player.stats[m.name]) || 0}
                                 onChange={e => handleStatChange(m.name, e.target.value)}
-                                className="w-16 p-1 bg-white dark:bg-slate-700 text-center font-black rounded-lg text-primary-600 outline-none"
+                                className="w-16 p-1 bg-white dark:bg-slate-700 text-center font-black rounded-lg text-primary-600 outline-none border border-primary-500/20 shadow-sm"
                               />
                             ) : (
-                              <span className="text-lg font-black text-slate-800 dark:text-white italic">{player.stats[m.name] || 0}</span>
+                              <span className="text-lg font-black text-slate-800 dark:text-white italic">{(player.stats && player.stats[m.name]) || 0}</span>
                             )}
                           </div>
                           <div className="w-full h-2 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-primary-600 rounded-full transition-all duration-500" style={{ width: `${player.stats[m.name] || 0}%` }}></div>
+                            <div className="h-full bg-primary-600 rounded-full transition-all duration-500" style={{ width: `${(player.stats && player.stats[m.name]) || 0}%` }}></div>
                           </div>
                         </div>
                       ))}
+                      {currentMetrics.length === 0 && (
+                        <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">No hay métricas definidas para la categoría: <br/> <span className="text-primary-600">{player.category}</span></p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

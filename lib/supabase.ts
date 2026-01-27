@@ -36,7 +36,6 @@ export const db = {
       .delete()
       .eq('id', id)
   },
-  // Fix: Added players property to db object to fix property missing errors in multiple components
   players: {
     getAll: () => supabase
       .from('players')
@@ -55,7 +54,7 @@ export const db = {
   fees: {
     getAll: () => supabase
       .from('fees')
-      .select('*, player:players(*)'), // Fix: Changed join from member to player to match FeesManagement expected property name
+      .select('*, player:players(*)'),
     
     upsert: (fee: any) => supabase
       .from('fees')
