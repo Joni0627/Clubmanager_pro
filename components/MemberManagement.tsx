@@ -6,7 +6,7 @@ import {
   UserCheck, Fingerprint, ShieldCheck, Briefcase, Ruler, Weight, Activity, 
   BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin
 } from 'lucide-react';
-import { db } from '../lib/supabase';
+import { db, supabase } from '../lib/supabase';
 
 interface MemberManagementProps {
   members: Member[];
@@ -68,16 +68,27 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
       await onSaveMember(memberToSave);
 
       // 2. Sincronización Inteligente con Tabla Players
-      // Si tiene asignado el rol de PLAYER, creamos/actualizamos su ficha de atleta
       const playerAssignments = memberToSave.assignments.filter(a => a.role === 'PLAYER');
       
       for (const ass of playerAssignments) {
         const disc = config.disciplines.find(d => d.id === ass.disciplineId);
-        const cat = disc?.branches.flatMap(b => b.categories).find(c => c.id === ass.categoryId);
+        // Buscamos la categoría en todas las ramas para ser robustos
+        const cat = disc?.branches
+          .flatMap(b => b.categories)
+          .find(c => c.id === ass.categoryId || c.name.toLowerCase() === ass.categoryId.toLowerCase());
 
         if (disc && cat) {
-          const playerData: Partial<Player> = {
-            id: memberId, // Usamos el mismo ID para mantener la relación 1:1 si es posible o vincular por DNI
+          // Buscamos si ya existe este jugador para este miembro en esta categoría específica
+          const { data: existingPlayer } = await supabase
+            .from('players')
+            .select('id')
+            .eq('member_id', memberId)
+            .eq('discipline', disc.name)
+            .eq('category', cat.name)
+            .maybeSingle();
+
+          const playerData: any = {
+            member_id: memberId,
             name: memberToSave.name,
             dni: memberToSave.dni,
             email: memberToSave.email,
@@ -87,9 +98,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
             gender: memberToSave.gender,
             status: 'Active'
           };
-          
-          // @ts-ignore - Añadimos la referencia al miembro para el SQL
-          playerData.member_id = memberId;
+
+          // Si ya existía, conservamos su ID de jugador para no duplicar
+          if (existingPlayer) {
+            playerData.id = existingPlayer.id;
+          }
 
           await db.players.upsert(playerData);
         }
@@ -122,24 +135,13 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
     setFormData({ ...formData, assignments: newAss });
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, photoUrl: reader.result as string });
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${name}? Esto no eliminará automáticamente su ficha de jugador por seguridad.`)) {
-      onDeleteMember(id);
-    }
-  };
-
-  const filteredMembers = members.filter(m => 
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.dni.includes(searchTerm)
-  );
+  // Fix: Added filteredMembers memo to support searching functionality and fix the compilation error
+  const filteredMembers = useMemo(() => {
+    return members.filter(m => 
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      m.dni.includes(searchTerm)
+    );
+  }, [members, searchTerm]);
 
   const tabs = [
     { id: 'identity', label: 'Identidad', icon: Fingerprint },
@@ -189,7 +191,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                 <div className="flex justify-between items-start">
                   <h3 className="font-black text-lg uppercase tracking-tight text-slate-800 dark:text-white leading-none mb-1 truncate">{member.name}</h3>
                   <button 
-                    onClick={() => handleDelete(member.id, member.name)}
+                    onClick={() => onDeleteMember(member.id)}
                     className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={16} />
@@ -208,7 +210,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-6xl h-full md:h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
-            
             <div className="px-6 md:px-10 py-5 flex justify-between items-center border-b border-slate-100 dark:border-slate-700/50 shrink-0 bg-slate-50 dark:bg-slate-800/40">
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-primary-600/10 items-center justify-center text-primary-600">
@@ -219,25 +220,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   <p className="text-[8px] md:text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">Gestión de Identidad</p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all border border-transparent dark:border-white/5">
-                <X size={20} />
-              </button>
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all"><X size={20} /></button>
             </div>
 
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
               <div className="w-full md:w-64 bg-slate-50/50 dark:bg-slate-900/40 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700/50 flex flex-col shrink-0 md:overflow-y-auto no-scrollbar">
-                <div className="hidden md:flex p-8 flex-col items-center border-b border-slate-100 dark:border-slate-700/50 shrink-0">
-                  <div onClick={() => fileInputRef.current?.click()} className="w-32 h-32 rounded-[2rem] bg-slate-200 dark:bg-slate-800 border-2 border-primary-600/20 overflow-hidden shadow-lg relative group cursor-pointer mb-5 hover:scale-105 transition-all">
-                    <img src={formData.photoUrl || 'https://via.placeholder.com/400'} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-primary-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                      <Camera className="text-white" size={24} />
-                    </div>
-                  </div>
-                  <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight text-center truncate w-full px-2">
-                    {formData.name || 'NUEVO REGISTRO'}
-                  </h4>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">DNI: {formData.dni || '---'}</p>
-                </div>
                 <nav className="flex md:flex-col overflow-x-auto no-scrollbar md:overflow-y-visible p-3 md:p-4 gap-2 md:gap-3 shrink-0">
                   {tabs.map(tab => {
                     const isActive = activeTab === tab.id;
@@ -246,16 +233,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as ModalTab)}
                         className={`flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-5 rounded-xl md:rounded-2xl transition-all relative shrink-0 border-2 ${
-                          isActive 
-                          ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 border-primary-400 scale-[1.02] z-10' 
-                          : 'text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700/30'
+                          isActive ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 border-primary-400' : 'text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700/30'
                         }`}
                       >
-                        <tab.icon size={18} className={isActive ? 'text-white' : 'opacity-30'} />
+                        <tab.icon size={18} />
                         <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{tab.label}</span>
-                        {isActive && (
-                          <div className="hidden md:block absolute left-0 w-1.5 h-8 bg-white rounded-r-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
-                        )}
                       </button>
                     );
                   })}
@@ -266,16 +248,16 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                 <div className="max-w-3xl mx-auto">
                   {activeTab === 'identity' && (
                     <div className="space-y-6 md:space-y-8 animate-fade-in">
-                      <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                       <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
                          <div className="w-1 h-4 bg-primary-600 rounded-full"></div> Información Personal
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                       </h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-2 col-span-1 md:col-span-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Nombre Completo</label>
                           <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: LIONEL MESSI" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Documento</label>
+                          <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Documento (DNI)</label>
                           <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className={inputClasses} placeholder="NÚMERO" />
                         </div>
                         <div className="space-y-2">
@@ -297,14 +279,16 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                           <div className="w-1 h-4 bg-blue-500 rounded-full"></div> Perfil Deportivo
                         </h4>
                         <button onClick={addAssignment} className="flex items-center gap-2 text-primary-600 text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all">
-                          <PlusCircle size={16} /> Nuevo
+                          <PlusCircle size={16} /> Nuevo Rol
                         </button>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                         {formData.assignments?.map((as, idx) => {
                           const disc = config.disciplines.find(d => d.id === as.disciplineId);
-                          const availableCategories = disc?.branches?.find(b => b.gender === formData.gender || b.enabled)?.categories || [];
+                          // Combinamos todas las categorías de todas las ramas para que sea más fácil elegir
+                          const availableCategories = disc?.branches?.flatMap(b => b.categories) || [];
+                          
                           return (
                             <div key={as.id} className="bg-slate-50 dark:bg-slate-800/60 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-4 shadow-sm transition-all">
                               <div className="flex justify-between items-center">
@@ -316,7 +300,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                                   <option value="PLAYER">JUGADOR (Atleta)</option>
                                   <option value="COACH">ENTRENADOR</option>
                                   <option value="PHYSICAL_TRAINER">PREP. FÍSICO</option>
-                                  <option value="MEDICAL">MÉDICO</option>
                                   <option value="ADMIN">ADMIN</option>
                                 </select>
                                 <button onClick={() => setFormData({...formData, assignments: formData.assignments?.filter((_, i) => i !== idx)})} className="text-slate-300 hover:text-red-500 transition-colors">
@@ -328,7 +311,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                                   {config.disciplines.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                                 <select value={as.categoryId} onChange={e => updateAssignment(idx, 'categoryId', e.target.value)} className={selectClasses + " p-3 rounded-xl text-[10px]"}>
-                                  <option value="">-- Sin Categoría --</option>
+                                  <option value="">-- Seleccionar Categoría --</option>
                                   {availableCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                               </div>
@@ -338,9 +321,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                       </div>
                     </div>
                   )}
-
-                  {/* Resto de solapas (health, contacts, system) se mantienen igual... */}
-
                 </div>
               </div>
             </div>
@@ -349,10 +329,10 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               <button 
                 onClick={handleSave} 
                 disabled={isSaving}
-                className="w-full md:w-auto flex items-center justify-center gap-4 bg-primary-600 text-white px-10 py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-xl shadow-primary-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full md:w-auto flex items-center justify-center gap-4 bg-primary-600 text-white px-10 py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-xl shadow-primary-600/20 hover:scale-[1.02] transition-all disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Confirmar y Sincronizar
+                Guardar y Sincronizar
               </button>
             </div>
           </div>
