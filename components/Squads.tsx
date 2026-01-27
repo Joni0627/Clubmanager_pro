@@ -39,42 +39,43 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
     }
   }, [activeBranch]);
 
+  const fetchPlayers = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await db.players.getAll();
+      if (data) setPlayers(data);
+    } catch (error) {
+      console.error("Error al cargar planteles:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPlayers = async () => {
-      setIsLoading(true);
-      try {
-        const { data } = await db.players.getAll();
-        if (data) setPlayers(data);
-      } catch (error) {
-        console.error("Error al cargar atletas:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchPlayers();
   }, []);
 
   const filteredAthletes = useMemo(() => {
     if (!activeSport) return [];
     
-    // El nombre de la categoría actual que estamos visualizando
-    const categoryName = activeBranch?.categories.find(c => c.id === selectedCatId)?.name;
+    // Obtenemos el nombre exacto de la categoría seleccionada en el filtro lateral
+    const selectedCategoryName = activeBranch?.categories.find(c => c.id === selectedCatId)?.name;
 
     return players.filter(p => {
-        const matchesSearch = searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        // 1. Filtro por Búsqueda de Texto
+        const matchesSearch = searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.dni.includes(searchTerm);
         
-        // Filtro robusto: Normalizamos nombres para evitar fallos por espacios o mayúsculas
+        // 2. Filtro por Disciplina (Comparación exacta por nombre normalizado)
         const pDisc = (p.discipline || '').trim().toLowerCase();
-        const sDisc = activeSport.name.trim().toLowerCase();
+        const sDisc = (activeSport.name || '').trim().toLowerCase();
         const matchesSport = pDisc === sDisc;
 
+        // 3. Filtro por Categoría (Comparación exacta por nombre normalizado)
         const pCat = (p.category || '').trim().toLowerCase();
-        const sCat = (categoryName || '').trim().toLowerCase();
+        const sCat = (selectedCategoryName || '').trim().toLowerCase();
+        const matchesCategory = !selectedCategoryName || pCat === sCat;
         
-        // Si no hay categoría seleccionada, mostramos todos de la disciplina
-        const matchesCategory = !categoryName || pCat === sCat;
-        
-        // El género también debe coincidir si está presente
+        // 4. Filtro por Género (Importante para separar ramas)
         const matchesGender = !p.gender || p.gender.toLowerCase() === selectedGender.toLowerCase();
 
         return matchesSearch && matchesSport && matchesCategory && matchesGender;
@@ -96,15 +97,18 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
       <header className="flex flex-col md:flex-row justify-between items-end gap-8 mb-20">
         <div>
           <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none text-slate-900 dark:text-white italic">Planteles</h2>
-          <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px] mt-6">Gestión de Talentos • {activeSport?.name}</p>
+          <div className="flex items-center gap-4 mt-6">
+              <div className="w-16 h-2 bg-primary-600 rounded-full"></div>
+              <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">{activeSport?.name} • Rama {selectedGender}</p>
+          </div>
         </div>
         <div className="relative w-full md:w-96">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input 
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="BUSCAR ATLETA..." 
-                className="w-full pl-16 pr-8 py-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/5 outline-none font-black text-xs uppercase tracking-widest shadow-xl" 
+                placeholder="BUSCAR EN PLANTEL..." 
+                className="w-full pl-16 pr-8 py-5 bg-white dark:bg-[#0f1219] rounded-3xl border border-slate-200 dark:border-white/5 outline-none font-black text-xs uppercase tracking-widest shadow-xl focus:border-primary-600/50 transition-all" 
             />
         </div>
       </header>
@@ -113,7 +117,7 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
         {clubConfig.disciplines.map(sport => (
           <button 
             key={sport.id}
-            onClick={() => setSelectedSportId(sport.id)}
+            onClick={() => { setSelectedSportId(sport.id); setSelectedCatId(''); }}
             className={`shrink-0 flex flex-col items-center gap-4 transition-all ${selectedSportId === sport.id ? 'scale-110 opacity-100' : 'opacity-30 grayscale hover:opacity-60'}`}
           >
             <div className={`w-24 h-24 rounded-3xl flex items-center justify-center border-4 ${selectedSportId === sport.id ? 'bg-slate-950 border-primary-600 shadow-2xl' : 'bg-slate-100 dark:bg-slate-800 border-transparent'}`}>
@@ -127,22 +131,28 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
       <div className="flex flex-col lg:flex-row gap-12">
           <aside className="w-full lg:w-80 shrink-0 space-y-8">
               <div className="bg-white dark:bg-[#0f1219] rounded-[3rem] p-8 shadow-2xl border border-slate-200 dark:border-white/5">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 border-b border-slate-100 dark:border-white/5 pb-4">Filtro de Rama</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 border-b border-slate-100 dark:border-white/5 pb-4">Filtrar por Rama</h4>
                   <div className="flex flex-col gap-3">
                       {['Masculino', 'Femenino'].map(g => (
-                          <button key={g} onClick={() => setSelectedGender(g as any)} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedGender === g ? 'bg-primary-600 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500'}`}>
+                          <button key={g} onClick={() => setSelectedGender(g as any)} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedGender === g ? 'bg-primary-600 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
                               {g} <ChevronRight size={14} className={selectedGender === g ? 'translate-x-1' : 'opacity-0'} />
                           </button>
                       ))}
                   </div>
 
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-12 mb-6 border-b border-slate-100 dark:border-white/5 pb-4">Categoría</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-12 mb-6 border-b border-slate-100 dark:border-white/5 pb-4">Seleccionar Categoría</h4>
                   <div className="flex flex-col gap-3">
                       {activeBranch?.categories?.map(cat => (
-                          <button key={cat.id} onClick={() => setSelectedCatId(cat.id)} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-950 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500'}`}>
+                          <button key={cat.id} onClick={() => setSelectedCatId(cat.id)} className={`flex items-center justify-between p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${selectedCatId === cat.id ? 'bg-slate-950 text-white shadow-xl' : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
                               {cat.name} <Star size={12} className={selectedCatId === cat.id ? 'fill-primary-500 text-primary-500' : 'opacity-0'} />
                           </button>
                       ))}
+                      {(!activeBranch || !activeBranch.categories || activeBranch.categories.length === 0) && (
+                          <div className="p-10 text-center opacity-40">
+                             <Settings size={20} className="mx-auto mb-2" />
+                             <p className="text-[8px] font-black uppercase tracking-widest">Sin categorías</p>
+                          </div>
+                      )}
                   </div>
               </div>
           </aside>
@@ -171,7 +181,8 @@ const Squads: React.FC<SquadsProps> = ({ clubConfig, onGoToSettings }) => {
               ) : (
                   <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[5rem]">
                       <Users size={64} className="mx-auto mb-6 text-slate-300" />
-                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas registrados en {activeBranch?.categories.find(c => c.id === selectedCatId)?.name || 'esta división'}</h3>
+                      <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin atletas en {activeBranch?.categories.find(c => c.id === selectedCatId)?.name || 'esta división'}</h3>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mt-4">Asegúrate de asignar el Miembro en "Legajo Maestro" con rol JUGADOR</p>
                   </div>
               )}
           </div>
