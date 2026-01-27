@@ -26,6 +26,20 @@ function App() {
     disciplines: []
   });
 
+  // Efecto para inyectar colores dinámicos en CSS
+  useEffect(() => {
+    const root = document.documentElement;
+    const color = config.primaryColor || '#ec4899';
+    
+    // Función simple para generar variantes de color (muy básica para el ejemplo)
+    // En un entorno pro usaríamos una librería como chroma-js
+    root.style.setProperty('--primary-500', color);
+    root.style.setProperty('--primary-600', color); // Usamos el mismo para el 600 que es el principal
+    
+    // Inyectar un color con transparencia para el overlay
+    root.style.setProperty('--primary-glow', `${color}33`);
+  }, [config.primaryColor]);
+
   useEffect(() => {
     const root = window.document.documentElement;
     if (isDarkMode) root.classList.add('dark');
@@ -40,13 +54,14 @@ function App() {
       if (membersData) setMembers(membersData);
       
       if (configData) {
+        // CORRECCIÓN DE MAPEO: Aseguramos que las keys coincidan con la interfaz ClubConfig
         setConfig({
           name: configData.name || 'MI CLUB',
           logoUrl: configData.logo_url || '',
-          primary_color: configData.primary_color || '#ec4899',
-          secondary_color: configData.secondary_color || '#0f172a',
+          primaryColor: configData.primary_color || '#ec4899', // Antes era primary_color
+          secondaryColor: configData.secondary_color || '#0f172a', // Antes era secondary_color
           disciplines: configData.disciplines || []
-        } as any);
+        });
       }
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -89,14 +104,18 @@ function App() {
 
   const handleSaveConfig = async (newConfig: ClubConfig) => {
     setConfig(newConfig);
-    await db.config.update({
-      name: newConfig.name,
-      logo_url: newConfig.logoUrl,
-      primary_color: newConfig.primaryColor || '#ec4899',
-      secondary_color: newConfig.secondaryColor || '#0f172a',
-      disciplines: newConfig.disciplines,
-      updated_at: new Date().toISOString()
-    });
+    try {
+      await db.config.update({
+        name: newConfig.name,
+        logo_url: newConfig.logoUrl,
+        primary_color: newConfig.primaryColor,
+        secondary_color: newConfig.secondaryColor,
+        disciplines: newConfig.disciplines,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error saving config:", e);
+    }
   };
 
   if (isLoading) return <SplashScreen />;
@@ -133,9 +152,9 @@ function App() {
           <div className="pt-24 p-12 max-w-7xl mx-auto">
             <header className="mb-20 animate-fade-in flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
-                <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white">Planteles</h2>
+                <h2 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none dark:text-white italic">Planteles</h2>
                 <div className="flex items-center gap-4 mt-6">
-                    <div className="w-16 h-2 bg-primary-600 rounded-full"></div>
+                    <div className="w-16 h-2 bg-primary-600 rounded-full shadow-[0_0_15px_var(--primary-glow)]"></div>
                     <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Gestión por Disciplina</p>
                 </div>
               </div>
@@ -186,7 +205,6 @@ function App() {
             clubConfig={config} 
             members={members}
             onBack={() => setView('squads')}
-            // Fix: Passed fetchData as onRefresh to DisciplineConsole
             onRefresh={fetchData}
           />
         )}
