@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-// Fix: Removed non-existent Position and MetricDefinition, using Metric instead
 import { Player, ClubConfig, Metric } from '../types.ts';
 import { X, Activity, Save, Edit3, User, FileText, AlertTriangle, Sparkles, Loader2, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, Users, Shield, Hash, Camera, Link as LinkIcon, Upload, TrendingUp } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
@@ -25,14 +24,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentMetrics = useMemo(() => {
-    // Fix: Corrected property access. Discipline has branches, which contain categories.
     const discipline = clubConfig.disciplines.find(d => d.name === player.discipline);
     const branch = discipline?.branches.find(b => b.gender === player.gender);
     const category = branch?.categories.find(c => c.name === player.category);
     return category?.metrics || [];
   }, [clubConfig, player.discipline, player.category, player.gender]);
 
-  // Fix: Changed MetricDefinition to Metric
   const calculateOverall = (stats: Record<string, number>, metrics: Metric[]) => {
     if (metrics.length === 0) return 0;
     let totalWeight = 0;
@@ -106,9 +103,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[100] flex items-center justify-center p-0 md:p-6 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-full md:h-[90vh] md:rounded-[4rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/5 relative">
-        <button onClick={onClose} className="absolute top-8 right-8 p-3 bg-slate-100 dark:bg-white/5 hover:bg-red-500 hover:text-white rounded-full z-[110] transition-all">
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-6 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl h-full md:h-[90vh] md:rounded-[4rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/10 relative">
+        <button onClick={onClose} className="absolute top-8 right-8 p-3 bg-slate-100 dark:bg-white/10 hover:bg-red-500 hover:text-white rounded-full z-[510] transition-all border border-transparent dark:border-white/5">
           <X size={20} />
         </button>
 

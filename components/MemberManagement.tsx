@@ -173,7 +173,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-0 md:p-10 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-6xl h-full md:h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
             
             <div className="px-6 md:px-10 py-5 flex justify-between items-center border-b border-slate-100 dark:border-slate-700/50 shrink-0 bg-slate-50 dark:bg-slate-800/40">
@@ -186,7 +186,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   <p className="text-[8px] md:text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">Gestión de Identidad</p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all">
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all border border-transparent dark:border-white/5">
                 <X size={20} />
               </button>
             </div>
