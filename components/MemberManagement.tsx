@@ -190,9 +190,9 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
               
-              <div className="w-full md:w-64 bg-slate-50/50 dark:bg-[#11141d] border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 overflow-hidden">
+              <div className="w-full md:w-64 bg-slate-50/50 dark:bg-[#11141d] border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 md:overflow-y-auto no-scrollbar">
                 
-                <div className="hidden md:flex p-8 flex-col items-center border-b border-slate-100 dark:border-white/5">
+                <div className="hidden md:flex p-8 flex-col items-center border-b border-slate-100 dark:border-white/5 shrink-0">
                   <div onClick={() => fileInputRef.current?.click()} className="w-32 h-32 rounded-[2rem] bg-slate-200 dark:bg-slate-900 border-2 border-primary-600/20 overflow-hidden shadow-lg relative group cursor-pointer mb-5 hover:scale-105 transition-all">
                     <img src={formData.photoUrl || 'https://via.placeholder.com/400'} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-primary-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
@@ -205,7 +205,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">DNI: {formData.dni || '---'}</p>
                 </div>
 
-                <nav className="flex md:flex-col overflow-x-auto no-scrollbar md:overflow-y-auto p-3 md:p-4 gap-2 md:gap-3 shrink-0">
+                <nav className="flex md:flex-col overflow-x-auto no-scrollbar md:overflow-y-visible p-3 md:p-4 gap-2 md:gap-3 shrink-0">
                   {tabs.map(tab => {
                     const isActive = activeTab === tab.id;
                     return (
@@ -223,7 +223,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         {isActive && (
                           <>
                             <div className="hidden md:block absolute left-0 w-1.5 h-8 bg-white rounded-r-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
-                            <div className="absolute right-3 w-2 h-2 bg-white rounded-full md:hidden"></div>
+                            {/* Mobile Tab Indicator - Adjusted to bottom bar to avoid text overlap */}
+                            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-1 bg-white/60 rounded-full md:hidden"></div>
                           </>
                         )}
                       </button>
@@ -231,7 +232,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   })}
                 </nav>
 
-                <div className="flex md:hidden items-center gap-4 px-5 py-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5">
+                <div className="flex md:hidden items-center gap-4 px-5 py-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5 shrink-0">
                    <div onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden shrink-0">
                       <img src={formData.photoUrl || 'https://via.placeholder.com/100'} className="w-full h-full object-cover" />
                    </div>
