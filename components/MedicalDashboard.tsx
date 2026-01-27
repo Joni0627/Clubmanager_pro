@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Player, MedicalRecord } from '../types';
-import { Activity, AlertTriangle, CheckCircle, Search, Calendar, FileText, Plus, X, Save, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Search, Calendar, FileText, Plus, X, Save, Trash2, Edit2, Loader2, Heart, ShieldCheck, ClipboardList } from 'lucide-react';
 import { db } from '../lib/supabase';
 
 interface MedicalDashboardProps {
@@ -52,144 +52,231 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
       return new Date(p.medical.expiryDate) < new Date();
   });
 
-  const getFilteredPlayers = () => {
-    switch(filter) {
-      case 'injured': return injuredPlayers;
-      case 'expired': return expiredPlayers;
-      default: return players;
-    }
-  };
+  const displayPlayers = filter === 'injured' ? injuredPlayers : filter === 'expired' ? expiredPlayers : players;
 
-  const displayPlayers = getFilteredPlayers();
+  // Clases compartidas para inputs
+  const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl font-bold text-sm outline-none border border-transparent dark:border-slate-700 focus:border-primary-600/50 transition-all dark:text-slate-200 shadow-inner";
+  const labelClasses = "text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-2 block";
 
   return (
-    <div className="p-10 h-full overflow-y-auto">
-      <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="p-4 md:p-10 h-full overflow-y-auto custom-scrollbar">
+      <div className="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
-           <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Central Médica</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Gestión de Sanidad & Aptitud Competitiva</p>
+           <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Central Médica</h2>
+           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">Control de Salud e Integridad Física</p>
         </div>
         
-        <div className="flex gap-2 p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-2xl">
-            <button onClick={() => setFilter('all')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-900 shadow-md' : 'text-slate-500'}`}>General</button>
-            <button onClick={() => setFilter('injured')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === 'injured' ? 'bg-white dark:bg-slate-700 text-red-600 shadow-md' : 'text-slate-500'}`}>No Aptos</button>
-            <button onClick={() => setFilter('expired')} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === 'expired' ? 'bg-white dark:bg-slate-700 text-orange-600 shadow-md' : 'text-slate-500'}`}>Vencidos</button>
+        <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+            <button onClick={() => setFilter('all')} className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filter === 'all' ? 'bg-white dark:bg-slate-700 text-primary-600 shadow-md scale-105' : 'text-slate-400'}`}>Todos</button>
+            <button onClick={() => setFilter('injured')} className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filter === 'injured' ? 'bg-white dark:bg-slate-700 text-red-500 shadow-md scale-105' : 'text-slate-400'}`}>No Aptos</button>
+            <button onClick={() => setFilter('expired')} className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filter === 'expired' ? 'bg-white dark:bg-slate-700 text-orange-500 shadow-md scale-105' : 'text-slate-400'}`}>Vencidos</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 p-10 rounded-[3rem] shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Enfermería</span>
-                <AlertTriangle className="text-red-500" size={24} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 p-8 rounded-[2.5rem] shadow-sm flex items-center justify-between group">
+            <div>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bajas Médicas</span>
+              <p className="text-5xl font-black text-red-600 italic mt-1">{injuredPlayers.length}</p>
             </div>
-            <p className="text-6xl font-black text-red-600">{injuredPlayers.length}</p>
+            <div className="w-14 h-14 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+              <AlertTriangle size={28} />
+            </div>
          </div>
-         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 p-10 rounded-[3rem] shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Doc. Vencida</span>
-                <Calendar className="text-orange-500" size={24} />
+         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 p-8 rounded-[2.5rem] shadow-sm flex items-center justify-between group">
+            <div>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aptos Vencidos</span>
+              <p className="text-5xl font-black text-orange-600 italic mt-1">{expiredPlayers.length}</p>
             </div>
-            <p className="text-6xl font-black text-orange-600">{expiredPlayers.length}</p>
+            <div className="w-14 h-14 bg-orange-50 dark:bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+              <Calendar size={28} />
+            </div>
          </div>
-         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 p-10 rounded-[3rem] shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Plantel Apto</span>
-                <CheckCircle className="text-emerald-500" size={24} />
+         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 p-8 rounded-[2.5rem] shadow-sm flex items-center justify-between group">
+            <div>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Atletas Listos</span>
+              <p className="text-5xl font-black text-emerald-600 italic mt-1">{players.length - injuredPlayers.length}</p>
             </div>
-            <p className="text-6xl font-black text-emerald-600">{players.length - injuredPlayers.length}</p>
+            <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+              <CheckCircle size={28} />
+            </div>
          </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-[3.5rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 dark:bg-slate-950/50 text-slate-400 font-black uppercase tracking-widest text-[10px] border-b border-slate-100 dark:border-white/5">
-            <tr>
-              <th className="p-8">Atleta</th>
-              <th className="p-8">Disciplina</th>
-              <th className="p-8">Apto Físico</th>
-              <th className="p-8">Vencimiento</th>
-              <th className="p-8 text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-            {displayPlayers.map(player => (
-              <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                <td className="p-8 flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner">
-                      <img src={player.photoUrl || 'https://via.placeholder.com/40'} className="w-full h-full object-cover" />
-                   </div>
-                   <span className="font-black text-slate-800 dark:text-white uppercase text-sm tracking-tighter">{player.name}</span>
-                </td>
-                <td className="p-8">
-                   <div className="flex flex-col">
-                      <span className="font-black text-[9px] uppercase text-primary-600 tracking-widest">{player.discipline}</span>
-                      <span className="text-[9px] text-slate-400 font-bold uppercase">{player.category}</span>
-                   </div>
-                </td>
-                <td className="p-8">
-                  {player.medical?.isFit ? (
-                     <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">APTO COMPETENCIA</span>
-                  ) : (
-                     <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-100 text-red-700 dark:bg-red-900/30">BAJA MÉDICA</span>
-                  )}
-                </td>
-                <td className="p-8">
-                   <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase">
-                      <Calendar size={14} className="text-primary-600" />
-                      {player.medical?.expiryDate || 'NO REGISTRADO'}
-                   </div>
-                </td>
-                <td className="p-8 text-right">
-                    <button onClick={() => handleEditClick(player)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 transition-all">
-                        <Edit2 size={16} />
-                    </button>
-                </td>
+      <div className="bg-white dark:bg-[#0f1219] rounded-[3.5rem] shadow-xl border border-slate-200 dark:border-white/5 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-950/50 text-slate-400 font-black uppercase tracking-widest text-[9px] border-b border-slate-100 dark:border-white/5">
+                <th className="p-8">Atleta / Identidad</th>
+                <th className="p-8">División</th>
+                <th className="p-8">Estatus Médico</th>
+                <th className="p-8">Vencimiento</th>
+                <th className="p-8 text-right">Gestión</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {displayPlayers.map(player => (
+                <tr key={player.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                  <td className="p-8">
+                     <div className="flex items-center gap-4">
+                       <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner shrink-0">
+                          <img src={player.photoUrl || 'https://via.placeholder.com/64'} className="w-full h-full object-cover" />
+                       </div>
+                       <div>
+                          <span className="font-black text-slate-800 dark:text-white uppercase text-sm tracking-tighter block">{player.name}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DNI: {player.dni}</span>
+                       </div>
+                     </div>
+                  </td>
+                  <td className="p-8">
+                     <div className="flex flex-col">
+                        <span className="font-black text-[9px] uppercase text-primary-600 tracking-widest">{player.discipline}</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase">{player.category}</span>
+                     </div>
+                  </td>
+                  <td className="p-8">
+                    {player.medical?.isFit ? (
+                       <div className="flex items-center gap-2 text-emerald-600">
+                          <CheckCircle size={14} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Apto Competición</span>
+                       </div>
+                    ) : (
+                       <div className="flex items-center gap-2 text-red-600">
+                          <Activity size={14} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Baja Médica</span>
+                       </div>
+                    )}
+                  </td>
+                  <td className="p-8">
+                     <div className="flex items-center gap-3 text-[11px] font-black text-slate-500 italic">
+                        <Calendar size={14} className="text-primary-600" />
+                        {player.medical?.expiryDate || 'N/A'}
+                     </div>
+                  </td>
+                  <td className="p-8 text-right">
+                      <button onClick={() => handleEditClick(player)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm border border-transparent dark:border-white/5">
+                          <Edit2 size={16} />
+                      </button>
+                  </td>
+                </tr>
+              ))}
+              {displayPlayers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-20 text-center text-slate-400 font-black uppercase text-[10px] tracking-widest">No se encontraron registros bajo este filtro</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && selectedPlayer && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-fade-in">
-            <div className="bg-white dark:bg-slate-900 rounded-[4rem] shadow-2xl w-full max-w-2xl border border-white/5 overflow-hidden">
-                <div className="p-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shadow-xl">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
+            <div className="bg-white dark:bg-[#0f121a] rounded-none md:rounded-[3.5rem] shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-white/5 flex flex-col max-h-full md:max-h-[90vh] overflow-hidden">
+                
+                {/* Header Modal */}
+                <div className="px-8 md:px-12 py-8 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+                    <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden bg-slate-200 shadow-2xl border-4 border-white dark:border-slate-700">
                             <img src={selectedPlayer.photoUrl} className="w-full h-full object-cover" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none">{selectedPlayer.name}</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ficha Sanitaria</p>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">{selectedPlayer.name}</h3>
+                            <div className="flex items-center gap-3 mt-2">
+                               <span className="px-3 py-1 bg-primary-600/10 text-primary-600 text-[8px] font-black rounded-full uppercase tracking-widest">Historia Clínica</span>
+                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DNI: {selectedPlayer.dni}</span>
+                            </div>
                         </div>
                     </div>
-                    <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-full hover:bg-red-500 hover:text-white transition-all"><X size={20} /></button>
+                    <button onClick={() => setShowModal(false)} className="p-3 bg-white dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"><X size={20} /></button>
                 </div>
-                <div className="p-12 space-y-8">
-                    <div className="flex gap-8 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-white/5">
-                        <button onClick={() => setFormData({...formData, isFit: true})} className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${formData.isFit ? 'bg-emerald-500 text-white shadow-xl' : 'text-slate-400'}`}>Apto</button>
-                        <button onClick={() => setFormData({...formData, isFit: false})} className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${!formData.isFit ? 'bg-red-500 text-white shadow-xl' : 'text-slate-400'}`}>No Apto</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Último Examen</label>
-                            <input type="date" value={formData.lastCheckup} onChange={e => setFormData({...formData, lastCheckup: e.target.value})} className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none" />
+
+                {/* Body Modal */}
+                <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
+                    <div className="max-w-2xl mx-auto space-y-10">
+                        
+                        {/* Estado de Aptitud */}
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                               <div className="w-1 h-4 bg-primary-600 rounded-full"></div> Dictamen de Aptitud
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4 p-2 bg-slate-100 dark:bg-slate-800/60 rounded-[2rem] border border-slate-200 dark:border-white/5">
+                                <button 
+                                  onClick={() => setFormData({...formData, isFit: true})} 
+                                  className={`flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${formData.isFit ? 'bg-emerald-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
+                                >
+                                  <ShieldCheck size={16} /> Apto Competencia
+                                </button>
+                                <button 
+                                  onClick={() => setFormData({...formData, isFit: false})} 
+                                  className={`flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${!formData.isFit ? 'bg-red-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
+                                >
+                                  <AlertTriangle size={16} /> Baja Médica
+                                </button>
+                            </div>
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Vencimiento Apto</label>
-                            <input type="date" value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none" />
+
+                        {/* Fechas */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Fecha de Último Examen</label>
+                                <div className="relative group">
+                                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-600 group-focus-within:scale-110 transition-transform" size={18} />
+                                  <input 
+                                    type="date" 
+                                    value={formData.lastCheckup} 
+                                    onChange={e => setFormData({...formData, lastCheckup: e.target.value})} 
+                                    className={inputClasses + " pl-12"} 
+                                  />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Vencimiento de Certificado</label>
+                                <div className="relative group">
+                                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 group-focus-within:scale-110 transition-transform" size={18} />
+                                  <input 
+                                    type="date" 
+                                    value={formData.expiryDate} 
+                                    onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
+                                    className={inputClasses + " pl-12"} 
+                                  />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Notas Médicas / Diagnóstico</label>
-                        <textarea rows={4} value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full p-6 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl text-sm font-bold dark:text-white outline-none resize-none" placeholder="Especificar lesión o condiciones especiales..." />
+
+                        {/* Notas y Diagnóstico */}
+                        <div className="space-y-4">
+                            <label className={labelClasses}>Notas Médicas / Diagnóstico Específico</label>
+                            <div className="relative group">
+                              <ClipboardList className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" size={18} />
+                              <textarea 
+                                rows={4} 
+                                value={formData.notes} 
+                                onChange={e => setFormData({...formData, notes: e.target.value})} 
+                                className={inputClasses + " pl-12 pt-4 min-h-[140px] resize-none leading-relaxed"} 
+                                placeholder="Describir lesión, tratamiento o condiciones especiales..." 
+                              />
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="p-10 border-t border-slate-100 dark:border-white/5 flex justify-end">
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-3 bg-slate-900 dark:bg-primary-600 text-white px-12 py-5 rounded-3xl font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                        {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                        Actualizar Registro
+
+                {/* Footer Modal */}
+                <div className="px-8 md:px-12 py-8 border-t border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-end items-center gap-4 bg-slate-50 dark:bg-slate-800/40 shrink-0">
+                    <button 
+                      onClick={() => setShowModal(false)}
+                      className="w-full md:w-auto px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={handleSave} 
+                      disabled={isSaving} 
+                      className="w-full md:w-auto flex items-center justify-center gap-3 bg-slate-950 dark:bg-primary-600 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        Confirmar y Sincronizar
                     </button>
                 </div>
             </div>
