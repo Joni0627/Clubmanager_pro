@@ -23,7 +23,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
   const [activeTab, setActiveTab] = useState<ModalTab>('identity');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<Member>>({
     name: '', dni: '', gender: 'Masculino', birthDate: '', email: '', phone: '',
@@ -70,59 +69,10 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
         createdAt: selectedMember?.createdAt || new Date().toISOString(),
       } as Member;
 
-      // 1. Guardar Miembro (Legajo Maestro)
       await onSaveMember(memberToSave);
-
-      // 2. Sincronizar Asignaciones Deportivas a la tabla Players
-      // Filtramos solo las que son de rol PLAYER
-      const playerAssignments = memberToSave.assignments.filter(a => a.role === 'PLAYER');
-      
-      for (const ass of playerAssignments) {
-        // Buscamos la disciplina en la config
-        const disciplineObj = config.disciplines.find(d => d.id === ass.disciplineId);
-        if (!disciplineObj) continue;
-
-        // Buscamos la categoría en todas las ramas de esa disciplina
-        const categoryObj = disciplineObj.branches
-          .flatMap(b => b.categories)
-          .find(c => c.id === ass.categoryId);
-
-        if (categoryObj) {
-          // Buscamos si ya existe este miembro en este deporte y categoría específicos
-          const { data: existingPlayer } = await supabase
-            .from('players')
-            .select('id')
-            .eq('member_id', memberId)
-            .eq('discipline', disciplineObj.name)
-            .eq('category', categoryObj.name)
-            .maybeSingle();
-
-          const playerData: any = {
-            member_id: memberId,
-            name: memberToSave.name,
-            dni: memberToSave.dni,
-            email: memberToSave.email,
-            photoUrl: memberToSave.photoUrl,
-            discipline: disciplineObj.name, // Guardamos el nombre real para el filtro de planteles
-            category: categoryObj.name,     // Guardamos el nombre real para el filtro de planteles
-            gender: memberToSave.gender,
-            status: 'Active'
-          };
-
-          if (existingPlayer) {
-            playerData.id = existingPlayer.id;
-          } else {
-            playerData.id = crypto.randomUUID(); // Nuevo ID de jugador si no existía el vínculo
-          }
-
-          await db.players.upsert(playerData);
-        }
-      }
-
       setShowModal(false);
     } catch (e) { 
-      console.error("Error en sincronización:", e);
-      alert("Error al sincronizar con el plantel. Verifica la configuración de la categoría.");
+      console.error("Error al guardar:", e);
     } finally { 
       setIsSaving(false); 
     }
@@ -334,7 +284,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                 className="w-full md:w-auto flex items-center justify-center gap-4 bg-primary-600 text-white px-10 py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-xl shadow-primary-600/20 hover:scale-[1.02] transition-all disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Confirmar y Sincronizar Plantel
+                Confirmar y Guardar Cambios
               </button>
             </div>
           </div>

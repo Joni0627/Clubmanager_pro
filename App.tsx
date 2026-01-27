@@ -43,10 +43,10 @@ function App() {
         setConfig({
           name: configData.name || 'MI CLUB',
           logoUrl: configData.logo_url || '',
-          primaryColor: configData.primary_color || '#ec4899',
-          secondaryColor: configData.secondary_color || '#0f172a',
+          primary_color: configData.primary_color || '#ec4899',
+          secondary_color: configData.secondary_color || '#0f172a',
           disciplines: configData.disciplines || []
-        });
+        } as any);
       }
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -186,6 +186,8 @@ function App() {
             clubConfig={config} 
             members={members}
             onBack={() => setView('squads')}
+            // Fix: Passed fetchData as onRefresh to DisciplineConsole
+            onRefresh={fetchData}
           />
         )}
       </main>
