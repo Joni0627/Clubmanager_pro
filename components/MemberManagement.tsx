@@ -116,6 +116,9 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
     { id: 'system', label: 'Sistema', icon: ShieldCheck },
   ];
 
+  const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700/50 focus:border-primary-600/50 dark:focus:border-primary-500/50 shadow-inner transition-all dark:text-slate-200";
+  const selectClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-slate-700/50 shadow-inner dark:text-slate-200";
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in pb-40">
       <header className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
@@ -133,7 +136,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="BUSCAR..." 
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-[#11141d] rounded-2xl border border-slate-200 dark:border-white/5 outline-none font-bold text-[11px] uppercase tracking-widest shadow-lg"
+              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none font-bold text-[11px] uppercase tracking-widest shadow-lg"
             />
           </div>
           <button onClick={handleNew} className="bg-primary-600 text-white px-6 py-4 rounded-2xl shadow-xl shadow-primary-600/20 hover:scale-105 transition-all shrink-0">
@@ -144,9 +147,9 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map(member => (
-          <div key={member.id} className="bg-white dark:bg-[#11141d] rounded-[2.5rem] p-6 md:p-8 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+          <div key={member.id} className="bg-white dark:bg-slate-800/40 rounded-[2.5rem] p-6 md:p-8 border border-slate-200 dark:border-slate-700/50 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
             <div className="flex items-center gap-5 relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner shrink-0">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden shadow-inner shrink-0">
                 <img src={member.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
               </div>
               <div className="min-w-0 flex-1">
@@ -162,7 +165,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DNI: {member.dni}</p>
               </div>
             </div>
-            <button onClick={() => handleEdit(member)} className="w-full mt-6 bg-slate-50 dark:bg-white/5 p-3.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-primary-600 hover:text-white transition-all">
+            <button onClick={() => handleEdit(member)} className="w-full mt-6 bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-primary-600 hover:text-white transition-all">
               Gestionar Legajo
             </button>
           </div>
@@ -171,9 +174,9 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-0 md:p-10 animate-fade-in">
-          <div className="bg-white dark:bg-[#0d1017] w-full max-w-6xl h-full md:h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col border border-slate-200 dark:border-white/10 overflow-hidden">
+          <div className="bg-white dark:bg-[#0f121a] w-full max-w-6xl h-full md:h-[90vh] md:rounded-[3rem] shadow-2xl flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
             
-            <div className="px-6 md:px-10 py-5 flex justify-between items-center border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50 dark:bg-slate-900/40">
+            <div className="px-6 md:px-10 py-5 flex justify-between items-center border-b border-slate-100 dark:border-slate-700/50 shrink-0 bg-slate-50 dark:bg-slate-800/40">
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-primary-600/10 items-center justify-center text-primary-600">
                   <Fingerprint size={24} />
@@ -183,17 +186,17 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   <p className="text-[8px] md:text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">Gestión de Identidad</p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-white/10 rounded-full hover:bg-red-500 hover:text-white transition-all">
+              <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all">
                 <X size={20} />
               </button>
             </div>
 
             <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
               
-              <div className="w-full md:w-64 bg-slate-50/50 dark:bg-[#11141d] border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0 md:overflow-y-auto no-scrollbar">
+              <div className="w-full md:w-64 bg-slate-50/50 dark:bg-slate-900/40 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-700/50 flex flex-col shrink-0 md:overflow-y-auto no-scrollbar">
                 
-                <div className="hidden md:flex p-8 flex-col items-center border-b border-slate-100 dark:border-white/5 shrink-0">
-                  <div onClick={() => fileInputRef.current?.click()} className="w-32 h-32 rounded-[2rem] bg-slate-200 dark:bg-slate-900 border-2 border-primary-600/20 overflow-hidden shadow-lg relative group cursor-pointer mb-5 hover:scale-105 transition-all">
+                <div className="hidden md:flex p-8 flex-col items-center border-b border-slate-100 dark:border-slate-700/50 shrink-0">
+                  <div onClick={() => fileInputRef.current?.click()} className="w-32 h-32 rounded-[2rem] bg-slate-200 dark:bg-slate-800 border-2 border-primary-600/20 overflow-hidden shadow-lg relative group cursor-pointer mb-5 hover:scale-105 transition-all">
                     <img src={formData.photoUrl || 'https://via.placeholder.com/400'} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-primary-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                       <Camera className="text-white" size={24} />
@@ -215,7 +218,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         className={`flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-5 rounded-xl md:rounded-2xl transition-all relative shrink-0 border-2 ${
                           isActive 
                           ? 'bg-primary-600 text-white shadow-xl shadow-primary-600/30 border-primary-400 scale-[1.02] z-10' 
-                          : 'text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-white/5'
+                          : 'text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700/30'
                         }`}
                       >
                         <tab.icon size={18} className={isActive ? 'text-white' : 'opacity-30'} />
@@ -223,7 +226,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         {isActive && (
                           <>
                             <div className="hidden md:block absolute left-0 w-1.5 h-8 bg-white rounded-r-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
-                            {/* Mobile Tab Indicator - Adjusted to bottom bar to avoid text overlap */}
                             <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-1 bg-white/60 rounded-full md:hidden"></div>
                           </>
                         )}
@@ -232,8 +234,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                   })}
                 </nav>
 
-                <div className="flex md:hidden items-center gap-4 px-5 py-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-white/5 shrink-0">
-                   <div onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+                <div className="flex md:hidden items-center gap-4 px-5 py-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/50 shrink-0">
+                   <div onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
                       <img src={formData.photoUrl || 'https://via.placeholder.com/100'} className="w-full h-full object-cover" />
                    </div>
                    <div className="min-w-0">
@@ -244,7 +246,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                 </div>
               </div>
 
-              <div className="flex-1 bg-white dark:bg-[#0d1017] overflow-y-auto p-6 md:p-10 custom-scrollbar">
+              <div className="flex-1 bg-white dark:bg-[#0f121a] overflow-y-auto p-6 md:p-10 custom-scrollbar">
                 <div className="max-w-3xl mx-auto">
                   
                   {activeTab === 'identity' && (
@@ -255,15 +257,15 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-2 col-span-1 md:col-span-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Nombre Completo</label>
-                          <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="EJ: LIONEL MESSI" />
+                          <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: LIONEL MESSI" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Documento</label>
-                          <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="NÚMERO" />
+                          <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className={inputClasses} placeholder="NÚMERO" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Género</label>
-                          <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner">
+                          <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className={selectClasses}>
                             <option>Masculino</option>
                             <option>Femenino</option>
                             <option>Otro</option>
@@ -271,7 +273,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Nacimiento</label>
-                          <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" />
+                          <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className={inputClasses} />
                         </div>
                       </div>
                     </div>
@@ -285,19 +287,19 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Obra Social</label>
-                          <input value={formData.medicalInsurance} onChange={e => setFormData({...formData, medicalInsurance: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="EJ: OSDE" />
+                          <input value={formData.medicalInsurance} onChange={e => setFormData({...formData, medicalInsurance: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: OSDE" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">G. Sanguíneo</label>
-                          <input value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="EJ: 0+" />
+                          <input value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: 0+" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Peso (kg)</label>
-                          <input value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="00.0" />
+                          <input value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className={inputClasses} placeholder="00.0" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Altura (cm)</label>
-                          <input value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none shadow-inner" placeholder="000" />
+                          <input value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} className={inputClasses} placeholder="000" />
                         </div>
                       </div>
                     </div>
@@ -312,11 +314,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                           <div className="space-y-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Teléfono</label>
-                            <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="+54..." />
+                            <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className={inputClasses} placeholder="+54..." />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Email</label>
-                            <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="ej@mail.com" />
+                            <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={inputClasses} placeholder="ej@mail.com" />
                           </div>
                         </div>
                       </section>
@@ -328,35 +330,35 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
                           <div className="space-y-2 md:col-span-4">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Dirección (Calle y Número)</label>
-                            <input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="CALLE 123" />
+                            <input value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value.toUpperCase()})} className={inputClasses} placeholder="CALLE 123" />
                           </div>
                           <div className="space-y-2 md:col-span-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Ciudad</label>
-                            <input value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="CIUDAD" />
+                            <input value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value.toUpperCase()})} className={inputClasses} placeholder="CIUDAD" />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Provincia</label>
-                            <input value={formData.province || ''} onChange={e => setFormData({...formData, province: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="PROV" />
+                            <input value={formData.province || ''} onChange={e => setFormData({...formData, province: e.target.value.toUpperCase()})} className={inputClasses} placeholder="PROV" />
                           </div>
                           <div className="space-y-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">C. Postal</label>
-                            <input value={formData.postalCode || ''} onChange={e => setFormData({...formData, postalCode: e.target.value.toUpperCase()})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30 shadow-inner" placeholder="ZIP" />
+                            <input value={formData.postalCode || ''} onChange={e => setFormData({...formData, postalCode: e.target.value.toUpperCase()})} className={inputClasses} placeholder="ZIP" />
                           </div>
                         </div>
                       </section>
 
-                      <section className="bg-emerald-500/5 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-500/10 space-y-6">
-                        <h5 className="text-[9px] md:text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-3">
+                      <section className="bg-emerald-500/5 dark:bg-emerald-500/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-emerald-500/10 dark:border-emerald-500/20 space-y-6">
+                        <h5 className="text-[9px] md:text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-3">
                           <UserCheck size={16} /> Contacto de Emergencia
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                           <div className="space-y-2">
-                            <label className="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest ml-3">Nombre Tutor</label>
-                            <input value={formData.tutor?.name || ''} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { relationship: 'Padre', phone: '', dni: '' }), name: e.target.value.toUpperCase() }})} className="w-full p-3.5 bg-white dark:bg-[#0d1017] rounded-xl font-bold text-xs border border-emerald-500/10" placeholder="NOMBRE" />
+                            <label className="text-[8px] font-black text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest ml-3">Nombre Tutor</label>
+                            <input value={formData.tutor?.name || ''} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { relationship: 'Padre', phone: '', dni: '' }), name: e.target.value.toUpperCase() }})} className="w-full p-3.5 bg-white dark:bg-slate-800 rounded-xl font-bold text-xs border border-emerald-500/10 dark:border-slate-700 dark:text-slate-200" placeholder="NOMBRE" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest ml-3">Vínculo</label>
-                            <select value={formData.tutor?.relationship || 'Padre'} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { name: '', phone: '', dni: '' }), relationship: e.target.value as any }})} className="w-full p-3.5 bg-white dark:bg-[#0d1017] rounded-xl font-bold text-xs border border-emerald-500/10">
+                            <label className="text-[8px] font-black text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest ml-3">Vínculo</label>
+                            <select value={formData.tutor?.relationship || 'Padre'} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { name: '', phone: '', dni: '' }), relationship: e.target.value as any }})} className="w-full p-3.5 bg-white dark:bg-slate-800 rounded-xl font-bold text-xs border border-emerald-500/10 dark:border-slate-700 dark:text-slate-200">
                               <option>Padre</option>
                               <option>Madre</option>
                               <option>Tutor Legal</option>
@@ -365,8 +367,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                             </select>
                           </div>
                           <div className="space-y-2 col-span-1 md:col-span-2">
-                            <label className="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest ml-3">Tel. Emergencia</label>
-                            <input value={formData.tutor?.phone || ''} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { name: '', relationship: 'Padre', dni: '' }), phone: e.target.value }})} className="w-full p-3.5 bg-white dark:bg-[#0d1017] rounded-xl font-bold text-xs border border-emerald-500/10" placeholder="TELÉFONO" />
+                            <label className="text-[8px] font-black text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest ml-3">Tel. Emergencia</label>
+                            <input value={formData.tutor?.phone || ''} onChange={e => setFormData({...formData, tutor: { ...(formData.tutor || { name: '', relationship: 'Padre', dni: '' }), phone: e.target.value }})} className="w-full p-3.5 bg-white dark:bg-slate-800 rounded-xl font-bold text-xs border border-emerald-500/10 dark:border-slate-700 dark:text-slate-200" placeholder="TELÉFONO" />
                           </div>
                         </div>
                       </section>
@@ -389,7 +391,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                           const disc = config.disciplines.find(d => d.id === as.disciplineId);
                           const availableCategories = disc?.branches?.flatMap(b => b.enabled ? b.categories : []) || [];
                           return (
-                            <div key={as.id} className="bg-slate-50 dark:bg-[#151924] p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
+                            <div key={as.id} className="bg-slate-50 dark:bg-slate-800/60 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-4 shadow-sm transition-all">
                               <div className="flex justify-between items-center">
                                 <select 
                                   value={as.role} 
@@ -407,10 +409,10 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                                 </button>
                               </div>
                               <div className="space-y-3">
-                                <select value={as.disciplineId} onChange={e => updateAssignment(idx, 'disciplineId', e.target.value)} className="w-full bg-white dark:bg-[#0d1017] p-3 rounded-xl text-[10px] font-bold border border-slate-100 dark:border-white/5">
+                                <select value={as.disciplineId} onChange={e => updateAssignment(idx, 'disciplineId', e.target.value)} className="w-full bg-white dark:bg-slate-900 p-3 rounded-xl text-[10px] font-bold border border-slate-100 dark:border-slate-700/50 dark:text-slate-200">
                                   {config.disciplines.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
-                                <select value={as.categoryId} onChange={e => updateAssignment(idx, 'categoryId', e.target.value)} className="w-full bg-white dark:bg-[#0d1017] p-3 rounded-xl text-[10px] font-bold border border-slate-100 dark:border-white/5">
+                                <select value={as.categoryId} onChange={e => updateAssignment(idx, 'categoryId', e.target.value)} className="w-full bg-white dark:bg-slate-900 p-3 rounded-xl text-[10px] font-bold border border-slate-100 dark:border-slate-700/50 dark:text-slate-200">
                                   <option value="">(Sin Categoría)</option>
                                   {availableCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
@@ -419,7 +421,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                           );
                         })}
                         {(formData.assignments?.length === 0) && (
-                          <div className="col-span-1 md:col-span-2 py-10 text-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl">
+                          <div className="col-span-1 md:col-span-2 py-10 text-center border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-2xl">
                              <Briefcase className="mx-auto text-slate-200 mb-2" size={32} />
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sin asignaciones deportivas</p>
                           </div>
@@ -436,7 +438,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         <div className="space-y-3">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Perfil</label>
-                          <select value={formData.systemRole} onChange={e => setFormData({...formData, systemRole: e.target.value as any})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-black text-[10px] uppercase shadow-inner">
+                          <select value={formData.systemRole} onChange={e => setFormData({...formData, systemRole: e.target.value as any})} className={selectClasses + " font-black text-[10px] uppercase"}>
                             <option value="Socio">Socio / Miembro</option>
                             <option value="STAFF">Staff Club</option>
                             <option value="Externo">Externo</option>
@@ -444,19 +446,19 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                         </div>
                         <div className="space-y-3">
                           <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Login</label>
-                          <div className="flex gap-2 p-1 bg-slate-100 dark:bg-[#151924] rounded-xl border border-slate-200 dark:border-white/5">
+                          <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50">
                              <button onClick={() => setFormData({...formData, canLogin: true})} className={`flex-1 py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${formData.canLogin ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-400'}`}>Si</button>
-                             <button onClick={() => setFormData({...formData, canLogin: false})} className={`flex-1 py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${!formData.canLogin ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}>No</button>
+                             <button onClick={() => setFormData({...formData, canLogin: false})} className={`flex-1 py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${!formData.canLogin ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-lg' : 'text-slate-400'}`}>No</button>
                           </div>
                         </div>
                         {formData.canLogin && (
                           <div className="space-y-3 col-span-1 md:col-span-2">
                             <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3">Usuario</label>
-                            <input value={formData.username || ''} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase().replace(/\s/g, '')})} className="w-full p-4 bg-slate-50 dark:bg-[#151924] rounded-xl font-bold text-sm outline-none border border-transparent focus:border-primary-600/30" placeholder="usuario.club" />
+                            <input value={formData.username || ''} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase().replace(/\s/g, '')})} className={inputClasses} placeholder="usuario.club" />
                           </div>
                         )}
                       </div>
-                      <div className="p-6 md:p-8 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex items-center gap-5">
+                      <div className="p-6 md:p-8 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-2xl border border-emerald-500/10 dark:border-emerald-500/20 flex items-center gap-5">
                          <BadgeCheck className="text-emerald-500 shrink-0" size={32} />
                          <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest leading-relaxed">Registro habilitado bajo normativas institucionales.</p>
                       </div>
@@ -467,8 +469,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               </div>
             </div>
 
-            {/* Footer Modal */}
-            <div className="px-6 md:px-10 py-5 border-t border-slate-100 dark:border-white/5 flex justify-end bg-slate-50 dark:bg-slate-900/40 shrink-0">
+            <div className="px-6 md:px-10 py-5 border-t border-slate-100 dark:border-slate-700/50 flex justify-end bg-slate-50 dark:bg-slate-800/40 shrink-0">
               <button 
                 onClick={handleSave} 
                 disabled={isSaving}
