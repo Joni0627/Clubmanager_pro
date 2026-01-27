@@ -9,13 +9,13 @@ import Dashboard from './Dashboard';
 import AttendanceTracker from './AttendanceTracker';
 import MedicalDashboard from './MedicalDashboard';
 import PlayerCard from './PlayerCard';
+import { db } from '../lib/supabase';
 
 interface DisciplineConsoleProps {
   discipline: Discipline;
   clubConfig: ClubConfig;
   members: Member[];
   onBack: () => void;
-  // Added onRefresh prop to support data synchronization
   onRefresh?: () => Promise<void> | void;
 }
 
@@ -23,60 +23,88 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   const [activeSubTab, setActiveSubTab] = useState<'summary' | 'players' | 'attendance' | 'medical'>('summary');
   const [selectedGender, setSelectedGender] = useState<'Masculino' | 'Femenino'>('Masculino');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  // Fix: Added missing state for selectedPlayer to resolve reference errors
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [persistedPlayers, setPersistedPlayers] = useState<Player[]>([]);
+  const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
 
-  // 1. Obtener la rama actual desde la matriz de la disciplina
+  // 1. Obtener la rama actual
   const activeBranch = useMemo(() => 
     discipline.branches.find(b => b.gender === selectedGender && b.enabled),
   [discipline, selectedGender]);
 
-  // 2. Setear la primera categoría por defecto cuando cambia la rama
+  // 2. Setear categoría por defecto
   useEffect(() => {
     if (activeBranch && activeBranch.categories.length > 0) {
       setSelectedCategoryId(activeBranch.categories[0].id);
-    } else {
-      setSelectedCategoryId('');
     }
   }, [activeBranch]);
 
-  // Fix: Added fetchPlayers function to satisfy component requirements and trigger data refresh
-  const fetchPlayers = async () => {
-    if (onRefresh) {
-      await onRefresh();
+  // 3. CARGA DE DATOS DESDE SUPABASE (Tabla Players)
+  const fetchPlayersData = async () => {
+    if (!selectedCategoryId || !activeBranch) return;
+    
+    setIsLoadingPlayers(true);
+    try {
+      const categoryName = activeBranch.categories.find(c => c.id === selectedCategoryId)?.name;
+      const { data, error } = await db.players.getAll();
+      
+      if (data) {
+        // Filtramos los datos de la tabla players que correspondan a esta consola
+        const filtered = data.filter(p => 
+          p.discipline === discipline.name && 
+          p.category === categoryName
+        );
+        setPersistedPlayers(filtered);
+      }
+    } catch (err) {
+      console.error("Error fetching players table:", err);
+    } finally {
+      setIsLoadingPlayers(false);
     }
   };
 
-  // 3. FILTRADO MAESTRO: Buscamos miembros que tengan la asignación correcta en su array de assignments
-  const filteredMembers = useMemo(() => {
+  useEffect(() => {
+    fetchPlayersData();
+  }, [selectedCategoryId, discipline.name]);
+
+  // 4. MERGE LÓGICO: Cruzamos Miembros Asignados con Datos Persistidos
+  const displayPlayers = useMemo(() => {
     if (!selectedCategoryId) return [];
     
-    return members.filter(m => 
+    // Filtramos miembros que tengan la asignación
+    const assignedMembers = members.filter(m => 
       m.assignments.some(a => 
         a.disciplineId === discipline.id && 
         a.categoryId === selectedCategoryId &&
         a.role === 'PLAYER'
       )
     );
-  }, [members, discipline.id, selectedCategoryId]);
 
-  // Transformamos miembros a interfaz Player para compatibilidad con componentes existentes
-  const displayPlayers: Player[] = filteredMembers.map(m => ({
-    id: m.id,
-    name: m.name,
-    dni: m.dni,
-    number: '00', // Dato a completar en ficha
-    position: 'N/A',
-    discipline: discipline.name,
-    gender: m.gender,
-    category: activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || '',
-    photoUrl: m.photoUrl,
-    email: m.email,
-    overallRating: m.overallRating || 0,
-    stats: m.stats || {},
-    medical: { isFit: true, expiryDate: '' },
-    status: 'Active'
-  }));
+    return assignedMembers.map(m => {
+      // Buscamos si este miembro ya tiene datos guardados en la tabla 'players'
+      const savedData = persistedPlayers.find(p => p.dni === m.dni || p.id === m.id);
+      
+      const categoryName = activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || '';
+
+      // Si hay datos guardados, los usamos. Si no, usamos valores base del miembro.
+      return {
+        id: m.id,
+        name: m.name,
+        dni: m.dni,
+        number: savedData?.number || '00',
+        position: savedData?.position || 'N/A',
+        discipline: discipline.name,
+        gender: m.gender,
+        category: categoryName,
+        photoUrl: m.photoUrl,
+        email: m.email,
+        overallRating: savedData?.overallRating || 0,
+        stats: savedData?.stats || {},
+        medical: savedData?.medical || { isFit: true, expiryDate: '' },
+        status: savedData?.status || 'Active'
+      };
+    });
+  }, [members, discipline.id, discipline.name, selectedCategoryId, persistedPlayers, activeBranch]);
 
   const subTabs = [
     { id: 'summary', label: 'Resumen', icon: BarChart3 },
@@ -120,7 +148,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
           </div>
 
           <div className="flex flex-col md:flex-row gap-8 pb-6 border-t border-slate-100 dark:border-white/5 pt-6">
-            {/* Filtro Rama */}
             <div className="flex flex-col gap-2">
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Seleccionar Rama</span>
               <div className="flex gap-2">
@@ -136,7 +163,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
               </div>
             </div>
 
-            {/* Filtro Categoría Dinámico */}
             <div className="flex flex-col gap-2 flex-1">
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">División / Categoría</span>
               <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -149,9 +175,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                     {cat.name}
                   </button>
                 ))}
-                {(!activeBranch || activeBranch.categories.length === 0) && (
-                  <p className="text-[10px] font-bold text-slate-400 italic py-2">Sin categorías configuradas para esta rama</p>
-                )}
               </div>
             </div>
           </div>
@@ -160,59 +183,68 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#080a0f] p-6 md:p-12">
         <div className="max-w-7xl mx-auto">
-          {activeSubTab === 'summary' && (
-             <Dashboard currentCategory={activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || 'General'} />
-          )}
+          {isLoadingPlayers ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="animate-spin text-primary-600 mb-4" size={32} />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Sincronizando Atletas...</p>
+            </div>
+          ) : (
+            <>
+              {activeSubTab === 'summary' && (
+                <Dashboard currentCategory={activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || 'General'} />
+              )}
 
-          {activeSubTab === 'players' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
-              {displayPlayers.length > 0 ? displayPlayers.map(athlete => (
-                <div 
-                  key={athlete.id} 
-                  // Fix: Assigned setSelectedPlayer to resolve reference error
-                  onClick={() => setSelectedPlayer(athlete)}
-                  className="bg-white dark:bg-[#0f1219] rounded-[3.5rem] p-10 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all cursor-pointer group"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-28 h-28 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl relative">
-                      <img src={athlete.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
-                      <div className="absolute -bottom-1 -right-1 bg-primary-600 text-white w-9 h-9 rounded-full flex items-center justify-center font-black italic text-xs">
-                        {athlete.overallRating}
+              {activeSubTab === 'players' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
+                  {displayPlayers.length > 0 ? displayPlayers.map(athlete => (
+                    <div 
+                      key={athlete.id} 
+                      onClick={() => setSelectedPlayer(athlete)}
+                      className="bg-white dark:bg-[#0f1219] rounded-[3.5rem] p-10 border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-2xl transition-all cursor-pointer group"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="w-28 h-28 rounded-full border-4 border-slate-50 dark:border-slate-800 p-1.5 mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl relative">
+                          <img src={athlete.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover rounded-full" />
+                          <div className="absolute -bottom-1 -right-1 bg-primary-600 text-white w-9 h-9 rounded-full flex items-center justify-center font-black italic text-xs shadow-lg">
+                            {athlete.overallRating}
+                          </div>
+                        </div>
+                        <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center leading-none mb-1 truncate w-full">{athlete.name}</h3>
+                        <p className="text-[10px] font-black text-primary-600 mb-4">{athlete.position} #{athlete.number}</p>
+                        <div className="flex items-center gap-3">
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">Sincronizado</span>
+                        </div>
                       </div>
                     </div>
-                    <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center leading-none mb-4">{athlete.name}</h3>
-                    <div className="flex items-center gap-3">
-                       <span className="text-[9px] font-black text-primary-600 uppercase tracking-widest bg-primary-500/10 px-4 py-1.5 rounded-full">MIEMBRO ASIGNADO</span>
+                  )) : (
+                    <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[5rem]">
+                       <Users size={64} className="mx-auto mb-6 text-slate-300" />
+                       <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin miembros asignados</h3>
                     </div>
-                  </div>
-                </div>
-              )) : (
-                <div className="col-span-full py-40 text-center opacity-30 border-4 border-dashed border-slate-200 dark:border-white/5 rounded-[5rem]">
-                   <Users size={64} className="mx-auto mb-6 text-slate-300" />
-                   <h3 className="font-black uppercase tracking-[0.6em] text-[10px]">Sin miembros asignados a esta categoría</h3>
-                   <p className="text-[9px] font-bold uppercase tracking-widest mt-4">Verifica las asignaciones en el Legajo del Miembro</p>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {activeSubTab === 'attendance' && (
-             <AttendanceTracker players={displayPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />
-          )}
+              {activeSubTab === 'attendance' && (
+                <AttendanceTracker players={displayPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />
+              )}
 
-          {activeSubTab === 'medical' && (
-             // Fix: Passed fetchPlayers to MedicalDashboard
-             <MedicalDashboard players={displayPlayers} onRefresh={fetchPlayers} />
+              {activeSubTab === 'medical' && (
+                <MedicalDashboard players={displayPlayers} onRefresh={fetchPlayersData} />
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Fix: Implemented PlayerCard modal with missing state and refresh function */}
       {selectedPlayer && (
         <PlayerCard 
           player={selectedPlayer} 
           onClose={() => setSelectedPlayer(null)} 
-          onSaveSuccess={fetchPlayers}
+          onSaveSuccess={() => {
+            fetchPlayersData();
+            if (onRefresh) onRefresh();
+          }}
           clubConfig={clubConfig}
         />
       )}
