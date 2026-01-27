@@ -4,7 +4,8 @@ import { Member, AppRole, ClubConfig, Tutor, Assignment, Player } from '../types
 import { 
   UserPlus, Search, Trash2, User, X, Save, Camera, Loader2, PlusCircle, Heart, 
   UserCheck, Fingerprint, ShieldCheck, Briefcase, Ruler, Weight, Activity, 
-  BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin, Phone, Mail, UserCircle
+  BadgeCheck, Contact2, ShieldAlert, ChevronRight, MapPin, Phone, Mail, UserCircle,
+  Image as ImageIcon
 } from 'lucide-react';
 import { db, supabase } from '../lib/supabase';
 
@@ -23,6 +24,7 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
   const [activeTab, setActiveTab] = useState<ModalTab>('identity');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<Member>>({
     name: '', dni: '', gender: 'Masculino', birthDate: '', email: '', phone: '',
@@ -40,7 +42,6 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
   const handleEdit = (member: Member) => {
     setSelectedMember(member);
-    // Aseguramos que el objeto tutor no sea null para evitar errores en inputs
     setFormData({
       ...member,
       tutor: member.tutor || { name: '', dni: '', relationship: 'Padre', phone: '', email: '' }
@@ -60,6 +61,17 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
     });
     setActiveTab('identity');
     setShowModal(true);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSave = async () => {
@@ -205,32 +217,57 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
               <div className="flex-1 bg-white dark:bg-[#0f121a] overflow-y-auto p-6 md:p-10 custom-scrollbar">
                 <div className="max-w-3xl mx-auto">
                   {activeTab === 'identity' && (
-                    <div className="space-y-6 md:space-y-8 animate-fade-in">
+                    <div className="space-y-10 animate-fade-in">
                        <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
                          <div className="w-1 h-4 bg-primary-600 rounded-full"></div> Información Personal
                        </h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <div className="space-y-2 col-span-1 md:col-span-2">
-                          <label className={labelClasses}>Nombre Completo</label>
-                          <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: LIONEL MESSI" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className={labelClasses}>Documento (DNI)</label>
-                          <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className={inputClasses} placeholder="NÚMERO" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className={labelClasses}>Género</label>
-                          <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className={selectClasses}>
-                            <option>Masculino</option>
-                            <option>Femenino</option>
-                            <option>Otro</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className={labelClasses}>Fecha de Nacimiento</label>
-                          <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className={inputClasses} />
-                        </div>
-                      </div>
+
+                       <div className="flex flex-col md:flex-row gap-10 items-start">
+                          {/* Photo Section */}
+                          <div className="flex flex-col items-center gap-4 shrink-0">
+                             <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
+                             <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-40 h-40 rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden cursor-pointer group hover:border-primary-600 transition-all relative"
+                             >
+                                {formData.photoUrl ? (
+                                   <img src={formData.photoUrl} className="w-full h-full object-cover" />
+                                ) : (
+                                   <div className="flex flex-col items-center text-slate-400 group-hover:text-primary-600 transition-colors">
+                                      <Camera size={32} />
+                                      <span className="text-[8px] font-black uppercase mt-2">Subir Foto</span>
+                                   </div>
+                                )}
+                                <div className="absolute inset-0 bg-primary-600/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                   <Camera className="text-white" size={24} />
+                                </div>
+                             </div>
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Foto de Perfil</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 w-full">
+                            <div className="space-y-2 col-span-1 md:col-span-2">
+                              <label className={labelClasses}>Nombre Completo</label>
+                              <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className={inputClasses} placeholder="EJ: LIONEL MESSI" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className={labelClasses}>Documento (DNI)</label>
+                              <input value={formData.dni} onChange={e => setFormData({...formData, dni: e.target.value})} className={inputClasses} placeholder="NÚMERO" />
+                            </div>
+                            <div className="space-y-2">
+                              <label className={labelClasses}>Género</label>
+                              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className={selectClasses}>
+                                <option>Masculino</option>
+                                <option>Femenino</option>
+                                <option>Otro</option>
+                              </select>
+                            </div>
+                            <div className="space-y-2 col-span-1 md:col-span-2">
+                              <label className={labelClasses}>Fecha de Nacimiento</label>
+                              <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className={inputClasses} />
+                            </div>
+                          </div>
+                       </div>
                     </div>
                   )}
 
