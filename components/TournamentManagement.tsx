@@ -5,7 +5,7 @@ import {
   Trophy, Plus, Calendar, Save, Trash2, X, ChevronRight, Edit3, 
   Settings2, Activity, Shield, Users, Loader2, Info, CheckCircle2,
   ListOrdered, LayoutGrid, Swords, AlertTriangle, Goal, UserPlus, 
-  ChevronDown, BarChart2, Hash, MapPin
+  ChevronDown, BarChart2, Hash, MapPin, Clock
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -64,10 +64,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     setIsRefreshing(true);
     try {
       const { data } = await db.matches.getAll(tournamentId);
-      if (data) {
-        // Mapeamos los eventos para asegurarnos de que la UI los reciba correctamente
-        setMatches(data);
-      }
+      if (data) setMatches(data);
     } catch (e) { console.error("Error cargando partidos:", e); }
     setIsRefreshing(false);
   };
@@ -158,6 +155,9 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       incidents: [...(matchForm.incidents || []), { id: crypto.randomUUID(), type, playerId: '', minute: '' }]
     });
   };
+
+  const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm outline-none border border-transparent dark:border-white/5 focus:border-primary-600 shadow-inner dark:text-white";
+  const labelClasses = "text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-2 block";
 
   if (!category) return null;
 
@@ -313,7 +313,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                                 </div>
                               </div>
 
-                              {/* DETALLE VISIBLE DE INCIDENCIAS (EL "REPORT" QUE BUSCABAS) */}
                               {clubEvents.length > 0 && (
                                 <div className="mt-8 pt-6 border-t border-slate-50 dark:border-white/5 flex flex-wrap justify-center gap-4">
                                   {clubEvents.map((ev: any) => {
@@ -387,7 +386,160 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
            )}
         </div>
       </div>
-      {/* ... Modales se mantienen iguales ... */}
+
+      {/* MODAL: NUEVO TORNEO */}
+      {showTournamentModal && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-white dark:bg-[#0f121a] w-full max-w-xl rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden">
+            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40">
+              <div className="flex items-center gap-4">
+                 <Trophy size={20} className="text-primary-600" />
+                 <h3 className="text-xl font-black uppercase italic tracking-tighter">Crear Competición</h3>
+              </div>
+              <button onClick={() => setShowTournamentModal(false)} className="p-2 hover:bg-red-500 rounded-full transition-colors"><X size={20} /></button>
+            </div>
+            <div className="p-10 space-y-8">
+               <div className="space-y-2">
+                  <label className={labelClasses}>Nombre del Torneo</label>
+                  <input value={tournamentForm.name} onChange={e => setTournamentForm({...tournamentForm, name: e.target.value.toUpperCase()})} placeholder="EJ: LIGA DE HONOR" className={inputClasses} />
+               </div>
+               <div className="space-y-2">
+                  <label className={labelClasses}>Tipo de Formato</label>
+                  <select value={tournamentForm.type} onChange={e => setTournamentForm({...tournamentForm, type: e.target.value as any})} className={inputClasses}>
+                    <option value="Professional">Liga Nacional / Profesional</option>
+                    <option value="Internal">Torneo Interno / Amistosos</option>
+                  </select>
+               </div>
+               <button onClick={handleSaveTournament} className="w-full py-5 bg-primary-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary-500/30 hover:scale-105 active:scale-95 transition-all">Registrar Torneo</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CARGAR ENCUENTRO / RESULTADO */}
+      {showMatchModal && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 md:p-10 animate-fade-in overflow-y-auto">
+          <div className="bg-white dark:bg-[#0f121a] w-full max-w-5xl md:rounded-[3.5rem] shadow-2xl border border-white/5 flex flex-col h-full md:h-auto md:max-h-[90vh]">
+            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+               <div className="flex items-center gap-4">
+                  <Swords size={20} className="text-primary-600" />
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter">{editingMatch ? 'Editar Resultado' : 'Programar Encuentro'}</h3>
+               </div>
+               <button onClick={() => setShowMatchModal(false)} className="p-2 hover:bg-red-500 rounded-full transition-colors"><X size={20} /></button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 md:p-12 space-y-12">
+               {/* Condición Local/Visitante */}
+               <div className="flex flex-col items-center">
+                  <label className={labelClasses}>Condición de {clubConfig.name}</label>
+                  <div className="grid grid-cols-2 gap-4 p-2 bg-slate-100 dark:bg-slate-800 rounded-3xl w-full max-w-md">
+                      <button onClick={() => setMatchForm({...matchForm, condition: 'Local'})} className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${matchForm.condition === 'Local' ? 'bg-primary-600 text-white shadow-lg scale-105' : 'text-slate-400'}`}>Como Local</button>
+                      <button onClick={() => setMatchForm({...matchForm, condition: 'Visitante'})} className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${matchForm.condition === 'Visitante' ? 'bg-primary-600 text-white shadow-lg scale-105' : 'text-slate-400'}`}>Como Visitante</button>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
+                     <div className="space-y-2">
+                        <label className={labelClasses}>Nombre del Rival</label>
+                        <input value={matchForm.rivalName} onChange={e => setMatchForm({...matchForm, rivalName: e.target.value.toUpperCase()})} placeholder="ESCRIBE EL RIVAL..." className={inputClasses} />
+                     </div>
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Mi Score</label>
+                           <input type="number" value={matchForm.myScore} onChange={e => setMatchForm({...matchForm, myScore: parseInt(e.target.value) || 0})} className={inputClasses + " text-3xl italic text-primary-600"} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Score Rival</label>
+                           <input type="number" value={matchForm.rivalScore} onChange={e => setMatchForm({...matchForm, rivalScore: parseInt(e.target.value) || 0})} className={inputClasses + " text-3xl italic"} />
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-6">
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Fecha</label>
+                           <input type="date" value={matchForm.date} onChange={e => setMatchForm({...matchForm, date: e.target.value})} className={inputClasses} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Estatus</label>
+                           <select value={matchForm.status} onChange={e => setMatchForm({...matchForm, status: e.target.value as any})} className={inputClasses}>
+                             <option value="Scheduled">Programado</option>
+                             <option value="Finished">Finalizado</option>
+                           </select>
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Instancia / Etapa</label>
+                           <input value={matchForm.stage} onChange={e => setMatchForm({...matchForm, stage: e.target.value})} className={inputClasses} placeholder="EJ: FASE REGULAR" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className={labelClasses}>Grupo / Zona</label>
+                           <input value={matchForm.group} onChange={e => setMatchForm({...matchForm, group: e.target.value})} className={inputClasses} placeholder="EJ: A" />
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* INCIDENCIAS */}
+               <div className="space-y-8 pt-10 border-t border-white/5">
+                  <div className="flex justify-between items-center">
+                     <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 italic">Reporte de Incidencias (Atletas Club)</h4>
+                     <div className="flex gap-2">
+                        <button onClick={() => addIncident('Goal')} className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest"><Goal size={12}/> Gol</button>
+                        <button onClick={() => addIncident('YellowCard')} className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest"><AlertTriangle size={12}/> Tarjeta</button>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {matchForm.incidents.map((inc: any, idx: number) => (
+                       <div key={inc.id} className="bg-slate-50 dark:bg-white/5 p-6 rounded-3xl border border-white/5 flex items-center gap-4 group">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${inc.type === 'Goal' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-500/20 text-amber-500'}`}>
+                             {inc.type === 'Goal' ? <Goal size={20} /> : <AlertTriangle size={20} />}
+                          </div>
+                          <div className="flex-1 space-y-3">
+                             <select 
+                                value={inc.playerId} 
+                                onChange={e => {
+                                  const newInc = [...matchForm.incidents];
+                                  newInc[idx].playerId = e.target.value;
+                                  setMatchForm({...matchForm, incidents: newInc});
+                                }}
+                                className="w-full bg-white dark:bg-slate-900 p-3 rounded-xl text-[10px] font-bold dark:text-white outline-none"
+                             >
+                                <option value="">Seleccionar Jugador...</option>
+                                {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                             </select>
+                             <input 
+                                type="number" 
+                                value={inc.minute} 
+                                onChange={e => {
+                                  const newInc = [...matchForm.incidents];
+                                  newInc[idx].minute = e.target.value;
+                                  setMatchForm({...matchForm, incidents: newInc});
+                                }}
+                                placeholder="Minuto" 
+                                className="w-20 bg-white dark:bg-slate-900 p-3 rounded-xl text-[10px] font-bold dark:text-white outline-none" 
+                             />
+                          </div>
+                          <button onClick={() => setMatchForm({...matchForm, incidents: matchForm.incidents.filter((_:any, i:number) => i !== idx)})} className="p-2 text-slate-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><X size={16} /></button>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-10 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 shrink-0 flex justify-end gap-4">
+               <button onClick={() => setShowMatchModal(false)} className="px-10 py-5 rounded-2xl text-[10px] font-black uppercase text-slate-400 tracking-widest">Cancelar</button>
+               <button onClick={handleSaveMatch} className="px-14 py-5 bg-primary-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl shadow-primary-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                  <Save size={18} /> Guardar Informe
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
