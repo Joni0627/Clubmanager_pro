@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import TopNav from './components/TopNav.tsx';
 import MasterData from './components/MasterData.tsx';
 import Squads from './components/Squads.tsx';
@@ -27,6 +27,7 @@ function App() {
     disciplines: []
   });
 
+  // Efecto de colores de marca
   useEffect(() => {
     const root = document.documentElement;
     const color = config.primaryColor || '#ec4899';
@@ -35,21 +36,23 @@ function App() {
     root.style.setProperty('--primary-glow', `${color}33`);
   }, [config.primaryColor]);
 
+  // Efecto de tema oscuro
   useEffect(() => {
     const root = window.document.documentElement;
     if (isDarkMode) root.classList.add('dark');
     else root.classList.remove('dark');
   }, [isDarkMode]);
 
-  const fetchData = async () => {
+  // FUNCIÓN DE CARGA OPTIMIZADA
+  const fetchData = useCallback(async () => {
+    // No mostramos loading si ya tenemos datos (para actualizaciones en segundo plano)
     try {
-      // Optimizamos usando Promise.all para disparar peticiones en paralelo
+      // Paralelismo real: Disparamos todas las consultas al mismo tiempo
       const [configRes, membersRes] = await Promise.all([
         db.config.get(),
         db.members.getAll()
       ]);
 
-      if (membersRes.data) setMembers(membersRes.data);
       if (configRes.data) {
         setConfig({
           name: configRes.data.name || 'MI CLUB',
@@ -59,20 +62,26 @@ function App() {
           disciplines: configRes.data.disciplines || []
         });
       }
+
+      if (membersRes.data) {
+        setMembers(membersRes.data);
+      }
+
     } catch (err) {
-      console.error("Error cargando datos:", err);
+      console.error("Error crítico en carga de datos:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSaveMember = async (member: Member) => {
     try {
       await db.members.upsert(member);
-      const { data } = await db.members.getAll();
-      if (data) setMembers(data);
+      fetchData(); // Recarga ligera
     } catch (e) {
       console.error("Error al guardar miembro:", e);
     }

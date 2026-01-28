@@ -16,22 +16,13 @@ export const db = {
     
     update: (data: any) => supabase
       .from('club_config')
-      .upsert(
-        { id: 1, ...data }, 
-        { onConflict: 'id' }
-      )
+      .upsert({ id: 1, ...data }, { onConflict: 'id' })
   },
   members: {
     getAll: () => supabase
       .from('members')
       .select('*')
       .order('name', { ascending: true }),
-    
-    // Nueva función optimizada para no traer todo el club
-    getByCategory: (disciplineId: string, categoryId: string) => supabase
-      .from('members')
-      .select('*')
-      .contains('assignments', [{ disciplineId, categoryId }]),
     
     upsert: (member: any) => supabase
       .from('members')
@@ -81,29 +72,50 @@ export const db = {
     delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
   },
   matches: {
-    // Agregamos el select de match_events para que el fixture no falle al buscar incidencias
+    // IMPORTANTE: Traemos los eventos (goles/tarjetas) vinculados
     getAll: (tournamentId: string) => supabase
       .from('matches')
-      .select('*, events:match_events(*)')
+      .select(`
+        *,
+        events:match_events (
+          id,
+          playerId,
+          type,
+          minute,
+          notes
+        )
+      `)
       .eq('tournamentId', tournamentId)
       .order('date', { ascending: true }),
     
     upsert: async (match: any) => {
       const { incidents, ...matchData } = match;
-      // Primero guardamos el partido
-      const { data: mData, error: mErr } = await supabase.from('matches').upsert(matchData).select().single();
+      
+      // 1. Guardar/Actualizar partido
+      const { data: mData, error: mErr } = await supabase
+        .from('matches')
+        .upsert(matchData)
+        .select()
+        .single();
+      
       if (mErr) throw mErr;
 
-      // Si hay incidencias, las guardamos en la tabla relacional
+      // 2. Limpiar incidencias anteriores para este partido (evita basura)
+      await supabase.from('match_events').delete().eq('matchId', mData.id);
+
+      // 3. Insertar nuevas incidencias si existen
       if (incidents && incidents.length > 0) {
         const eventsToSave = incidents.map((inc: any) => ({
           matchId: mData.id,
           playerId: inc.playerId,
           type: inc.type,
-          minute: parseInt(inc.minute) || 0
+          minute: parseInt(inc.minute) || 0,
+          notes: inc.notes || ''
         }));
-        await supabase.from('match_events').upsert(eventsToSave);
+        const { error: eErr } = await supabase.from('match_events').insert(eventsToSave);
+        if (eErr) throw eErr;
       }
+      
       return { data: mData };
     },
     

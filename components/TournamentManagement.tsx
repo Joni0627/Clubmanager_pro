@@ -6,7 +6,7 @@ import {
   Settings2, Activity, Shield, Users, Loader2, Info, CheckCircle2,
   ListOrdered, LayoutGrid, Swords, AlertTriangle, Goal, UserPlus, 
   ChevronDown, BarChart2, Hash, MapPin
-} from 'lucide-center';
+} from 'lucide-react';
 import { db } from '../lib/supabase';
 
 interface TournamentManagementProps {
@@ -64,7 +64,10 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     setIsRefreshing(true);
     try {
       const { data } = await db.matches.getAll(tournamentId);
-      if (data) setMatches(data);
+      if (data) {
+        // Mapeamos los eventos para asegurarnos de que la UI los reciba correctamente
+        setMatches(data);
+      }
     } catch (e) { console.error("Error cargando partidos:", e); }
     setIsRefreshing(false);
   };
@@ -112,7 +115,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         status: matchForm.status,
         group: matchForm.group,
         stage: matchForm.stage,
-        incidents: matchForm.incidents // db.matches.upsert se encarga de procesar esto
+        incidents: matchForm.incidents 
       };
       
       await db.matches.upsert(m);
@@ -224,7 +227,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                 {isRefreshing && (
                   <div className="flex items-center gap-3 p-4 bg-primary-600/10 text-primary-600 rounded-2xl animate-pulse">
                     <Loader2 className="animate-spin" size={16} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Actualizando Fixture...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Sincronizando Datos...</span>
                   </div>
                 )}
                 {viewMode === 'fixture' ? (
@@ -257,54 +260,76 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     <div className="grid grid-cols-1 gap-6">
                       {matches.length > 0 ? matches.map(m => {
                         const isClubHome = m.homeTeam === clubConfig.name;
+                        const clubEvents = m.events || [];
+
                         return (
-                          <div key={m.id} className="bg-white dark:bg-[#0f1219] p-8 rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-sm group hover:border-primary-600/30 transition-all flex flex-col md:flex-row items-center justify-between gap-8 animate-fade-in-up">
-                              <div className="flex-1 text-center md:text-right px-4">
-                                <h4 className={`text-2xl font-black uppercase tracking-tighter italic leading-none ${m.homeTeam === clubConfig.name ? 'text-primary-600 underline decoration-2 underline-offset-8' : 'text-slate-800 dark:text-white'}`}>{m.homeTeam}</h4>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 block">Local</span>
-                              </div>
-                              
-                              <div className="flex flex-col items-center shrink-0 bg-slate-50 dark:bg-white/5 p-8 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner min-w-[200px]">
-                                <div className="flex items-center gap-8 mb-4">
-                                    <span className={`text-5xl font-black italic ${m.status === 'Finished' && m.homeScore! > m.awayScore! ? 'text-primary-600' : 'dark:text-white'}`}>{m.status === 'Finished' ? m.homeScore : '-'}</span>
-                                    <div className="w-12 h-12 bg-slate-950 text-white rounded-full flex items-center justify-center text-[10px] font-black italic shadow-lg shrink-0">VS</div>
-                                    <span className={`text-5xl font-black italic ${m.status === 'Finished' && m.awayScore! > m.homeScore! ? 'text-primary-600' : 'dark:text-white'}`}>{m.status === 'Finished' ? m.awayScore : '-'}</span>
+                          <div key={m.id} className="bg-white dark:bg-[#0f1219] p-8 rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-sm group hover:border-primary-600/30 transition-all flex flex-col animate-fade-in-up overflow-hidden">
+                              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                                <div className="flex-1 text-center md:text-right px-4">
+                                  <h4 className={`text-2xl font-black uppercase tracking-tighter italic leading-none ${m.homeTeam === clubConfig.name ? 'text-primary-600 underline decoration-2 underline-offset-8' : 'text-slate-800 dark:text-white'}`}>{m.homeTeam}</h4>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 block">Local</span>
                                 </div>
-                                <div className="flex flex-col items-center gap-1">
-                                    <span className="text-[10px] font-black uppercase text-primary-600 tracking-widest">{m.date}</span>
-                                    <span className={`text-[8px] font-black uppercase px-3 py-1 rounded-full ${m.status === 'Finished' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>{m.status === 'Finished' ? 'Finalizado' : 'Programado'}</span>
+                                
+                                <div className="flex flex-col items-center shrink-0 bg-slate-50 dark:bg-white/5 p-8 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner min-w-[200px]">
+                                  <div className="flex items-center gap-8 mb-4">
+                                      <span className={`text-5xl font-black italic ${m.status === 'Finished' && m.homeScore! > m.awayScore! ? 'text-primary-600' : 'dark:text-white'}`}>{m.status === 'Finished' ? m.homeScore : '-'}</span>
+                                      <div className="w-12 h-12 bg-slate-950 text-white rounded-full flex items-center justify-center text-[10px] font-black italic shadow-lg shrink-0">VS</div>
+                                      <span className={`text-5xl font-black italic ${m.status === 'Finished' && m.awayScore! > m.homeScore! ? 'text-primary-600' : 'dark:text-white'}`}>{m.status === 'Finished' ? m.awayScore : '-'}</span>
+                                  </div>
+                                  <div className="flex flex-col items-center gap-1">
+                                      <span className="text-[10px] font-black uppercase text-primary-600 tracking-widest">{m.date}</span>
+                                      <span className={`text-[8px] font-black uppercase px-3 py-1 rounded-full ${m.status === 'Finished' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>{m.status === 'Finished' ? 'Finalizado' : 'Programado'}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex-1 text-center md:text-left px-4">
+                                  <h4 className={`text-2xl font-black uppercase tracking-tighter italic leading-none ${m.awayTeam === clubConfig.name ? 'text-primary-600 underline decoration-2 underline-offset-8' : 'text-slate-800 dark:text-white'}`}>{m.awayTeam}</h4>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 block">Visitante</span>
+                                </div>
+
+                                <div className="flex md:flex-col gap-2 shrink-0">
+                                  <button 
+                                    onClick={() => { 
+                                      const isHome = m.homeTeam === clubConfig.name;
+                                      setMatchForm({
+                                        rivalName: isHome ? m.awayTeam : m.homeTeam,
+                                        condition: isHome ? 'Local' : 'Visitante',
+                                        date: m.date,
+                                        status: m.status,
+                                        myScore: isHome ? m.homeScore : m.awayScore,
+                                        rivalScore: isHome ? m.awayScore : m.homeScore,
+                                        group: m.group,
+                                        stage: m.stage,
+                                        incidents: m.events || []
+                                      });
+                                      setEditingMatch(m); 
+                                      setShowMatchModal(true); 
+                                    }} 
+                                    className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-primary-600 transition-all"
+                                  >
+                                    <Edit3 size={18} />
+                                  </button>
+                                  <button onClick={() => deleteMatch(m.id)} className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-300 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
                                 </div>
                               </div>
 
-                              <div className="flex-1 text-center md:text-left px-4">
-                                <h4 className={`text-2xl font-black uppercase tracking-tighter italic leading-none ${m.awayTeam === clubConfig.name ? 'text-primary-600 underline decoration-2 underline-offset-8' : 'text-slate-800 dark:text-white'}`}>{m.awayTeam}</h4>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2 block">Visitante</span>
-                              </div>
-
-                              <div className="flex md:flex-col gap-2 shrink-0">
-                                <button 
-                                  onClick={() => { 
-                                    const isHome = m.homeTeam === clubConfig.name;
-                                    setMatchForm({
-                                      rivalName: isHome ? m.awayTeam : m.homeTeam,
-                                      condition: isHome ? 'Local' : 'Visitante',
-                                      date: m.date,
-                                      status: m.status,
-                                      myScore: isHome ? m.homeScore : m.awayScore,
-                                      rivalScore: isHome ? m.awayScore : m.homeScore,
-                                      group: m.group,
-                                      stage: m.stage,
-                                      incidents: m.events || []
-                                    });
-                                    setEditingMatch(m); 
-                                    setShowMatchModal(true); 
-                                  }} 
-                                  className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-400 hover:text-primary-600 transition-all"
-                                >
-                                  <Edit3 size={18} />
-                                </button>
-                                <button onClick={() => deleteMatch(m.id)} className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-300 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
-                              </div>
+                              {/* DETALLE VISIBLE DE INCIDENCIAS (EL "REPORT" QUE BUSCABAS) */}
+                              {clubEvents.length > 0 && (
+                                <div className="mt-8 pt-6 border-t border-slate-50 dark:border-white/5 flex flex-wrap justify-center gap-4">
+                                  {clubEvents.map((ev: any) => {
+                                    const player = players.find(p => p.id === ev.playerId);
+                                    return (
+                                      <div key={ev.id} className="flex items-center gap-2 bg-slate-50 dark:bg-white/5 px-3 py-1.5 rounded-full border border-slate-100 dark:border-white/5">
+                                        {ev.type === 'Goal' ? <Goal size={10} className="text-emerald-500" /> : <AlertTriangle size={10} className="text-amber-500" />}
+                                        <span className="text-[9px] font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest">
+                                          {player ? player.name : 'Desconocido'} 
+                                          {ev.minute && <span className="text-primary-600 ml-1">'{ev.minute}</span>}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                           </div>
                         );
                       }) : (
@@ -317,7 +342,40 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                   </>
                 ) : (
                   <div className="bg-white dark:bg-[#0f1219] rounded-[4rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden">
-                    {/* ... Standings logic ... */}
+                    <div className="p-10 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/40">
+                        <h3 className="text-2xl font-black uppercase italic tracking-tighter">Tabla de Posiciones</h3>
+                        <p className="text-[9px] font-black text-primary-600 uppercase tracking-widest mt-1">Clasificación General - {activeTournament.name}</p>
+                     </div>
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                           <thead>
+                              <tr className="bg-slate-100/50 dark:bg-slate-900/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-white/5">
+                                 <th className="px-8 py-5">#</th>
+                                 <th className="px-8 py-5">Equipo</th>
+                                 <th className="px-6 py-5 text-center">PJ</th>
+                                 <th className="px-6 py-5 text-center">PG</th>
+                                 <th className="px-6 py-5 text-center">PE</th>
+                                 <th className="px-6 py-5 text-center">PP</th>
+                                 <th className="px-6 py-5 text-center">DIF</th>
+                                 <th className="px-8 py-5 text-right text-primary-600">PTS</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                              {standings.map((team, idx) => (
+                                <tr key={team.name} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                   <td className="px-8 py-6 font-black italic text-slate-400">{idx + 1}</td>
+                                   <td className={`px-8 py-6 font-black uppercase text-sm ${team.name === clubConfig.name ? 'text-primary-600' : 'text-slate-800 dark:text-white'}`}>{team.name}</td>
+                                   <td className="px-6 py-6 text-center font-bold">{team.pj}</td>
+                                   <td className="px-6 py-6 text-center text-emerald-500 font-bold">{team.pg}</td>
+                                   <td className="px-6 py-6 text-center font-bold">{team.pe}</td>
+                                   <td className="px-6 py-6 text-center text-red-500 font-bold">{team.pp}</td>
+                                   <td className="px-6 py-6 text-center font-black italic">{team.gf - team.gc}</td>
+                                   <td className="px-8 py-6 text-right font-black text-lg italic text-primary-600">{team.pts}</td>
+                                </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
                   </div>
                 )}
              </div>
@@ -329,7 +387,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
            )}
         </div>
       </div>
-      {/* ... Modals ... */}
+      {/* ... Modales se mantienen iguales ... */}
     </div>
   );
 };
