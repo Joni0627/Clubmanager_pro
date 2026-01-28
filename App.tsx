@@ -7,7 +7,6 @@ import DisciplineConsole from './components/DisciplineConsole.tsx';
 import MemberManagement from './components/MemberManagement.tsx';
 import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-// Fix: Removed unused UserSession import which caused compilation errors
 import { ClubConfig, Discipline, Member } from './types.ts';
 import { db } from './lib/supabase.ts';
 import { Shield, ArrowRight } from 'lucide-react';
@@ -44,16 +43,20 @@ function App() {
 
   const fetchData = async () => {
     try {
-      const { data: configData } = await db.config.get();
-      const { data: membersData } = await db.members.getAll();
-      if (membersData) setMembers(membersData);
-      if (configData) {
+      // Optimizamos usando Promise.all para disparar peticiones en paralelo
+      const [configRes, membersRes] = await Promise.all([
+        db.config.get(),
+        db.members.getAll()
+      ]);
+
+      if (membersRes.data) setMembers(membersRes.data);
+      if (configRes.data) {
         setConfig({
-          name: configData.name || 'MI CLUB',
-          logoUrl: configData.logo_url || '',
-          primaryColor: configData.primary_color || '#ec4899',
-          secondaryColor: configData.secondary_color || '#0f172a',
-          disciplines: configData.disciplines || []
+          name: configRes.data.name || 'MI CLUB',
+          logoUrl: configRes.data.logo_url || '',
+          primaryColor: configRes.data.primary_color || '#ec4899',
+          secondaryColor: configRes.data.secondary_color || '#0f172a',
+          disciplines: configRes.data.disciplines || []
         });
       }
     } catch (err) {

@@ -27,6 +27,12 @@ export const db = {
       .select('*')
       .order('name', { ascending: true }),
     
+    // Nueva función optimizada para no traer todo el club
+    getByCategory: (disciplineId: string, categoryId: string) => supabase
+      .from('members')
+      .select('*')
+      .contains('assignments', [{ disciplineId, categoryId }]),
+    
     upsert: (member: any) => supabase
       .from('members')
       .upsert(member),
@@ -75,20 +81,32 @@ export const db = {
     delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
   },
   matches: {
+    // Agregamos el select de match_events para que el fixture no falle al buscar incidencias
     getAll: (tournamentId: string) => supabase
       .from('matches')
-      .select('*')
+      .select('*, events:match_events(*)')
       .eq('tournamentId', tournamentId)
       .order('date', { ascending: true }),
-    upsert: (match: any) => supabase.from('matches').upsert(match),
+    
+    upsert: async (match: any) => {
+      const { incidents, ...matchData } = match;
+      // Primero guardamos el partido
+      const { data: mData, error: mErr } = await supabase.from('matches').upsert(matchData).select().single();
+      if (mErr) throw mErr;
+
+      // Si hay incidencias, las guardamos en la tabla relacional
+      if (incidents && incidents.length > 0) {
+        const eventsToSave = incidents.map((inc: any) => ({
+          matchId: mData.id,
+          playerId: inc.playerId,
+          type: inc.type,
+          minute: parseInt(inc.minute) || 0
+        }));
+        await supabase.from('match_events').upsert(eventsToSave);
+      }
+      return { data: mData };
+    },
+    
     delete: (id: string) => supabase.from('matches').delete().eq('id', id)
-  },
-  matchEvents: {
-    getAll: (matchId: string) => supabase
-      .from('match_events')
-      .select('*')
-      .eq('matchId', matchId),
-    upsert: (event: any) => supabase.from('match_events').upsert(event),
-    delete: (id: string) => supabase.from('match_events').delete().eq('id', id)
   }
 };
