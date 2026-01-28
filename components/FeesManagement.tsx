@@ -5,7 +5,7 @@ import {
   Search, DollarSign, Filter, Check, AlertCircle, Calendar, Plus, X, 
   Trash2, Save, CreditCard, Loader2, User, History, TrendingUp, 
   ArrowUpRight, AlertTriangle, Clock, Receipt, Wallet, FileText, 
-  Camera, Link as LinkIcon, ExternalLink, Image as ImageIcon, UserSearch
+  Camera, Link as LinkIcon, ExternalLink, Image as ImageIcon
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -278,7 +278,7 @@ const FeesManagement: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-24 text-center">
                      <div className="flex flex-col items-center opacity-30">
-                        <UserSearch size={48} className="mb-4 text-slate-300" />
+                        <Search size={48} className="mb-4 text-slate-300" />
                         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">No se encontraron socios</p>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Prueba buscando por DNI o Nombre parcial</p>
                      </div>
@@ -290,7 +290,7 @@ const FeesManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL: Nueva Cuota (Sin cambios, ya optimizado) */}
+      {/* MODAL: Nueva Cuota */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col">
