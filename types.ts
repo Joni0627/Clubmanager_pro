@@ -88,11 +88,21 @@ export interface UserSession {
   assignedCategories: string[];
 }
 
+export interface MedicalHistoryItem {
+  id: string;
+  date: string;
+  isFit: boolean;
+  expiryDate: string;
+  notes?: string;
+  professionalName?: string;
+}
+
 export interface MedicalRecord {
   isFit: boolean;
   lastCheckup?: string;
   expiryDate: string;
   notes?: string;
+  history?: MedicalHistoryItem[];
 }
 
 export interface Player {

@@ -1,7 +1,11 @@
 
 import React, { useState } from 'react';
-import { Player, MedicalRecord } from '../types';
-import { Activity, AlertTriangle, CheckCircle, Search, Calendar, FileText, Plus, X, Save, Trash2, Edit2, Loader2, Heart, ShieldCheck, ClipboardList } from 'lucide-react';
+import { Player, MedicalRecord, MedicalHistoryItem } from '../types';
+import { 
+  Activity, AlertTriangle, CheckCircle, Search, Calendar, FileText, 
+  Plus, X, Save, Trash2, Edit2, Loader2, Heart, ShieldCheck, 
+  ClipboardList, History, Clock, ChevronRight, UserCircle
+} from 'lucide-react';
 import { db } from '../lib/supabase';
 
 interface MedicalDashboardProps {
@@ -15,16 +19,27 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Estado para la nueva evaluación que se está cargando
   const [formData, setFormData] = useState<MedicalRecord>({
     isFit: true,
-    lastCheckup: '',
+    lastCheckup: new Date().toISOString().split('T')[0],
     expiryDate: '',
-    notes: ''
+    notes: '',
+    history: []
   });
 
   const handleEditClick = (player: Player) => {
     setSelectedPlayer(player);
-    setFormData(player.medical || { isFit: true, lastCheckup: '', expiryDate: '', notes: '' });
+    const existingMedical = player.medical || { isFit: true, lastCheckup: '', expiryDate: '', notes: '', history: [] };
+    
+    setFormData({
+      ...existingMedical,
+      // Al abrir para editar, preparamos los campos para una "Nueva Evaluación"
+      // pero mantenemos el historial existente
+      lastCheckup: new Date().toISOString().split('T')[0],
+      notes: '',
+      history: existingMedical.history || []
+    });
     setShowModal(true);
   };
 
@@ -32,7 +47,26 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
     if (!selectedPlayer) return;
     setIsSaving(true);
     try {
-      const updatedPlayer = { ...selectedPlayer, medical: formData };
+      // Creamos el nuevo item del historial
+      const newHistoryItem: MedicalHistoryItem = {
+        id: crypto.randomUUID(),
+        date: formData.lastCheckup || new Date().toISOString().split('T')[0],
+        isFit: formData.isFit,
+        expiryDate: formData.expiryDate,
+        notes: formData.notes,
+        professionalName: 'Staff Médico Club' // Podría ser dinámico en el futuro
+      };
+
+      // Actualizamos el objeto médico completo
+      const updatedMedical: MedicalRecord = {
+        isFit: formData.isFit,
+        lastCheckup: formData.lastCheckup,
+        expiryDate: formData.expiryDate,
+        notes: formData.notes,
+        history: [newHistoryItem, ...(formData.history || [])]
+      };
+
+      const updatedPlayer = { ...selectedPlayer, medical: updatedMedical };
       if (formData.isFit) updatedPlayer.status = 'Active';
       else updatedPlayer.status = 'Injured';
       
@@ -54,7 +88,6 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
 
   const displayPlayers = filter === 'injured' ? injuredPlayers : filter === 'expired' ? expiredPlayers : players;
 
-  // Clases compartidas para inputs
   const inputClasses = "w-full p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl font-bold text-sm outline-none border border-transparent dark:border-slate-700 focus:border-primary-600/50 transition-all dark:text-slate-200 shadow-inner";
   const labelClasses = "text-[9px] font-black text-slate-400 uppercase tracking-widest ml-3 mb-2 block";
 
@@ -161,11 +194,6 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
                   </td>
                 </tr>
               ))}
-              {displayPlayers.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-20 text-center text-slate-400 font-black uppercase text-[10px] tracking-widest">No se encontraron registros bajo este filtro</td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -173,7 +201,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
 
       {showModal && selectedPlayer && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
-            <div className="bg-white dark:bg-[#0f121a] rounded-none md:rounded-[3.5rem] shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-white/5 flex flex-col max-h-full md:max-h-[90vh] overflow-hidden">
+            <div className="bg-white dark:bg-[#0f121a] rounded-none md:rounded-[3.5rem] shadow-2xl w-full max-w-6xl border border-slate-200 dark:border-white/5 flex flex-col h-full md:h-[90vh] overflow-hidden">
                 
                 {/* Header Modal */}
                 <div className="px-8 md:px-12 py-8 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
@@ -184,7 +212,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
                         <div>
                             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">{selectedPlayer.name}</h3>
                             <div className="flex items-center gap-3 mt-2">
-                               <span className="px-3 py-1 bg-primary-600/10 text-primary-600 text-[8px] font-black rounded-full uppercase tracking-widest">Historia Clínica</span>
+                               <span className="px-3 py-1 bg-primary-600/10 text-primary-600 text-[8px] font-black rounded-full uppercase tracking-widest">Ficha Clínica Digital</span>
                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">DNI: {selectedPlayer.dni}</span>
                             </div>
                         </div>
@@ -192,71 +220,121 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
                     <button onClick={() => setShowModal(false)} className="p-3 bg-white dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"><X size={20} /></button>
                 </div>
 
-                {/* Body Modal */}
-                <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
-                    <div className="max-w-2xl mx-auto space-y-10">
-                        
-                        {/* Estado de Aptitud */}
-                        <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                               <div className="w-1 h-4 bg-primary-600 rounded-full"></div> Dictamen de Aptitud
-                            </h4>
-                            <div className="grid grid-cols-2 gap-4 p-2 bg-slate-100 dark:bg-slate-800/60 rounded-[2rem] border border-slate-200 dark:border-white/5">
-                                <button 
-                                  onClick={() => setFormData({...formData, isFit: true})} 
-                                  className={`flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${formData.isFit ? 'bg-emerald-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
-                                >
-                                  <ShieldCheck size={16} /> Apto Competencia
-                                </button>
-                                <button 
-                                  onClick={() => setFormData({...formData, isFit: false})} 
-                                  className={`flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${!formData.isFit ? 'bg-red-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
-                                >
-                                  <AlertTriangle size={16} /> Baja Médica
-                                </button>
-                            </div>
+                {/* Body Modal Split View */}
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    
+                    {/* Left: Historial Timeline */}
+                    <div className="w-full md:w-1/2 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-white/5 overflow-y-auto p-8 md:p-12 custom-scrollbar">
+                        <div className="flex items-center gap-3 mb-10">
+                            <History size={20} className="text-primary-600" />
+                            <h4 className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Historial de Evaluaciones</h4>
                         </div>
 
-                        {/* Fechas */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2">
-                                <label className={labelClasses}>Fecha de Último Examen</label>
-                                <div className="relative group">
-                                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-600 group-focus-within:scale-110 transition-transform" size={18} />
-                                  <input 
-                                    type="date" 
-                                    value={formData.lastCheckup} 
-                                    onChange={e => setFormData({...formData, lastCheckup: e.target.value})} 
-                                    className={inputClasses + " pl-12"} 
-                                  />
+                        {formData.history && formData.history.length > 0 ? (
+                          <div className="space-y-8 relative before:absolute before:left-4 before:top-2 before:bottom-0 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+                            {formData.history.map((item, idx) => (
+                              <div key={item.id} className="relative pl-12 animate-fade-in-up">
+                                {/* Dot Indicator */}
+                                <div className={`absolute left-2.5 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 shadow-sm z-10 ${item.isFit ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                
+                                <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+                                   <div className="flex justify-between items-start mb-3">
+                                      <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 italic">
+                                         <Clock size={12} /> {item.date}
+                                      </div>
+                                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${item.isFit ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                                         {item.isFit ? 'Apto' : 'Baja'}
+                                      </span>
+                                   </div>
+                                   <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-4">
+                                      {item.notes || 'Sin observaciones registradas.'}
+                                   </p>
+                                   <div className="flex items-center gap-2 text-[8px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-50 dark:border-white/5 pt-3">
+                                      <UserCircle size={10} /> {item.professionalName}
+                                      <span className="mx-2">•</span>
+                                      Vto: {item.expiryDate || 'N/A'}
+                                   </div>
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className={labelClasses}>Vencimiento de Certificado</label>
-                                <div className="relative group">
-                                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 group-focus-within:scale-110 transition-transform" size={18} />
-                                  <input 
-                                    type="date" 
-                                    value={formData.expiryDate} 
-                                    onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
-                                    className={inputClasses + " pl-12"} 
-                                  />
-                                </div>
-                            </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-20 text-center opacity-30 flex flex-col items-center">
+                             <ClipboardList size={40} className="mb-4" />
+                             <p className="text-[9px] font-black uppercase tracking-widest">Sin registros históricos previos</p>
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Right: New Entry Form */}
+                    <div className="w-full md:w-1/2 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center gap-3 mb-10">
+                            <Plus size={20} className="text-emerald-500" />
+                            <h4 className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Nueva Evaluación Médica</h4>
                         </div>
 
-                        {/* Notas y Diagnóstico */}
-                        <div className="space-y-4">
-                            <label className={labelClasses}>Notas Médicas / Diagnóstico Específico</label>
-                            <div className="relative group">
-                              <ClipboardList className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" size={18} />
-                              <textarea 
-                                rows={4} 
-                                value={formData.notes} 
-                                onChange={e => setFormData({...formData, notes: e.target.value})} 
-                                className={inputClasses + " pl-12 pt-4 min-h-[140px] resize-none leading-relaxed"} 
-                                placeholder="Describir lesión, tratamiento o condiciones especiales..." 
-                              />
+                        <div className="space-y-10">
+                            {/* Estado de Aptitud */}
+                            <div className="space-y-4">
+                                <label className={labelClasses}>Dictamen de Aptitud Actual</label>
+                                <div className="grid grid-cols-2 gap-4 p-2 bg-slate-100 dark:bg-slate-800/60 rounded-[2rem] border border-slate-200 dark:border-white/5">
+                                    <button 
+                                      onClick={() => setFormData({...formData, isFit: true})} 
+                                      className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${formData.isFit ? 'bg-emerald-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
+                                    >
+                                      <ShieldCheck size={16} /> Apto Competencia
+                                    </button>
+                                    <button 
+                                      onClick={() => setFormData({...formData, isFit: false})} 
+                                      className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${!formData.isFit ? 'bg-red-500 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:bg-white/5'}`}
+                                    >
+                                      <AlertTriangle size={16} /> Baja Médica
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Fechas */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Fecha de Evaluación</label>
+                                    <div className="relative group">
+                                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-600 group-focus-within:scale-110 transition-transform" size={18} />
+                                      <input 
+                                        type="date" 
+                                        value={formData.lastCheckup} 
+                                        onChange={e => setFormData({...formData, lastCheckup: e.target.value})} 
+                                        className={inputClasses + " pl-12"} 
+                                      />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Vencimiento Sugerido</label>
+                                    <div className="relative group">
+                                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 group-focus-within:scale-110 transition-transform" size={18} />
+                                      <input 
+                                        type="date" 
+                                        value={formData.expiryDate} 
+                                        onChange={e => setFormData({...formData, expiryDate: e.target.value})} 
+                                        className={inputClasses + " pl-12"} 
+                                      />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notas y Diagnóstico */}
+                            <div className="space-y-4">
+                                <label className={labelClasses}>Diagnóstico / Observaciones Clínicas</label>
+                                <div className="relative group">
+                                  <ClipboardList className="absolute left-4 top-5 text-slate-400 group-focus-within:text-primary-600 transition-colors" size={18} />
+                                  <textarea 
+                                    rows={6} 
+                                    value={formData.notes} 
+                                    onChange={e => setFormData({...formData, notes: e.target.value})} 
+                                    className={inputClasses + " pl-12 pt-4 min-h-[180px] resize-none leading-relaxed text-sm"} 
+                                    placeholder="Describir lesión, hallazgos clínicos o tratamiento sugerido..." 
+                                  />
+                                </div>
+                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-right px-4">Este informe quedará archivado permanentemente en el historial.</p>
                             </div>
                         </div>
                     </div>
@@ -268,15 +346,15 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ players, onRefresh 
                       onClick={() => setShowModal(false)}
                       className="w-full md:w-auto px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                     >
-                      Cancelar
+                      Cerrar sin Guardar
                     </button>
                     <button 
                       onClick={handleSave} 
                       disabled={isSaving} 
-                      className="w-full md:w-auto flex items-center justify-center gap-3 bg-slate-950 dark:bg-primary-600 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                      className="w-full md:w-auto flex items-center justify-center gap-4 bg-slate-950 dark:bg-primary-600 text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                        Confirmar y Sincronizar
+                        Archivar Evaluación Médico
                     </button>
                 </div>
             </div>

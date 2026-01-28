@@ -1,10 +1,10 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Player, ClubConfig, Metric } from '../types.ts';
+import { Player, ClubConfig, Metric, MedicalHistoryItem } from '../types.ts';
 import { 
   X, Activity, Save, Edit3, User, Heart, Shield, Hash, Camera, 
   Loader2, CheckCircle, Smartphone, Mail, Fingerprint, MapPin, 
-  Briefcase, BarChart3, Target, Award, Info
+  Briefcase, BarChart3, Target, Award, Info, History, Clock, UserCircle
 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { db } from '../lib/supabase.ts';
@@ -171,12 +171,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                   >
                     <tab.icon size={18} className={isActive ? 'text-white' : 'opacity-30'} />
                     <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{tab.label}</span>
-                    {isActive && (
-                      <>
-                        <div className="hidden md:block absolute left-0 w-1.5 h-8 bg-white rounded-r-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-1 bg-white/60 rounded-full md:hidden"></div>
-                      </>
-                    )}
                   </button>
                 );
               })}
@@ -229,11 +223,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                           </div>
                         </div>
                       ))}
-                      {currentMetrics.length === 0 && (
-                        <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">No hay métricas definidas para la categoría: <br/> <span className="text-primary-600">{player.category}</span></p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -267,92 +256,76 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player: initialPlayer, onClose,
                         placeholder="EJ: 10"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className={labelClasses}>Disciplina</label>
-                      <div className={inputClasses + " bg-slate-100 dark:bg-slate-900/40 text-slate-400"}>
-                        {player.discipline}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className={labelClasses}>Categoría</label>
-                      <div className={inputClasses + " bg-slate-100 dark:bg-slate-900/40 text-slate-400"}>
-                        {player.category}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-8 bg-violet-500/5 rounded-[2rem] border border-violet-500/10 flex items-center gap-6">
-                    <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-500 shrink-0">
-                      <Award size={32} />
-                    </div>
-                    <div>
-                      <h5 className="text-[11px] font-black text-violet-600 uppercase tracking-widest">Estatus Competitivo</h5>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Habilitado para competencias oficiales de la federación.</p>
-                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'medical_record' && (
-                <div className="space-y-10 animate-fade-in">
+                <div className="space-y-10 animate-fade-in pb-10">
                   <h4 className="text-[10px] md:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                     <div className="w-1 h-4 bg-rose-500 rounded-full"></div> Historial Sanitario
+                     <div className="w-1 h-4 bg-rose-500 rounded-full"></div> Historia Clínica
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <label className={labelClasses}>Aptitud Competitiva</label>
-                      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700/50">
-                        <button 
-                          disabled={!isEditing}
-                          onClick={() => handleInfoChange('medical', { ...player.medical, isFit: true })}
-                          className={`flex-1 py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${player.medical.isFit ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}`}
-                        >
-                          Apto
-                        </button>
-                        <button 
-                          disabled={!isEditing}
-                          onClick={() => handleInfoChange('medical', { ...player.medical, isFit: false })}
-                          className={`flex-1 py-3 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${!player.medical.isFit ? 'bg-red-500 text-white shadow-lg' : 'text-slate-400'}`}
-                        >
-                          No Apto
-                        </button>
+                      <label className={labelClasses}>Estado Actual</label>
+                      <div className={`p-6 rounded-[2rem] border flex items-center gap-6 transition-all ${player.medical?.isFit ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-600' : 'bg-red-500/5 border-red-500/10 text-red-600'}`}>
+                        {player.medical?.isFit ? <CheckCircle size={32} /> : <Info size={32} />}
+                        <div>
+                          <h5 className="text-[11px] font-black uppercase tracking-widest">
+                            {player.medical?.isFit ? 'Apto Competencia' : 'Baja Médica'}
+                          </h5>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            Vto: {player.medical?.expiryDate || 'N/A'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     
                     <div className="space-y-4">
-                      <label className={labelClasses}>Vencimiento Apto Médico</label>
-                      <input 
-                        disabled={!isEditing}
-                        type="date"
-                        value={player.medical.expiryDate}
-                        onChange={e => handleInfoChange('medical', { ...player.medical, expiryDate: e.target.value })}
-                        className={inputClasses}
-                      />
-                    </div>
-
-                    <div className="col-span-1 md:col-span-2 space-y-4">
-                      <label className={labelClasses}>Notas y Observaciones Clínicas</label>
-                      <textarea 
-                        disabled={!isEditing}
-                        value={player.medical.notes || ''}
-                        onChange={e => handleInfoChange('medical', { ...player.medical, notes: e.target.value })}
-                        className={inputClasses + " h-32 resize-none"}
-                        placeholder="DETALLE DE LESIONES, ALERGIAS O MEDICACIÓN..."
-                      />
+                      <label className={labelClasses}>Última Evaluación</label>
+                      <div className="bg-slate-50 dark:bg-slate-800/40 p-6 rounded-[2rem] border border-slate-100 dark:border-white/5">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fecha: {player.medical?.lastCheckup || 'Sin fecha'}</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2 line-clamp-2 italic">
+                          "{player.medical?.notes || 'Sin observaciones.'}"
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className={`p-8 rounded-[2rem] border flex items-center gap-6 transition-all ${player.medical.isFit ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-600' : 'bg-red-500/5 border-red-500/10 text-red-600'}`}>
-                    {player.medical.isFit ? <CheckCircle size={32} /> : <Info size={32} />}
-                    <div>
-                      <h5 className="text-[11px] font-black uppercase tracking-widest">
-                        {player.medical.isFit ? 'Documentación al día' : 'Atleta en Observación'}
-                      </h5>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                        Sincronizado con la Central Médica Institucional.
-                      </p>
-                    </div>
+                  {/* Historial Timeline en la ficha del jugador */}
+                  <div className="mt-12">
+                     <div className="flex items-center gap-3 mb-8">
+                        <History size={18} className="text-primary-600" />
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Historial Médico Completo</h5>
+                     </div>
+                     
+                     <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-0 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
+                        {player.medical?.history && player.medical.history.length > 0 ? (
+                          player.medical.history.map((item: MedicalHistoryItem) => (
+                            <div key={item.id} className="relative pl-12">
+                               <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${item.isFit ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                               <div className="bg-slate-50 dark:bg-slate-800/40 p-5 rounded-3xl border border-slate-100 dark:border-white/5">
+                                  <div className="flex justify-between items-start mb-2">
+                                     <span className="text-[9px] font-black uppercase text-slate-400 italic flex items-center gap-2">
+                                        <Clock size={10} /> {item.date}
+                                     </span>
+                                     <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${item.isFit ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                                        {item.isFit ? 'Apto' : 'Baja'}
+                                     </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed italic">"{item.notes || 'Sin notas'}"</p>
+                                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 text-[8px] font-bold text-slate-400 uppercase tracking-widest flex justify-between">
+                                     <span>Vto: {item.expiryDate || 'N/A'}</span>
+                                     <span className="flex items-center gap-1"><UserCircle size={10} /> {item.professionalName}</span>
+                                  </div>
+                               </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-center py-10 text-[9px] font-black uppercase text-slate-400 tracking-[0.3em]">Sin registros históricos archivados</p>
+                        )}
+                     </div>
                   </div>
                 </div>
               )}
