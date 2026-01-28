@@ -1,5 +1,4 @@
 
-
 export type AppRole = 'ADMIN' | 'COORDINATOR' | 'COACH' | 'PHYSICAL_TRAINER' | 'MEDICAL' | 'PLAYER' | 'DELEGATE';
 
 export interface Metric {
@@ -88,6 +87,7 @@ export interface MemberFee {
   due_date: string;
   payment_date?: string;
   payment_method?: string;
+  receipt_url?: string; // Nuevo campo para comprobante
   reference?: string;
   member?: Member; // Join con la tabla members
 }
