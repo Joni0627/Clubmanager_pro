@@ -5,8 +5,10 @@ import MasterData from './components/MasterData.tsx';
 import Squads from './components/Squads.tsx';
 import DisciplineConsole from './components/DisciplineConsole.tsx';
 import MemberManagement from './components/MemberManagement.tsx';
+import FeesManagement from './components/FeesManagement.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
-import { ClubConfig, Discipline, Member, UserSession } from './types.ts';
+// Fix: Removed unused UserSession import which caused compilation errors
+import { ClubConfig, Discipline, Member } from './types.ts';
 import { db } from './lib/supabase.ts';
 import { Shield, ArrowRight } from 'lucide-react';
 
@@ -26,17 +28,11 @@ function App() {
     disciplines: []
   });
 
-  // Efecto para inyectar colores dinámicos en CSS
   useEffect(() => {
     const root = document.documentElement;
     const color = config.primaryColor || '#ec4899';
-    
-    // Función simple para generar variantes de color (muy básica para el ejemplo)
-    // En un entorno pro usaríamos una librería como chroma-js
     root.style.setProperty('--primary-500', color);
-    root.style.setProperty('--primary-600', color); // Usamos el mismo para el 600 que es el principal
-    
-    // Inyectar un color con transparencia para el overlay
+    root.style.setProperty('--primary-600', color);
     root.style.setProperty('--primary-glow', `${color}33`);
   }, [config.primaryColor]);
 
@@ -50,16 +46,13 @@ function App() {
     try {
       const { data: configData } = await db.config.get();
       const { data: membersData } = await db.members.getAll();
-      
       if (membersData) setMembers(membersData);
-      
       if (configData) {
-        // CORRECCIÓN DE MAPEO: Aseguramos que las keys coincidan con la interfaz ClubConfig
         setConfig({
           name: configData.name || 'MI CLUB',
           logoUrl: configData.logo_url || '',
-          primaryColor: configData.primary_color || '#ec4899', // Antes era primary_color
-          secondaryColor: configData.secondary_color || '#0f172a', // Antes era secondary_color
+          primaryColor: configData.primary_color || '#ec4899',
+          secondaryColor: configData.secondary_color || '#0f172a',
           disciplines: configData.disciplines || []
         });
       }
@@ -70,9 +63,7 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleSaveMember = async (member: Member) => {
     try {
@@ -145,6 +136,12 @@ function App() {
               onSaveMember={handleSaveMember}
               onDeleteMember={handleDeleteMember}
             />
+          </div>
+        )}
+
+        {view === 'payments' && (
+          <div className="pt-24">
+            <FeesManagement />
           </div>
         )}
         

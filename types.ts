@@ -1,4 +1,5 @@
 
+
 export type AppRole = 'ADMIN' | 'COORDINATOR' | 'COACH' | 'PHYSICAL_TRAINER' | 'MEDICAL' | 'PLAYER' | 'DELEGATE';
 
 export interface Metric {
@@ -71,21 +72,24 @@ export interface Member {
   assignments: Assignment[];
   status: 'Active' | 'Inactive' | 'Pending';
   createdAt: string;
-  // Perfil de Sistema
   systemRole: 'STAFF' | 'Socio' | 'Externo';
   canLogin: boolean;
   username?: string;
-  // Campos de rendimiento
   stats: Record<string, number>;
   overallRating?: number;
 }
 
-export interface UserSession {
-  memberId: string;
-  email: string;
-  role: AppRole;
-  permissions: string[];
-  assignedCategories: string[];
+export interface MemberFee {
+  id: string;
+  member_id: string;
+  period: string; // Ej: "2024-05"
+  amount: number;
+  status: 'Pending' | 'Paid' | 'Late';
+  due_date: string;
+  payment_date?: string;
+  payment_method?: string;
+  reference?: string;
+  member?: Member; // Join con la tabla members
 }
 
 export interface MedicalHistoryItem {
@@ -122,35 +126,34 @@ export interface Player {
   status: 'Active' | 'Injured' | 'Suspended';
 }
 
-export interface MemberFee {
-  id: string;
-  player_id: string;
-  amount: number;
-  status: 'Pending' | 'UpToDate' | 'Late';
-  due_date: string;
-  payment_method: string;
-  reference?: string;
-  player?: Player;
-}
+// Added missing exports to resolve compilation errors in AdminPanel and App components
 
+// Fix: Interface for season competition matches
 export interface Fixture {
   id: string;
   discipline: string;
   category: string;
   opponent: string;
   date: string;
-  venue: string;
+  venue: 'Home' | 'Away';
   competition: string;
   result: string;
 }
 
+// Fix: Interface for team staff and hierarchy structure
 export interface TeamStructure {
   id: string;
   discipline: string;
-  gender: 'Masculino' | 'Femenino';
+  gender: string;
   category: string;
   coach: string;
-  physicalTrainer: string;
-  medicalStaff: string;
+  physicalTrainer?: string;
+  medicalStaff?: string;
   playersCount: number;
+}
+
+// Fix: Interface for user authentication sessions
+export interface UserSession {
+  user: any;
+  session: any;
 }
