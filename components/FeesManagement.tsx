@@ -5,7 +5,7 @@ import {
   Search, DollarSign, Filter, Check, AlertCircle, Calendar, Plus, X, 
   Trash2, Save, CreditCard, Loader2, User, History, TrendingUp, 
   ArrowUpRight, AlertTriangle, Clock, Receipt, Wallet, FileText, 
-  Camera, Link as LinkIcon, ExternalLink, Image as ImageIcon
+  Camera, Link as LinkIcon, ExternalLink, Image as ImageIcon, UserSearch
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -64,11 +64,24 @@ const FeesManagement: React.FC = () => {
     return { total, paid, pending, lateCount };
   }, [fees]);
 
+  // BUSCADOR INTELIGENTE: Filtra por nombre, apellido o DNI (tokenizado)
   const filteredFees = useMemo(() => {
-    return fees.filter(f => 
-      f.member?.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      f.member?.dni.includes(searchTerm)
-    ).sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime());
+    if (!searchTerm.trim()) return fees.sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime());
+
+    const tokens = searchTerm.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+    return fees.filter(f => {
+      const memberName = (f.member?.name || '').toLowerCase();
+      const memberDni = (f.member?.dni || '').toLowerCase();
+      const reference = (f.reference || '').toLowerCase();
+      
+      // Debe coincidir cada token de búsqueda en alguno de los campos
+      return tokens.every(token => 
+        memberName.includes(token) || 
+        memberDni.includes(token) ||
+        reference.includes(token)
+      );
+    }).sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime());
   }, [fees, searchTerm]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +99,6 @@ const FeesManagement: React.FC = () => {
     if (!formData.member_id) return alert("Selecciona un miembro");
     setIsSaving(true);
     try {
-      // Si el pago tiene fecha o comprobante, lo marcamos como Pagado automáticamente
       const finalStatus = formData.receipt_url || formData.payment_date ? 'Paid' : (formData.status || 'Pending');
       
       const payload = { 
@@ -145,17 +157,25 @@ const FeesManagement: React.FC = () => {
         </div>
         
         <div className="flex gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-72">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <div className="relative flex-1 md:w-80 group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-600 transition-colors" size={18} />
             <input 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="BUSCAR SOCIO..." 
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none font-bold text-[11px] uppercase tracking-widest shadow-lg"
+              placeholder="NOMBRE, APELLIDO O DNI..." 
+              className="w-full pl-14 pr-4 py-5 bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200 dark:border-white/5 outline-none font-black text-[11px] uppercase tracking-widest shadow-xl focus:border-primary-600/50 transition-all placeholder:text-slate-300"
             />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-slate-400 transition-all"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <button onClick={() => setShowModal(true)} className="bg-primary-600 text-white px-8 py-4 rounded-2xl shadow-xl shadow-primary-600/20 hover:scale-105 transition-all shrink-0 flex items-center gap-2">
-            <Plus size={18} /> <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Nueva Cuota</span>
+          <button onClick={() => setShowModal(true)} className="bg-primary-600 text-white px-8 py-5 rounded-3xl shadow-xl shadow-primary-600/20 hover:scale-105 active:scale-95 transition-all shrink-0 flex items-center gap-3">
+            <Plus size={18} strokeWidth={3} /> <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Nueva Cuota</span>
           </button>
         </div>
       </header>
@@ -168,7 +188,7 @@ const FeesManagement: React.FC = () => {
           { label: 'Socios Morosos', value: stats.lateCount, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
           { label: 'Proyección Mes', value: `$${stats.total.toLocaleString()}`, icon: Receipt, color: 'text-primary-600', bg: 'bg-primary-600/10' },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white dark:bg-slate-800/40 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm group">
+          <div key={i} className="bg-white dark:bg-slate-800/40 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm group hover:shadow-lg transition-all">
             <div className="flex justify-between items-start mb-4">
               <div className={`p-3 rounded-xl ${kpi.bg} ${kpi.color} group-hover:scale-110 transition-transform`}>
                 <kpi.icon size={20} />
@@ -198,7 +218,7 @@ const FeesManagement: React.FC = () => {
                 <tr key={fee.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 overflow-hidden shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-900 overflow-hidden shrink-0 border border-slate-200 dark:border-white/5">
                         <img src={fee.member?.photoUrl || 'https://via.placeholder.com/150'} className="w-full h-full object-cover" />
                       </div>
                       <div>
@@ -217,7 +237,7 @@ const FeesManagement: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-black text-slate-800 dark:text-white italic">${fee.amount.toLocaleString()}</span>
                       {fee.receipt_url && (
-                        <div className="p-1.5 bg-primary-600/10 text-primary-600 rounded-lg" title="Comprobante adjunto">
+                        <div className="p-1.5 bg-primary-600/10 text-primary-600 rounded-lg animate-bounce" title="Comprobante adjunto">
                            <ImageIcon size={12} />
                         </div>
                       )}
@@ -231,22 +251,22 @@ const FeesManagement: React.FC = () => {
                       {fee.status !== 'Paid' && (
                         <button 
                           onClick={() => markAsPaid(fee)}
-                          className="p-2 bg-emerald-500 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-emerald-500/20"
+                          className="p-2.5 bg-emerald-500 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-emerald-500/20"
                           title="Marcar como pagado"
                         >
-                          <Check size={16} />
+                          <Check size={16} strokeWidth={3} />
                         </button>
                       )}
                       <button 
                         onClick={() => setSelectedMemberHistory(fee.member || null)}
-                        className="p-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-xl hover:bg-primary-600 hover:text-white transition-all"
+                        className="p-2.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-xl hover:bg-primary-600 hover:text-white transition-all shadow-sm"
                         title="Ver Historial"
                       >
                         <History size={16} />
                       </button>
                       <button 
                         onClick={async () => { if(confirm('¿Eliminar registro?')) { await db.fees.delete(fee.id); loadData(); } }}
-                        className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                        className="p-2.5 text-slate-300 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -254,12 +274,23 @@ const FeesManagement: React.FC = () => {
                   </td>
                 </tr>
               ))}
+              {filteredFees.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-24 text-center">
+                     <div className="flex flex-col items-center opacity-30">
+                        <UserSearch size={48} className="mb-4 text-slate-300" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">No se encontraron socios</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">Prueba buscando por DNI o Nombre parcial</p>
+                     </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* MODAL: Nueva Cuota */}
+      {/* MODAL: Nueva Cuota (Sin cambios, ya optimizado) */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[500] flex items-center justify-center p-0 md:p-10 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] md:rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col">
@@ -278,8 +309,6 @@ const FeesManagement: React.FC = () => {
 
             <div className="p-8 md:p-12 overflow-y-auto custom-scrollbar flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                
-                {/* Columna Izquierda: Datos Básicos */}
                 <div className="space-y-8">
                   <div className="space-y-3">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Seleccionar Miembro / Socio</label>
@@ -332,7 +361,6 @@ const FeesManagement: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Columna Derecha: Comprobante y Vencimiento */}
                 <div className="space-y-8">
                   <div className="space-y-3">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Adjuntar Comprobante</label>
@@ -380,7 +408,6 @@ const FeesManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -399,7 +426,7 @@ const FeesManagement: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: Historial Individual (Sin cambios requeridos, ya muestra lo necesario) */}
+      {/* MODAL: Historial Individual */}
       {selectedMemberHistory && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[501] flex items-center justify-center p-4 animate-fade-in">
            <div className="bg-white dark:bg-[#0f121a] w-full max-w-3xl rounded-[3rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col h-[80vh]">
