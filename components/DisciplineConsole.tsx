@@ -213,6 +213,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                   category={activeBranch?.categories.find(c => c.id === selectedCategoryId) || null}
                   gender={selectedGender}
                   players={displayPlayers}
+                  clubConfig={clubConfig}
                 />
               )}
 
