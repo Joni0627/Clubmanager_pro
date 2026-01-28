@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Discipline, ClubConfig, Member, Player, Category, Tournament } from '../types';
 import { 
   BarChart3, Users, CalendarCheck2, Stethoscope, ChevronLeft, 
-  Activity, Trophy, TrendingUp, Filter, Loader2, User, UserCheck
+  Activity, Trophy, TrendingUp, Filter, Loader2, User, UserCheck,
+  ChevronUp, ChevronDown, LayoutDashboard
 } from 'lucide-react';
 import Dashboard from './Dashboard';
 import AttendanceTracker from './AttendanceTracker';
@@ -27,6 +28,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [persistedPlayers, setPersistedPlayers] = useState<Player[]>([]);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   const activeBranch = useMemo(() => 
     discipline.branches.find(b => b.gender === selectedGender && b.enabled),
@@ -96,25 +98,25 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] mt-24 animate-fade-in overflow-hidden bg-slate-50 dark:bg-[#080a0f] border-t border-slate-200 dark:border-white/5">
-      <header className="flex-none bg-white dark:bg-[#0f1219] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm">
+      <header className={`flex-none bg-white dark:bg-[#0f1219] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm transition-all duration-500 ease-in-out relative ${isHeaderCollapsed ? 'pb-2' : 'pb-0'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
-            <div className="flex items-center gap-5 w-full md:w-auto">
-              <button onClick={onBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 transition-all shadow-sm border border-slate-200">
+            <div className={`flex items-center gap-5 w-full md:w-auto transition-all duration-500 ${isHeaderCollapsed ? 'scale-90 origin-left' : ''}`}>
+              <button onClick={onBack} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-primary-600 transition-all shadow-sm border border-slate-200 dark:border-white/10">
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-slate-950 flex items-center justify-center shadow-xl border border-primary-600/30">
-                  {discipline.iconUrl ? <img src={discipline.iconUrl} className="w-full h-full object-cover p-1.5" /> : <Activity size={24} className="text-primary-600" />}
+                <div className={`rounded-2xl bg-slate-950 flex items-center justify-center shadow-xl border border-primary-600/30 transition-all duration-500 ${isHeaderCollapsed ? 'w-10 h-10' : 'w-12 h-12'}`}>
+                  {discipline.iconUrl ? <img src={discipline.iconUrl} className="w-full h-full object-cover p-1.5" /> : <Activity size={isHeaderCollapsed ? 18 : 24} className="text-primary-600" />}
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black uppercase tracking-tighter dark:text-white italic">{discipline.name}</h2>
-                  <p className="text-[9px] font-black text-primary-600 uppercase tracking-[0.3em]">Consola Deportiva</p>
+                  <h2 className={`font-black uppercase tracking-tighter dark:text-white italic transition-all duration-500 ${isHeaderCollapsed ? 'text-xl' : 'text-3xl'}`}>{discipline.name}</h2>
+                  {!isHeaderCollapsed && <p className="text-[9px] font-black text-primary-600 uppercase tracking-[0.3em] animate-fade-in">Consola Deportiva</p>}
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 overflow-x-auto no-scrollbar">
+            <div className={`flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto no-scrollbar transition-all duration-500 ${isHeaderCollapsed ? 'scale-95' : ''}`}>
               {subTabs.map(tab => (
                 <button
                   key={tab.id}
@@ -128,42 +130,70 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-8 pb-6 border-t border-slate-100 dark:border-white/5 pt-6">
-            <div className="flex flex-col gap-2">
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Seleccionar Rama</span>
-              <div className="flex gap-2">
-                {['Masculino', 'Femenino'].map(g => (
-                  <button
-                    key={g}
-                    onClick={() => setSelectedGender(g as any)}
-                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${selectedGender === g ? 'bg-slate-950 text-white border-slate-950 shadow-lg' : 'bg-transparent border-slate-100 text-slate-400 opacity-60'}`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* SECCIÓN COLAPSABLE DE FILTROS */}
+          <div className={`grid transition-all duration-500 ease-in-out ${isHeaderCollapsed ? 'grid-rows-[0fr] opacity-0 pointer-events-none mb-0' : 'grid-rows-[1fr] opacity-100 mb-6'}`}>
+            <div className="overflow-hidden">
+                <div className="flex flex-col md:flex-row gap-8 border-t border-slate-100 dark:border-white/5 pt-6">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Seleccionar Rama</span>
+                      <div className="flex gap-2">
+                        {['Masculino', 'Femenino'].map(g => (
+                          <button
+                            key={g}
+                            onClick={() => setSelectedGender(g as any)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${selectedGender === g ? 'bg-slate-950 text-white border-slate-950 shadow-lg' : 'bg-transparent border-slate-100 dark:border-white/10 text-slate-400 opacity-60'}`}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-            <div className="flex flex-col gap-2 flex-1">
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">División / Categoría</span>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {activeBranch?.categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategoryId(cat.id)}
-                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 whitespace-nowrap ${selectedCategoryId === cat.id ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-400'}`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">División / Categoría</span>
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                        {activeBranch?.categories.map(cat => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategoryId(cat.id)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 whitespace-nowrap ${selectedCategoryId === cat.id ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-white dark:bg-white/5 border-slate-100 dark:border-white/10 text-slate-400'}`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                </div>
             </div>
           </div>
         </div>
+
+        {/* BOTÓN DE COLAPSO FLOTANTE */}
+        <button 
+          onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+          className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-primary-600 shadow-lg hover:scale-110 transition-all z-20 cursor-pointer"
+        >
+          {isHeaderCollapsed ? <ChevronDown size={14} strokeWidth={3} /> : <ChevronUp size={14} strokeWidth={3} />}
+        </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#080a0f] p-6 md:p-12">
+      <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#080a0f] p-6 md:p-12 custom-scrollbar">
         <div className="max-w-7xl mx-auto">
+          {/* Muestra un pequeño resumen visual si está colapsado para saber donde estamos parados */}
+          {isHeaderCollapsed && (
+            <div className="mb-8 animate-fade-in flex items-center gap-4 text-slate-400 font-black uppercase text-[9px] tracking-[0.2em] bg-white/50 dark:bg-white/5 px-6 py-3 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+               <div className="flex items-center gap-2">
+                  <User size={12} className={selectedGender === 'Masculino' ? 'text-blue-500' : 'text-pink-500'} />
+                  {selectedGender}
+               </div>
+               <span className="text-slate-200 opacity-20">|</span>
+               <div className="flex items-center gap-2">
+                  <TrendingUp size={12} className="text-primary-600" />
+                  {activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name}
+               </div>
+            </div>
+          )}
+
           {isLoadingPlayers ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="animate-spin text-primary-600 mb-4" size={32} />
