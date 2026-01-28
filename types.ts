@@ -81,15 +81,15 @@ export interface Member {
 export interface MemberFee {
   id: string;
   member_id: string;
-  period: string; // Ej: "2024-05"
+  period: string;
   amount: number;
   status: 'Pending' | 'Paid' | 'Late';
   due_date: string;
   payment_date?: string;
   payment_method?: string;
-  receipt_url?: string; // Nuevo campo para comprobante
+  receipt_url?: string;
   reference?: string;
-  member?: Member; // Join con la tabla members
+  member?: Member;
 }
 
 export interface MedicalHistoryItem {
@@ -126,9 +126,46 @@ export interface Player {
   status: 'Active' | 'Injured' | 'Suspended';
 }
 
-// Added missing exports to resolve compilation errors in AdminPanel and App components
+// --- NUEVOS TIPOS PARA TORNEOS ---
 
-// Fix: Interface for season competition matches
+export type TournamentType = 'Professional' | 'Internal';
+export type MatchStatus = 'Scheduled' | 'Finished' | 'Canceled';
+export type MatchEventType = 'Goal' | 'YellowCard' | 'RedCard' | 'Foul' | 'Substitution';
+
+export interface Tournament {
+  id: string;
+  name: string;
+  type: TournamentType;
+  disciplineId: string;
+  categoryId: string;
+  gender: 'Masculino' | 'Femenino';
+  status: 'Open' | 'Finished';
+  createdAt: string;
+}
+
+export interface Match {
+  id: string;
+  tournamentId: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore?: number;
+  awayScore?: number;
+  date: string;
+  time?: string;
+  venue?: string;
+  status: MatchStatus;
+  events?: MatchEvent[];
+}
+
+export interface MatchEvent {
+  id: string;
+  matchId: string;
+  playerId: string; // Miembro ID
+  type: MatchEventType;
+  minute?: number;
+  notes?: string;
+}
+
 export interface Fixture {
   id: string;
   discipline: string;
@@ -140,7 +177,6 @@ export interface Fixture {
   result: string;
 }
 
-// Fix: Interface for team staff and hierarchy structure
 export interface TeamStructure {
   id: string;
   discipline: string;
@@ -152,7 +188,6 @@ export interface TeamStructure {
   playersCount: number;
 }
 
-// Fix: Interface for user authentication sessions
 export interface UserSession {
   user: any;
   session: any;

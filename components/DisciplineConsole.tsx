@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Discipline, ClubConfig, Member, Player, Category } from '../types';
+import { Discipline, ClubConfig, Member, Player, Category, Tournament } from '../types';
 import { 
   BarChart3, Users, CalendarCheck2, Stethoscope, ChevronLeft, 
   Activity, Trophy, TrendingUp, Filter, Loader2, User, UserCheck
@@ -9,6 +9,7 @@ import Dashboard from './Dashboard';
 import AttendanceTracker from './AttendanceTracker';
 import MedicalDashboard from './MedicalDashboard';
 import PlayerCard from './PlayerCard';
+import TournamentManagement from './TournamentManagement';
 import { db } from '../lib/supabase';
 
 interface DisciplineConsoleProps {
@@ -20,44 +21,37 @@ interface DisciplineConsoleProps {
 }
 
 const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubConfig, members, onBack, onRefresh }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'summary' | 'players' | 'attendance' | 'medical'>('summary');
+  const [activeSubTab, setActiveSubTab] = useState<'summary' | 'players' | 'attendance' | 'medical' | 'tournaments'>('summary');
   const [selectedGender, setSelectedGender] = useState<'Masculino' | 'Femenino'>('Masculino');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [persistedPlayers, setPersistedPlayers] = useState<Player[]>([]);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
 
-  // 1. Obtener la rama actual
   const activeBranch = useMemo(() => 
     discipline.branches.find(b => b.gender === selectedGender && b.enabled),
   [discipline, selectedGender]);
 
-  // 2. Setear categoría por defecto
   useEffect(() => {
     if (activeBranch && activeBranch.categories.length > 0) {
-      setSelectedCategoryId(activeBranch.categories[0].id);
+      if (!activeBranch.categories.find(c => c.id === selectedCategoryId)) {
+        setSelectedCategoryId(activeBranch.categories[0].id);
+      }
     }
   }, [activeBranch]);
 
-  // 3. CARGA DE DATOS DESDE SUPABASE (Tabla Players)
   const fetchPlayersData = async () => {
     if (!selectedCategoryId || !activeBranch) return;
-    
     setIsLoadingPlayers(true);
     try {
       const categoryName = activeBranch.categories.find(c => c.id === selectedCategoryId)?.name;
-      const { data, error } = await db.players.getAll();
-      
+      const { data } = await db.players.getAll();
       if (data) {
-        // Filtramos los datos de la tabla players que correspondan a esta consola
-        const filtered = data.filter(p => 
-          p.discipline === discipline.name && 
-          p.category === categoryName
-        );
+        const filtered = data.filter(p => p.discipline === discipline.name && p.category === categoryName);
         setPersistedPlayers(filtered);
       }
     } catch (err) {
-      console.error("Error fetching players table:", err);
+      console.error(err);
     } finally {
       setIsLoadingPlayers(false);
     }
@@ -67,26 +61,12 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
     fetchPlayersData();
   }, [selectedCategoryId, discipline.name]);
 
-  // 4. MERGE LÓGICO: Cruzamos Miembros Asignados con Datos Persistidos
   const displayPlayers = useMemo(() => {
     if (!selectedCategoryId) return [];
-    
-    // Filtramos miembros que tengan la asignación
-    const assignedMembers = members.filter(m => 
-      m.assignments.some(a => 
-        a.disciplineId === discipline.id && 
-        a.categoryId === selectedCategoryId &&
-        a.role === 'PLAYER'
-      )
-    );
-
+    const assignedMembers = members.filter(m => m.assignments.some(a => a.disciplineId === discipline.id && a.categoryId === selectedCategoryId && a.role === 'PLAYER'));
     return assignedMembers.map(m => {
-      // Buscamos si este miembro ya tiene datos guardados en la tabla 'players'
       const savedData = persistedPlayers.find(p => p.dni === m.dni || p.id === m.id);
-      
       const categoryName = activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || '';
-
-      // Si hay datos guardados, los usamos. Si no, usamos valores base del miembro.
       return {
         id: m.id,
         name: m.name,
@@ -110,6 +90,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
     { id: 'summary', label: 'Resumen', icon: BarChart3 },
     { id: 'players', label: 'Plantel', icon: Users },
     { id: 'attendance', label: 'Asistencia', icon: CalendarCheck2 },
+    { id: 'tournaments', label: 'Torneos', icon: Trophy },
     { id: 'medical', label: 'Médico', icon: Stethoscope },
   ];
 
@@ -133,12 +114,12 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
               </div>
             </div>
 
-            <div className="flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200">
+            <div className="flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl border border-slate-200 overflow-x-auto no-scrollbar">
               {subTabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveSubTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-md scale-105' : 'text-slate-400'}`}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all whitespace-nowrap ${activeSubTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-md scale-105' : 'text-slate-400'}`}
                 >
                   <tab.icon size={14} />
                   <span>{tab.label}</span>
@@ -211,9 +192,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                         </div>
                         <h3 className="font-black uppercase tracking-tighter text-2xl text-slate-800 dark:text-white text-center leading-none mb-1 truncate w-full">{athlete.name}</h3>
                         <p className="text-[10px] font-black text-primary-600 mb-4">{athlete.position} #{athlete.number}</p>
-                        <div className="flex items-center gap-3">
-                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">Sincronizado</span>
-                        </div>
                       </div>
                     </div>
                   )) : (
@@ -227,6 +205,15 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
               {activeSubTab === 'attendance' && (
                 <AttendanceTracker players={displayPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />
+              )}
+
+              {activeSubTab === 'tournaments' && (
+                <TournamentManagement 
+                  discipline={discipline} 
+                  category={activeBranch?.categories.find(c => c.id === selectedCategoryId) || null}
+                  gender={selectedGender}
+                  players={displayPlayers}
+                />
               )}
 
               {activeSubTab === 'medical' && (

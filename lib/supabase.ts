@@ -64,5 +64,31 @@ export const db = {
       .from('fees')
       .delete()
       .eq('id', id)
+  },
+  tournaments: {
+    getAll: (disciplineId?: string) => {
+      let query = supabase.from('tournaments').select('*');
+      if (disciplineId) query = query.eq('disciplineId', disciplineId);
+      return query.order('createdAt', { ascending: false });
+    },
+    upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
+    delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
+  },
+  matches: {
+    getAll: (tournamentId: string) => supabase
+      .from('matches')
+      .select('*')
+      .eq('tournamentId', tournamentId)
+      .order('date', { ascending: true }),
+    upsert: (match: any) => supabase.from('matches').upsert(match),
+    delete: (id: string) => supabase.from('matches').delete().eq('id', id)
+  },
+  matchEvents: {
+    getAll: (matchId: string) => supabase
+      .from('match_events')
+      .select('*')
+      .eq('matchId', matchId),
+    upsert: (event: any) => supabase.from('match_events').upsert(event),
+    delete: (id: string) => supabase.from('match_events').delete().eq('id', id)
   }
 };
