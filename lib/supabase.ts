@@ -71,8 +71,15 @@ export const db = {
     upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
     delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
   },
+  participants: {
+    getAll: (tournamentId: string) => supabase
+      .from('tournament_participants')
+      .select('*')
+      .eq('tournamentId', tournamentId),
+    upsert: (participant: any) => supabase.from('tournament_participants').upsert(participant),
+    delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
+  },
   matches: {
-    // IMPORTANTE: Traemos los eventos (goles/tarjetas) vinculados
     getAll: (tournamentId: string) => supabase
       .from('matches')
       .select(`
@@ -90,8 +97,6 @@ export const db = {
     
     upsert: async (match: any) => {
       const { incidents, ...matchData } = match;
-      
-      // 1. Guardar/Actualizar partido
       const { data: mData, error: mErr } = await supabase
         .from('matches')
         .upsert(matchData)
@@ -100,10 +105,8 @@ export const db = {
       
       if (mErr) throw mErr;
 
-      // 2. Limpiar incidencias anteriores para este partido (evita basura)
       await supabase.from('match_events').delete().eq('matchId', mData.id);
 
-      // 3. Insertar nuevas incidencias si existen
       if (incidents && incidents.length > 0) {
         const eventsToSave = incidents.map((inc: any) => ({
           matchId: mData.id,

@@ -78,29 +78,19 @@ export interface Member {
   overallRating?: number;
 }
 
-export interface MemberFee {
-  id: string;
-  member_id: string;
-  period: string;
-  amount: number;
-  status: 'Pending' | 'Paid' | 'Late';
-  due_date: string;
-  payment_date?: string;
-  payment_method?: string;
-  receipt_url?: string;
-  reference?: string;
-  member?: Member;
-}
+// --- MEDICAL TYPES ---
 
+// Added missing MedicalHistoryItem interface
 export interface MedicalHistoryItem {
   id: string;
   date: string;
   isFit: boolean;
   expiryDate: string;
-  notes?: string;
-  professionalName?: string;
+  notes: string;
+  professionalName: string;
 }
 
+// Added missing MedicalRecord interface
 export interface MedicalRecord {
   isFit: boolean;
   lastCheckup?: string;
@@ -109,6 +99,9 @@ export interface MedicalRecord {
   history?: MedicalHistoryItem[];
 }
 
+// --- PLAYER TYPE ---
+
+// Added missing Player interface used in multiple components
 export interface Player {
   id: string;
   name: string;
@@ -122,8 +115,51 @@ export interface Player {
   email: string;
   overallRating: number;
   stats: Record<string, number>;
-  medical: MedicalRecord;
-  status: 'Active' | 'Injured' | 'Suspended';
+  medical?: MedicalRecord;
+  status: string;
+}
+
+// --- ADMIN & FIXTURE TYPES ---
+
+// Added missing Fixture interface for AdminPanel
+export interface Fixture {
+  id: string;
+  discipline: string;
+  category: string;
+  opponent: string;
+  date: string;
+  venue: string;
+  competition: string;
+  result: string;
+}
+
+// Added missing TeamStructure interface for AdminPanel
+export interface TeamStructure {
+  id: string;
+  discipline: string;
+  gender: string;
+  category: string;
+  coach: string;
+  physicalTrainer: string;
+  medicalStaff: string;
+  playersCount: number;
+}
+
+// --- FEES TYPES ---
+
+// Added missing MemberFee interface for FeesManagement
+export interface MemberFee {
+  id: string;
+  member_id: string;
+  amount: number;
+  due_date: string;
+  period: string;
+  status: 'Pending' | 'Paid' | 'Late';
+  payment_method?: string;
+  payment_date?: string | null;
+  receipt_url?: string;
+  reference?: string;
+  member?: Member;
 }
 
 // --- NUEVOS TIPOS PARA TORNEOS ---
@@ -131,6 +167,21 @@ export interface Player {
 export type TournamentType = 'Professional' | 'Internal';
 export type MatchStatus = 'Scheduled' | 'Finished' | 'Canceled';
 export type MatchEventType = 'Goal' | 'YellowCard' | 'RedCard' | 'Foul' | 'Substitution';
+
+export interface TournamentParticipant {
+  id: string;
+  tournamentId: string;
+  name: string;
+  memberIds: string[]; // IDs de la tabla Members
+}
+
+export interface TournamentSettings {
+  hasGroups: boolean;
+  groupsCount: number;
+  advancingPerGroup: number;
+  hasPlayoffs: boolean;
+  playoffStart: 'F' | 'SF' | 'QF' | 'R16'; // Final, Semi, Cuartos, Octavos
+}
 
 export interface Tournament {
   id: string;
@@ -140,20 +191,25 @@ export interface Tournament {
   categoryId: string;
   gender: 'Masculino' | 'Femenino';
   status: 'Open' | 'Finished';
+  settings?: TournamentSettings;
   createdAt: string;
 }
 
 export interface Match {
   id: string;
   tournamentId: string;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeam: string; // Para modo pro (texto)
+  awayTeam: string; // Para modo pro (texto)
+  homeParticipantId?: string; // Para modo interno
+  awayParticipantId?: string; // Para modo interno
   homeScore?: number;
   awayScore?: number;
   date: string;
   time?: string;
   venue?: string;
   status: MatchStatus;
+  group?: string; // Ej: 'A'
+  stage?: string; // Ej: 'Fase de Grupos' o 'Semifinal'
   events?: MatchEvent[];
 }
 
@@ -164,28 +220,6 @@ export interface MatchEvent {
   type: MatchEventType;
   minute?: number;
   notes?: string;
-}
-
-export interface Fixture {
-  id: string;
-  discipline: string;
-  category: string;
-  opponent: string;
-  date: string;
-  venue: 'Home' | 'Away';
-  competition: string;
-  result: string;
-}
-
-export interface TeamStructure {
-  id: string;
-  discipline: string;
-  gender: string;
-  category: string;
-  coach: string;
-  physicalTrainer?: string;
-  medicalStaff?: string;
-  playersCount: number;
 }
 
 export interface UserSession {

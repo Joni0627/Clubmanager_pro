@@ -4,14 +4,8 @@ import { Player } from "../types.ts";
 
 // Fix: Refactored to handle dynamic player stats and strictly follow @google/genai guidelines
 export const generatePlayerReport = async (player: Player): Promise<string> => {
-  const apiKey = process.env.API_KEY;
-  
-  if (!apiKey || apiKey.trim() === "") {
-    console.error("Gemini API_KEY no configurada.");
-    return "Error: La API_KEY de Google Gemini no está configurada.";
-  }
-
   // Always use { apiKey: process.env.API_KEY } for initialization as per instructions
+  // The API key is assumed to be pre-configured in process.env.API_KEY.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   
   // Format dynamic stats into a readable string for the prompt to support any sport configuration
