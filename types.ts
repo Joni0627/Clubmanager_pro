@@ -78,9 +78,7 @@ export interface Member {
   overallRating?: number;
 }
 
-// --- MEDICAL TYPES ---
-
-// Added missing MedicalHistoryItem interface
+// Fix: Added MedicalHistoryItem and MedicalRecord to support health tracking features
 export interface MedicalHistoryItem {
   id: string;
   date: string;
@@ -90,18 +88,14 @@ export interface MedicalHistoryItem {
   professionalName: string;
 }
 
-// Added missing MedicalRecord interface
 export interface MedicalRecord {
   isFit: boolean;
-  lastCheckup?: string;
+  lastCheckup: string;
   expiryDate: string;
-  notes?: string;
-  history?: MedicalHistoryItem[];
+  notes: string;
+  history: MedicalHistoryItem[];
 }
 
-// --- PLAYER TYPE ---
-
-// Added missing Player interface used in multiple components
 export interface Player {
   id: string;
   name: string;
@@ -119,9 +113,7 @@ export interface Player {
   status: string;
 }
 
-// --- ADMIN & FIXTURE TYPES ---
-
-// Added missing Fixture interface for AdminPanel
+// Fix: Added Fixture and TeamStructure for administrative and scheduling features
 export interface Fixture {
   id: string;
   discipline: string;
@@ -133,7 +125,6 @@ export interface Fixture {
   result: string;
 }
 
-// Added missing TeamStructure interface for AdminPanel
 export interface TeamStructure {
   id: string;
   discipline: string;
@@ -145,42 +136,40 @@ export interface TeamStructure {
   playersCount: number;
 }
 
-// --- FEES TYPES ---
-
-// Added missing MemberFee interface for FeesManagement
+// Fix: Added MemberFee to support financial management module
 export interface MemberFee {
   id: string;
   member_id: string;
+  member?: Member;
   amount: number;
-  due_date: string;
   period: string;
-  status: 'Pending' | 'Paid' | 'Late';
-  payment_method?: string;
+  status: 'Paid' | 'Pending' | 'Late';
+  due_date: string;
   payment_date?: string | null;
+  payment_method?: string;
   receipt_url?: string;
   reference?: string;
-  member?: Member;
 }
 
-// --- NUEVOS TIPOS PARA TORNEOS ---
+// --- NUEVOS TIPOS PARA TORNEOS (GRUPOS Y LLAVES) ---
 
 export type TournamentType = 'Professional' | 'Internal';
 export type MatchStatus = 'Scheduled' | 'Finished' | 'Canceled';
 export type MatchEventType = 'Goal' | 'YellowCard' | 'RedCard' | 'Foul' | 'Substitution';
-
-export interface TournamentParticipant {
-  id: string;
-  tournamentId: string;
-  name: string;
-  memberIds: string[]; // IDs de la tabla Members
-}
 
 export interface TournamentSettings {
   hasGroups: boolean;
   groupsCount: number;
   advancingPerGroup: number;
   hasPlayoffs: boolean;
-  playoffStart: 'F' | 'SF' | 'QF' | 'R16'; // Final, Semi, Cuartos, Octavos
+  playoffStart: 'F' | 'SF' | 'QF' | 'R16';
+}
+
+export interface TournamentParticipant {
+  id: string;
+  tournamentId: string;
+  name: string;
+  memberIds: string[];
 }
 
 export interface Tournament {
@@ -191,38 +180,33 @@ export interface Tournament {
   categoryId: string;
   gender: 'Masculino' | 'Femenino';
   status: 'Open' | 'Finished';
-  settings?: TournamentSettings;
+  settings: TournamentSettings;
   createdAt: string;
 }
 
 export interface Match {
   id: string;
   tournamentId: string;
-  homeTeam: string; // Para modo pro (texto)
-  awayTeam: string; // Para modo pro (texto)
-  homeParticipantId?: string; // Para modo interno
-  awayParticipantId?: string; // Para modo interno
+  homeTeam: string;
+  awayTeam: string;
+  homeParticipantId?: string;
+  awayParticipantId?: string;
   homeScore?: number;
   awayScore?: number;
   date: string;
   time?: string;
   venue?: string;
   status: MatchStatus;
-  group?: string; // Ej: 'A'
-  stage?: string; // Ej: 'Fase de Grupos' o 'Semifinal'
+  group?: string; 
+  stage?: string; 
   events?: MatchEvent[];
 }
 
 export interface MatchEvent {
   id: string;
   matchId: string;
-  playerId: string; // Miembro ID
+  playerId: string;
   type: MatchEventType;
   minute?: number;
   notes?: string;
-}
-
-export interface UserSession {
-  user: any;
-  session: any;
 }
