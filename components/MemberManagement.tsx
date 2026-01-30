@@ -96,10 +96,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
   const addAssignment = () => {
     if (config.disciplines.length === 0) return alert("Configura disciplinas primero");
+    // Fix: Updated Assignment property names to match snake_case in types.ts
     const newAssignment: Assignment = {
       id: crypto.randomUUID(),
-      disciplineId: config.disciplines[0].id,
-      categoryId: '',
+      discipline_id: config.disciplines[0].id,
+      category_id: '',
       role: 'PLAYER'
     };
     setFormData(prev => ({ ...prev, assignments: [...(prev.assignments || []), newAssignment] }));
@@ -108,7 +109,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
   const updateAssignment = (idx: number, field: keyof Assignment, value: string) => {
     const newAss = [...(formData.assignments || [])];
     newAss[idx] = { ...newAss[idx], [field]: value };
-    if (field === 'disciplineId') newAss[idx].categoryId = '';
+    // Fix: Updated check for discipline_id and corresponding category_id reset
+    if (field === 'discipline_id') newAss[idx].category_id = '';
     setFormData({ ...formData, assignments: newAss });
   };
 
@@ -370,7 +372,8 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                         {formData.assignments?.map((as, idx) => {
-                          const disc = config.disciplines.find(d => d.id === as.disciplineId);
+                          // Fix: Use snake_case property discipline_id
+                          const disc = config.disciplines.find(d => d.id === as.discipline_id);
                           const availableCategories = disc?.branches?.flatMap(b => b.categories) || [];
                           
                           return (
@@ -391,10 +394,11 @@ const MemberManagement: React.FC<MemberManagementProps> = ({ members, config, on
                                 </button>
                               </div>
                               <div className="space-y-3">
-                                <select value={as.disciplineId} onChange={e => updateAssignment(idx, 'disciplineId', e.target.value)} className={selectClasses + " p-3 rounded-xl text-[10px]"}>
+                                {/* Fix: Use snake_case property names discipline_id and category_id */}
+                                <select value={as.discipline_id} onChange={e => updateAssignment(idx, 'discipline_id', e.target.value)} className={selectClasses + " p-3 rounded-xl text-[10px]"}>
                                   {config.disciplines.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
-                                <select value={as.categoryId} onChange={e => updateAssignment(idx, 'categoryId', e.target.value)} className={selectClasses + " p-3 rounded-xl text-[10px]"}>
+                                <select value={as.category_id} onChange={e => updateAssignment(idx, 'category_id', e.target.value)} className={selectClasses + " p-3 rounded-xl text-[10px]"}>
                                   <option value="">-- Seleccionar Categoría --</option>
                                   {availableCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>

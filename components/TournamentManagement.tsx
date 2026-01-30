@@ -25,9 +25,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   
-  // Fix: Added missing memberSearch state to handle search functionality in the participant selection modal
   const [memberSearch, setMemberSearch] = useState('');
-  
   const [isLoading, setIsLoading] = useState(true);
   const [showTournamentWizard, setShowTournamentWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -43,7 +41,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [matchForm, setMatchForm] = useState<any>({
     rivalName: '', condition: 'Local', date: new Date().toISOString().split('T')[0],
     status: 'Scheduled', myScore: 0, rivalScore: 0, group: 'A', stage: 'Fase Regular',
-    homeParticipantId: '', awayParticipantId: ''
+    home_participant_id: '', away_participant_id: ''
   });
 
   const loadBaseData = async () => {
@@ -55,12 +53,12 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         db.members.getAll()
       ]);
       if (tourRes.data) {
-        const filtered = tourRes.data.filter(t => t.categoryId === category.id && t.gender === gender);
+        const filtered = tourRes.data.filter(t => t.category_id === category.id && t.gender === gender);
         setTournaments(filtered);
         if (filtered.length > 0 && !activeTournament) setActiveTournament(filtered[0]);
       }
       if (memRes.data) setAllMembers(memRes.data);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error cargando base:", e); }
     setIsLoading(false);
   };
 
@@ -80,34 +78,58 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         id: crypto.randomUUID(),
         name: tournamentForm.name,
         type: tournamentForm.type || 'Professional',
-        disciplineId: discipline.id,
-        categoryId: category.id,
+        discipline_id: discipline.id,
+        category_id: category.id,
         gender: gender,
         status: 'Open',
         settings: tournamentForm.settings as any,
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
       await db.tournaments.upsert(newT);
       loadBaseData();
       setShowTournamentWizard(false);
       setWizardStep(1);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error torneo:", e); }
   };
 
   const handleSaveParticipant = async () => {
-    if (!activeTournament || !participantForm.name) return;
+    if (!activeTournament) return;
+
+    // --- VALIDACIÓN DE CAMPOS OBLIGATORIOS ---
+    if (!participantForm.name || participantForm.name.trim() === '') {
+      alert("⚠️ El nombre del Equipo / Pareja es obligatorio.");
+      return;
+    }
+    if (participantForm.members.length === 0) {
+      alert("⚠️ Debes seleccionar al menos un socio para inscribir.");
+      return;
+    }
+
     try {
-      await db.participants.upsert({
+      // Usamos snake_case para coincidir con la base de datos Supabase
+      const { error } = await db.participants.upsert({
         id: crypto.randomUUID(),
-        tournamentId: activeTournament.id,
-        name: participantForm.name,
-        memberIds: participantForm.members
+        tournament_id: activeTournament.id,
+        name: participantForm.name.toUpperCase().trim(),
+        member_ids: participantForm.members
       });
-      const partsRes = await db.participants.getAll(activeTournament.id);
-      if (partsRes.data) setParticipants(partsRes.data);
+
+      if (error) {
+        console.error("Error en Supabase:", error);
+        alert("Ocurrió un error técnico al guardar el registro.");
+        return;
+      }
+
+      // Recargamos los participantes para que se vea el cambio inmediatamente
+      const { data } = await db.participants.getAll(activeTournament.id);
+      if (data) setParticipants(data);
+      
       setShowParticipantModal(false);
       setParticipantForm({ name: '', members: [] });
-    } catch (e) { console.error(e); }
+      setMemberSearch('');
+    } catch (e) { 
+      console.error("Error fatal guardando participante:", e); 
+    }
   };
 
   const handleSaveMatch = async () => {
@@ -116,18 +138,18 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     let awayTeam = matchForm.condition === 'Local' ? matchForm.rivalName : clubConfig.name;
     
     if (activeTournament.type === 'Internal') {
-      homeTeam = participants.find(p => p.id === matchForm.homeParticipantId)?.name || 'Local';
-      awayTeam = participants.find(p => p.id === matchForm.awayParticipantId)?.name || 'Visitante';
+      homeTeam = participants.find(p => p.id === matchForm.home_participant_id)?.name || 'Local';
+      awayTeam = participants.find(p => p.id === matchForm.away_participant_id)?.name || 'Visitante';
     }
 
     try {
       await db.matches.upsert({
         id: crypto.randomUUID(),
-        tournamentId: activeTournament.id,
+        tournament_id: activeTournament.id,
         homeTeam,
         awayTeam,
-        homeParticipantId: matchForm.homeParticipantId,
-        awayParticipantId: matchForm.awayParticipantId,
+        home_participant_id: matchForm.home_participant_id,
+        away_participant_id: matchForm.away_participant_id,
         homeScore: matchForm.myScore,
         awayScore: matchForm.rivalScore,
         date: matchForm.date,
@@ -138,7 +160,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       const matchesRes = await db.matches.getAll(activeTournament.id);
       if (matchesRes.data) setMatches(matchesRes.data);
       setShowMatchModal(false);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error partido:", e); }
   };
 
   const inputClasses = "w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-white/5 focus:border-primary-600 shadow-inner dark:text-white transition-all";
@@ -254,7 +276,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                          <div key={p.id} className="bg-white dark:bg-[#0f1219] p-5 rounded-[1.5rem] border border-slate-200 dark:border-white/5 shadow-sm">
                             <h4 className="text-sm font-black uppercase italic tracking-tighter text-primary-600 mb-4">{p.name}</h4>
                             <div className="space-y-1.5">
-                               {p.memberIds.map(mid => <div key={mid} className="text-[9px] font-bold uppercase text-slate-500 bg-slate-50 dark:bg-white/5 p-2 rounded-lg flex items-center gap-2"><UserCircle size={12} /> {allMembers.find(mem => mem.id === mid)?.name}</div>)}
+                               {(p.member_ids || []).map(mid => <div key={mid} className="text-[9px] font-bold uppercase text-slate-500 bg-slate-50 dark:bg-white/5 p-2 rounded-lg flex items-center gap-2"><UserCircle size={12} /> {allMembers.find(mem => mem.id === mid)?.name || 'Cargando...'}</div>)}
                             </div>
                          </div>
                        ))}
@@ -406,7 +428,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       )}
 
-      {/* MODAL: INSCRIBIR SOCIO/EQUIPO (OPTIMIZADO UI) */}
+      {/* MODAL: INSCRIBIR SOCIO/EQUIPO (CON VALIDACIÓN MEJORADA) */}
       {showParticipantModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -416,17 +438,26 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                <div className="space-y-2">
-                  <label className={labelClasses}>Nombre del Equipo / Pareja</label>
-                  <input value={participantForm.name} onChange={e => setParticipantForm({...participantForm, name: e.target.value.toUpperCase()})} placeholder="EJ: LOS GALÁCTICOS" className={inputClasses} />
+                  <label className={labelClasses}>Nombre del Equipo / Pareja <span className="text-red-500">*</span></label>
+                  <input 
+                    value={participantForm.name} 
+                    onChange={e => setParticipantForm({...participantForm, name: e.target.value.toUpperCase()})} 
+                    placeholder="EJ: LOS GALÁCTICOS" 
+                    className={inputClasses} 
+                  />
+                  {!participantForm.name && <p className="text-[7px] text-red-400 font-bold uppercase tracking-widest ml-2 italic">Campo obligatorio</p>}
                </div>
                <div className="space-y-4">
-                  <label className={labelClasses}>Seleccionar Socios ({participantForm.members.length})</label>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className={labelClasses}>Seleccionar Socios ({participantForm.members.length}) <span className="text-red-500">*</span></label>
+                    {participantForm.members.length === 0 && <p className="text-[7px] text-red-400 font-bold uppercase tracking-widest italic mb-1">Seleccione al menos uno</p>}
+                  </div>
                   <div className="relative mb-4">
                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                      <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="BUSCAR POR NOMBRE..." className={inputClasses + " pl-10 py-2.5"} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                     {allMembers.filter(m => m.name.toLowerCase().includes(memberSearch.toLowerCase())).slice(0, 10).map(m => {
+                     {allMembers.filter(m => m.name.toLowerCase().includes(memberSearch.toLowerCase())).slice(0, 20).map(m => {
                         const isSelected = participantForm.members.includes(m.id);
                         return (
                           <button key={m.id} onClick={() => { const newMems = isSelected ? participantForm.members.filter(id => id !== m.id) : [...participantForm.members, m.id]; setParticipantForm({...participantForm, members: newMems}); }} className={`p-3 rounded-xl border transition-all flex items-center gap-3 ${isSelected ? 'bg-primary-600 border-primary-600 text-white' : 'bg-slate-50 dark:bg-white/5 border-transparent text-slate-400'}`}>
@@ -440,7 +471,12 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                </div>
             </div>
             <div className="p-6 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-               <button onClick={handleSaveParticipant} className="w-full py-4 bg-primary-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-[1.02] transition-all">Confirmar Registro</button>
+               <button 
+                onClick={handleSaveParticipant} 
+                className="w-full py-4 bg-primary-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-[1.02] transition-all disabled:grayscale disabled:opacity-50"
+               >
+                 Confirmar Registro
+               </button>
             </div>
           </div>
         </div>
@@ -459,14 +495,14 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                    <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                          <label className={labelClasses}>Local</label>
-                         <select value={matchForm.homeParticipantId} onChange={e => setMatchForm({...matchForm, homeParticipantId: e.target.value})} className={inputClasses}>
+                         <select value={matchForm.home_participant_id} onChange={e => setMatchForm({...matchForm, home_participant_id: e.target.value})} className={inputClasses}>
                             <option value="">Seleccionar...</option>
                             {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                          </select>
                       </div>
                       <div className="space-y-2">
                          <label className={labelClasses}>Visitante</label>
-                         <select value={matchForm.awayParticipantId} onChange={e => setMatchForm({...matchForm, awayParticipantId: e.target.value})} className={inputClasses}>
+                         <select value={matchForm.away_participant_id} onChange={e => setMatchForm({...matchForm, away_participant_id: e.target.value})} className={inputClasses}>
                             <option value="">Seleccionar...</option>
                             {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                          </select>

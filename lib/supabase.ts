@@ -63,24 +63,24 @@ export const db = {
       .eq('id', id)
   },
   tournaments: {
-    getAll: (disciplineId?: string) => {
+    getAll: (discipline_id?: string) => {
       let query = supabase.from('tournaments').select('*');
-      if (disciplineId) query = query.eq('disciplineId', disciplineId);
-      return query.order('createdAt', { ascending: false });
+      if (discipline_id) query = query.eq('discipline_id', discipline_id);
+      return query.order('created_at', { ascending: false });
     },
     upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
     delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
   },
   participants: {
-    getAll: (tournamentId: string) => supabase
+    getAll: (tournament_id: string) => supabase
       .from('tournament_participants')
       .select('*')
-      .eq('tournamentId', tournamentId),
+      .eq('tournament_id', tournament_id),
     upsert: (participant: any) => supabase.from('tournament_participants').upsert(participant),
     delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
   },
   matches: {
-    getAll: (tournamentId: string) => supabase
+    getAll: (tournament_id: string) => supabase
       .from('matches')
       .select(`
         *,
@@ -92,7 +92,7 @@ export const db = {
           notes
         )
       `)
-      .eq('tournamentId', tournamentId)
+      .eq('tournament_id', tournament_id)
       .order('date', { ascending: true }),
     
     upsert: async (match: any) => {
@@ -105,11 +105,11 @@ export const db = {
       
       if (mErr) throw mErr;
 
-      await supabase.from('match_events').delete().eq('matchId', mData.id);
+      await supabase.from('match_events').delete().eq('match_id', mData.id);
 
       if (incidents && incidents.length > 0) {
         const eventsToSave = incidents.map((inc: any) => ({
-          matchId: mData.id,
+          match_id: mData.id,
           playerId: inc.playerId,
           type: inc.type,
           minute: parseInt(inc.minute) || 0,

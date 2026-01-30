@@ -28,7 +28,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [persistedPlayers, setPersistedPlayers] = useState<Player[]>([]);
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(true); // Default collapsed for better UX
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(true);
 
   const activeBranch = useMemo(() => 
     discipline.branches.find(b => b.gender === selectedGender && b.enabled),
@@ -65,7 +65,7 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
   const displayPlayers = useMemo(() => {
     if (!selectedCategoryId) return [];
-    const assignedMembers = members.filter(m => m.assignments.some(a => a.disciplineId === discipline.id && a.categoryId === selectedCategoryId && a.role === 'PLAYER'));
+    const assignedMembers = members.filter(m => m.assignments.some(a => a.discipline_id === discipline.id && a.category_id === selectedCategoryId && a.role === 'PLAYER'));
     return assignedMembers.map(m => {
       const savedData = persistedPlayers.find(p => p.dni === m.dni || p.id === m.id);
       const categoryName = activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || '';
@@ -98,11 +98,11 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] mt-24 animate-fade-in overflow-hidden bg-slate-50 dark:bg-[#080a0f] border-t border-slate-200 dark:border-white/5">
-      <header className={`flex-none bg-white dark:bg-[#0f1219] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm transition-all duration-300 ${isHeaderCollapsed ? 'pb-2' : 'pb-0'}`}>
+      <header className={`relative flex-none bg-white dark:bg-[#0f1219] border-b border-slate-200 dark:border-white/10 z-[140] shadow-sm transition-all duration-300 ${isHeaderCollapsed ? 'pb-1' : 'pb-4'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 pt-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
             <div className={`flex items-center gap-4 w-full md:w-auto transition-all ${isHeaderCollapsed ? 'scale-90 origin-left' : ''}`}>
-              <button onClick={onBack} className="p-2.5 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-primary-600 transition-all shadow-sm">
+              <button onClick={onBack} className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-primary-600 transition-all">
                 <ChevronLeft size={18} strokeWidth={2.5} />
               </button>
               <div className="flex items-center gap-3">
@@ -158,9 +158,15 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
           </div>
         </div>
 
-        <button onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)} className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-primary-600 shadow-md hover:scale-110 transition-all z-20 cursor-pointer">
-          {isHeaderCollapsed ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronUp size={12} strokeWidth={3} />}
-        </button>
+        {/* REPOSICIONADO: Se ajustó el bottom para integrarlo mejor al borde del header */}
+        <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 z-[200]">
+          <button 
+            onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)} 
+            className="w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-primary-600 shadow-[0_4px_10px_rgba(0,0,0,0.1)] hover:scale-110 transition-all cursor-pointer"
+          >
+            {isHeaderCollapsed ? <ChevronDown size={12} strokeWidth={3} /> : <ChevronUp size={12} strokeWidth={3} />}
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#080a0f] p-4 md:p-8 custom-scrollbar">

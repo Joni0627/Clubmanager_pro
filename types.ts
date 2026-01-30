@@ -45,8 +45,8 @@ export interface Tutor {
 
 export interface Assignment {
   id: string;
-  disciplineId: string;
-  categoryId: string;
+  discipline_id: string;
+  category_id: string;
   role: AppRole;
 }
 
@@ -78,7 +78,6 @@ export interface Member {
   overallRating?: number;
 }
 
-// Fix: Added MedicalHistoryItem and MedicalRecord to support health tracking features
 export interface MedicalHistoryItem {
   id: string;
   date: string;
@@ -113,7 +112,6 @@ export interface Player {
   status: string;
 }
 
-// Fix: Added Fixture and TeamStructure for administrative and scheduling features
 export interface Fixture {
   id: string;
   discipline: string;
@@ -136,7 +134,6 @@ export interface TeamStructure {
   playersCount: number;
 }
 
-// Fix: Added MemberFee to support financial management module
 export interface MemberFee {
   id: string;
   member_id: string;
@@ -150,8 +147,6 @@ export interface MemberFee {
   receipt_url?: string;
   reference?: string;
 }
-
-// --- NUEVOS TIPOS PARA TORNEOS (GRUPOS Y LLAVES) ---
 
 export type TournamentType = 'Professional' | 'Internal';
 export type MatchStatus = 'Scheduled' | 'Finished' | 'Canceled';
@@ -167,30 +162,30 @@ export interface TournamentSettings {
 
 export interface TournamentParticipant {
   id: string;
-  tournamentId: string;
+  tournament_id: string;
   name: string;
-  memberIds: string[];
+  member_ids: string[];
 }
 
 export interface Tournament {
   id: string;
   name: string;
   type: TournamentType;
-  disciplineId: string;
-  categoryId: string;
+  discipline_id: string;
+  category_id: string;
   gender: 'Masculino' | 'Femenino';
   status: 'Open' | 'Finished';
   settings: TournamentSettings;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface Match {
   id: string;
-  tournamentId: string;
+  tournament_id: string;
   homeTeam: string;
   awayTeam: string;
-  homeParticipantId?: string;
-  awayParticipantId?: string;
+  home_participant_id?: string;
+  away_participant_id?: string;
   homeScore?: number;
   awayScore?: number;
   date: string;
@@ -204,7 +199,7 @@ export interface Match {
 
 export interface MatchEvent {
   id: string;
-  matchId: string;
+  match_id: string;
   playerId: string;
   type: MatchEventType;
   minute?: number;
