@@ -34,6 +34,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [viewMode, setViewMode] = useState<'fixture' | 'groups' | 'bracket' | 'participants'>('fixture');
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
+  const [editingTournamentId, setEditingTournamentId] = useState<string | null>(null);
 
   // --- Estados de Formulario ---
   const [tForm, setTForm] = useState<Partial<Tournament>>({
@@ -46,7 +47,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     home_participant_id: '', 
     away_participant_id: '', 
     rivalName: '',
-    isHome: true, // Para modo profesional: ¿Soy Local?
+    isHome: true, 
     myScore: 0, 
     rivalScore: 0, 
     date: new Date().toISOString().split('T')[0], 
@@ -71,8 +72,12 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         });
         
         setTournaments(filtered);
-        if (filtered.length > 0 && !activeTournament) {
-          setActiveTournament(filtered[0]);
+        // Mantener el activo si aún existe tras una edición, si no poner el primero
+        if (filtered.length > 0) {
+           const stillExists = filtered.find(f => f.id === activeTournament?.id);
+           if (!stillExists) setActiveTournament(filtered[0]);
+        } else {
+           setActiveTournament(null);
         }
       }
       if (memRes.data) setAllMembers(memRes.data);
@@ -92,11 +97,47 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     }
   }, [activeTournament]);
 
+  // --- GESTIÓN DE TORNEOS (EDICIÓN Y ELIMINACIÓN) ---
+  const handleEditTournament = async (t: Tournament, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingTournamentId(t.id);
+    setTForm({
+      name: t.name,
+      type: t.type,
+      settings: t.settings
+    });
+    
+    // Cargar participantes actuales para el wizard
+    const partRes = await db.participants.getAll(t.id);
+    if (partRes.data) {
+      const memberIds = partRes.data.flatMap(p => p.memberids || []);
+      setSelectedMembers(memberIds);
+    } else {
+      setSelectedMembers([]);
+    }
+
+    setWizardStep(1);
+    setShowWizard(true);
+  };
+
+  const handleDeleteTournament = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('¿ESTÁS SEGURO? Se eliminará el torneo, todos los resultados y la tabla de posiciones permanentemente.')) return;
+    setIsLoading(true);
+    try {
+      await db.tournaments.delete(id);
+      await loadInitialData();
+    } catch (err) {
+      console.error(err);
+    }
+    setIsLoading(false);
+  };
+
   const handleFinalizeTournament = async () => {
     if (!tForm.name || !category) return;
     setIsLoading(true);
     try {
-      const tournamentId = crypto.randomUUID();
+      const tournamentId = editingTournamentId || crypto.randomUUID();
       const newTournament: any = {
         id: tournamentId,
         name: tForm.name.toUpperCase(),
@@ -110,29 +151,43 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       };
       await db.tournaments.upsert(newTournament);
 
-      if (tForm.type === 'Internal' && selectedMembers.length > 0) {
-        const promises = selectedMembers.map(mid => {
-          const member = allMembers.find(m => m.id === mid);
-          return db.participants.upsert({
-            id: crypto.randomUUID(),
-            tournamentid: tournamentId,
-            name: member?.name.toUpperCase() || 'JUGADOR',
-            memberids: [mid]
+      // Si es interno, manejar participantes
+      if (tForm.type === 'Internal') {
+        // En edición, lo ideal es borrar y re-insertar o sincronizar
+        // Por simplicidad en este flujo, borramos previos si es edición
+        if (editingTournamentId) {
+          const { data: existingParts } = await db.participants.getAll(editingTournamentId);
+          if (existingParts) {
+            for (const p of existingParts) await db.participants.delete(p.id);
+          }
+        }
+
+        if (selectedMembers.length > 0) {
+          const promises = selectedMembers.map(mid => {
+            const member = allMembers.find(m => m.id === mid);
+            return db.participants.upsert({
+              id: crypto.randomUUID(),
+              tournamentid: tournamentId,
+              name: member?.name.toUpperCase() || 'JUGADOR',
+              memberids: [mid]
+            });
           });
-        });
-        await Promise.all(promises);
+          await Promise.all(promises);
+        }
       }
 
       await loadInitialData();
       setShowWizard(false);
       setWizardStep(1);
       setSelectedMembers([]);
+      setEditingTournamentId(null);
     } catch (e) {
-      console.error("Error creando torneo:", e);
+      console.error("Error procesando torneo:", e);
     }
     setIsLoading(false);
   };
 
+  // --- GESTIÓN DE PARTIDOS ---
   const handleDeleteMatch = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('¿Seguro que deseas eliminar este resultado?')) return;
@@ -206,7 +261,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
           <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-1 ml-1">Central de Torneos Plegma Sport</p>
         </div>
         <button 
-          onClick={() => { setWizardStep(1); setShowWizard(true); }}
+          onClick={() => { setEditingTournamentId(null); setWizardStep(1); setTForm({name: '', type: 'Professional', settings: { hasGroups: false, groupsCount: 1, advancingPerGroup: 2, hasPlayoffs: false, playoffStart: 'F' }}); setShowWizard(true); }}
           className="bg-primary-600 text-white px-10 py-5 rounded-3xl font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-primary-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
         >
           <Plus size={18} strokeWidth={3} /> Nuevo Torneo
@@ -221,16 +276,26 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
              </h4>
              <div className="space-y-3">
                 {tournaments.map(t => (
-                  <button 
-                    key={t.id}
-                    onClick={() => { setActiveTournament(t); setViewMode('fixture'); }}
-                    className={`w-full p-5 rounded-3xl flex flex-col items-start transition-all relative border-2 ${activeTournament?.id === t.id ? 'bg-primary-600 border-primary-600 text-white shadow-xl scale-[1.02]' : 'bg-transparent border-slate-100 dark:border-white/5 text-slate-500 hover:bg-slate-50'}`}
-                  >
-                    <span className="text-xs font-black uppercase tracking-tight italic truncate w-full text-left">{t.name}</span>
-                    <span className={`text-[8px] font-black uppercase tracking-widest mt-2 ${activeTournament?.id === t.id ? 'text-white/60' : 'text-primary-600'}`}>
-                      {t.type === 'Professional' ? 'Liga Profesional' : 'Torneo del Club'}
-                    </span>
-                  </button>
+                  <div key={t.id} className="relative group/t">
+                    <button 
+                      onClick={() => { setActiveTournament(t); setViewMode('fixture'); }}
+                      className={`w-full p-5 pr-14 rounded-3xl flex flex-col items-start transition-all relative border-2 ${activeTournament?.id === t.id ? 'bg-primary-600 border-primary-600 text-white shadow-xl scale-[1.02]' : 'bg-transparent border-slate-100 dark:border-white/5 text-slate-500 hover:bg-slate-50'}`}
+                    >
+                      <span className="text-xs font-black uppercase tracking-tight italic truncate w-full text-left">{t.name}</span>
+                      <span className={`text-[8px] font-black uppercase tracking-widest mt-2 ${activeTournament?.id === t.id ? 'text-white/60' : 'text-primary-600'}`}>
+                        {t.type === 'Professional' ? 'Liga Profesional' : 'Torneo del Club'}
+                      </span>
+                    </button>
+                    
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover/t:opacity-100 transition-opacity z-10">
+                       <button onClick={(e) => handleEditTournament(t, e)} className={`p-2 rounded-lg transition-all ${activeTournament?.id === t.id ? 'bg-white/20 text-white hover:bg-white/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary-600'}`}>
+                          <Edit3 size={14} />
+                       </button>
+                       <button onClick={(e) => handleDeleteTournament(t.id, e)} className={`p-2 rounded-lg transition-all ${activeTournament?.id === t.id ? 'bg-white/20 text-white hover:bg-red-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500'}`}>
+                          <Trash2 size={14} />
+                       </button>
+                    </div>
+                  </div>
                 ))}
                 {tournaments.length === 0 && !isLoading && (
                   <div className="text-center py-10 opacity-40">
@@ -374,13 +439,17 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-4xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
             <div className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-600/20"><Plus size={28} /></div>
+                  <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-600/20">
+                     {editingTournamentId ? <Edit3 size={28} /> : <Plus size={28} />}
+                  </div>
                   <div>
-                    <h3 className="text-2xl font-black uppercase italic tracking-tighter dark:text-white">Configuración del Torneo</h3>
+                    <h3 className="text-2xl font-black uppercase italic tracking-tighter dark:text-white">
+                       {editingTournamentId ? 'Editar Torneo' : 'Configuración del Torneo'}
+                    </h3>
                     <p className="text-[9px] font-black uppercase tracking-widest text-primary-600 opacity-60">Paso {wizardStep} de 4 • Ecosistema Plegma</p>
                   </div>
                </div>
-               <button onClick={() => setShowWizard(false)} className="p-3 bg-white dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"><X size={24} /></button>
+               <button onClick={() => { setShowWizard(false); setEditingTournamentId(null); }} className="p-3 bg-white dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"><X size={24} /></button>
             </div>
             
             <div className="p-10 flex-1 overflow-y-auto custom-scrollbar">
@@ -580,7 +649,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                    className="bg-primary-600 text-white px-20 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-primary-500/30 flex items-center gap-4 hover:scale-105 active:scale-95 transition-all"
                  >
                    {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Award size={20} />}
-                   Finalizar Creación
+                   {editingTournamentId ? 'Actualizar Torneo' : 'Finalizar Creación'}
                  </button>
                )}
             </div>
