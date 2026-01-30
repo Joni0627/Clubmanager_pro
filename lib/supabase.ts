@@ -72,10 +72,10 @@ export const db = {
     delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
   },
   participants: {
-    getAll: (tournament_id: string) => supabase
+    getAll: (tournamentid: string) => supabase
       .from('tournament_participants')
       .select('*')
-      .eq('tournament_id', tournament_id),
+      .eq('tournamentid', tournamentid), // Ajustado según captura
     upsert: (participant: any) => supabase.from('tournament_participants').upsert(participant),
     delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
   },

@@ -162,9 +162,9 @@ export interface TournamentSettings {
 
 export interface TournamentParticipant {
   id: string;
-  tournament_id: string;
+  tournamentid: string; // Coincide con captura Supabase
   name: string;
-  member_ids: string[];
+  memberids: string[]; // Coincide con captura Supabase
 }
 
 export interface Tournament {
