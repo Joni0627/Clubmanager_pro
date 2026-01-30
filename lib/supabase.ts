@@ -63,9 +63,9 @@ export const db = {
       .eq('id', id)
   },
   tournaments: {
-    getAll: (discipline_id?: string) => {
+    getAll: (disciplineId?: string) => {
       let query = supabase.from('tournaments').select('*');
-      if (discipline_id) query = query.eq('discipline_id', discipline_id);
+      if (disciplineId) query = query.eq('disciplineId', disciplineId);
       return query.order('created_at', { ascending: false });
     },
     upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
@@ -80,7 +80,7 @@ export const db = {
     delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
   },
   matches: {
-    getAll: (tournament_id: string) => supabase
+    getAll: (tournamentId: string) => supabase
       .from('matches')
       .select(`
         *,
@@ -92,7 +92,7 @@ export const db = {
           notes
         )
       `)
-      .eq('tournament_id', tournament_id)
+      .eq('tournamentId', tournamentId)
       .order('date', { ascending: true }),
     
     upsert: async (match: any) => {

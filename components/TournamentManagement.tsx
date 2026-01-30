@@ -53,7 +53,11 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         db.members.getAll()
       ]);
       if (tourRes.data) {
-        const filtered = tourRes.data.filter(t => t.category_id === category.id && t.gender === gender);
+        // Usamos categoryId (CamelCase) para el filtrado, que es como están guardados en DB
+        const filtered = tourRes.data.filter((t: any) => 
+          (t.categoryId === category.id || t.category_id === category.id) && 
+          t.gender === gender
+        );
         setTournaments(filtered);
         if (filtered.length > 0 && !activeTournament) setActiveTournament(filtered[0]);
       }
@@ -78,8 +82,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         id: crypto.randomUUID(),
         name: tournamentForm.name,
         type: tournamentForm.type || 'Professional',
-        discipline_id: discipline.id,
-        category_id: category.id,
+        disciplineId: discipline.id,
+        categoryId: category.id,
         gender: gender,
         status: 'Open',
         settings: tournamentForm.settings as any,
@@ -95,7 +99,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const handleSaveParticipant = async () => {
     if (!activeTournament) return;
 
-    // --- VALIDACIÓN DE CAMPOS OBLIGATORIOS ---
     if (!participantForm.name || participantForm.name.trim() === '') {
       alert("⚠️ El nombre del Equipo / Pareja es obligatorio.");
       return;
@@ -106,7 +109,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     }
 
     try {
-      // Usamos snake_case para coincidir con la base de datos Supabase
+      // Inscribir en la tabla de participantes (aquí sí usamos snake_case por ser tabla relacional limpia)
       const { error } = await db.participants.upsert({
         id: crypto.randomUUID(),
         tournament_id: activeTournament.id,
@@ -116,11 +119,10 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
 
       if (error) {
         console.error("Error en Supabase:", error);
-        alert("Ocurrió un error técnico al guardar el registro.");
+        alert("Error técnico: Asegúrese de que la tabla 'tournament_participants' tenga las columnas 'tournament_id' (uuid) y 'member_ids' (text[] o jsonb).");
         return;
       }
 
-      // Recargamos los participantes para que se vea el cambio inmediatamente
       const { data } = await db.participants.getAll(activeTournament.id);
       if (data) setParticipants(data);
       
@@ -145,7 +147,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     try {
       await db.matches.upsert({
         id: crypto.randomUUID(),
-        tournament_id: activeTournament.id,
+        tournamentId: activeTournament.id,
         homeTeam,
         awayTeam,
         home_participant_id: matchForm.home_participant_id,
@@ -204,6 +206,9 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     <span className="text-[7px] font-bold uppercase tracking-widest mt-1 text-primary-600/60">{t.type === 'Professional' ? 'Liga' : 'Local'}</span>
                   </button>
                 ))}
+                {tournaments.length === 0 && !isLoading && (
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center py-4 italic">Sin torneos cargados</p>
+                )}
              </div>
           </div>
           
@@ -306,7 +311,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
             </div>
             
             <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
-               {/* STEPPER PROGRESS */}
                <div className="flex justify-between mb-10 px-4 relative">
                   <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 dark:bg-white/5 -translate-y-1/2 -z-10"></div>
                   {[1, 2, 3, 4].map(s => (
@@ -428,7 +432,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       )}
 
-      {/* MODAL: INSCRIBIR SOCIO/EQUIPO (CON VALIDACIÓN MEJORADA) */}
+      {/* MODAL: INSCRIBIR SOCIO/EQUIPO */}
       {showParticipantModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -482,7 +486,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       )}
 
-      {/* MODAL: CARGAR RESULTADO (OPTIMIZADO UI) */}
+      {/* MODAL: CARGAR RESULTADO */}
       {showMatchModal && activeTournament && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 animate-fade-in">
            <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">

@@ -171,8 +171,8 @@ export interface Tournament {
   id: string;
   name: string;
   type: TournamentType;
-  discipline_id: string;
-  category_id: string;
+  disciplineId: string;
+  categoryId: string;
   gender: 'Masculino' | 'Femenino';
   status: 'Open' | 'Finished';
   settings: TournamentSettings;
@@ -181,7 +181,7 @@ export interface Tournament {
 
 export interface Match {
   id: string;
-  tournament_id: string;
+  tournamentId: string;
   homeTeam: string;
   awayTeam: string;
   home_participant_id?: string;
