@@ -52,7 +52,7 @@ export const db = {
     getAll: (tournamentId: string) => supabase
       .from('tournament_participants')
       .select('*')
-      .eq('tournamentid', tournamentId), // tournamentid en minúsculas según captura
+      .eq('tournamentid', tournamentId),
     
     upsert: (participant: any) => supabase
       .from('tournament_participants')
@@ -76,12 +76,12 @@ export const db = {
           notes
         )
       `)
-      .eq('tournamentId', tournamentId) // tournamentId con CamelCase según captura visualizer
+      .eq('tournamentId', tournamentId)
       .order('date', { ascending: true }),
     
     upsert: async (match: any) => {
       const { incidents, ...matchData } = match;
-      // Aseguramos que matchData use tournamentId (CamelCase)
+      
       const { data: mData, error: mErr } = await supabase
         .from('matches')
         .upsert(matchData)
@@ -91,7 +91,6 @@ export const db = {
       if (mErr) throw mErr;
 
       if (incidents && incidents.length > 0) {
-        // matchId con CamelCase según captura match_events
         await supabase.from('match_events').delete().eq('matchId', mData.id);
         const eventsToSave = incidents.map((inc: any) => ({
           matchId: mData.id,

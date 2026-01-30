@@ -53,8 +53,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [participantSearch, setParticipantSearch] = useState('');
   
   const [matchForm, setMatchForm] = useState({
-    home_participant_id: '', 
-    away_participant_id: '', 
+    homeParticipantId: '', 
+    awayParticipantId: '', 
     rivalName: '',
     isHome: true, 
     myScore: 0, 
@@ -123,7 +123,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     }));
   };
 
-  // Filtrado global de miembros por disciplina (ignorando categoría para el armado libre)
   const availableMembers = useMemo(() => {
     return allMembers.filter(m => {
       const hasDiscipline = m.assignments?.some(a => (a.discipline_id || (a as any).disciplineId) === discipline.id);
@@ -150,13 +149,11 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       };
       await db.tournaments.upsert(newTournament);
 
-      // Limpiar participantes si es edición
       if (editingTournamentId) {
         const { data: existingParts } = await db.participants.getAll(editingTournamentId);
         if (existingParts) for (const p of existingParts) await db.participants.delete(p.id);
       }
 
-      // Guardar Equipos como Participantes
       if (tForm.type === 'Internal') {
         const promises = tempTeams.map(team => db.participants.upsert({
           id: crypto.randomUUID(),
@@ -204,8 +201,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const handleEditMatch = (match: Match) => {
     setEditingMatchId(match.id);
     setMatchForm({
-      home_participant_id: match.home_participant_id || '',
-      away_participant_id: match.away_participant_id || '',
+      homeParticipantId: match.homeParticipantId || '',
+      awayParticipantId: match.awayParticipantId || '',
       rivalName: activeTournament?.type === 'Professional' ? (match.homeTeam === clubConfig.name ? match.awayTeam : match.homeTeam) : '',
       isHome: match.homeTeam === clubConfig.name,
       myScore: (match.homeTeam === clubConfig.name ? match.homeScore : match.awayScore) || 0,
@@ -381,7 +378,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       </div>
 
-      {/* WIZARD DE CREACIÓN / EDICIÓN */}
       {showWizard && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-5xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -445,7 +441,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                {wizardStep === 3 && (
                  <div className="space-y-10 animate-fade-in flex flex-col h-full">
                     <div className="flex flex-col md:flex-row gap-10 flex-1">
-                       {/* Panel de Equipos */}
                        <div className="w-full md:w-1/2 space-y-6">
                           <div className="flex justify-between items-center">
                              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Equipos Registrados</h4>
@@ -470,7 +465,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                           </div>
                        </div>
                        
-                       {/* Selector de Jugadores (Búsqueda Global por Disciplina) */}
                        <div className="w-full md:w-1/2 space-y-6">
                           <div className="relative">
                              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -531,7 +525,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       )}
 
-      {/* MODAL DE CARGA DE RESULTADOS */}
       {showMatchModal && activeTournament && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[600] flex items-center justify-center p-4 animate-fade-in">
            <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -544,7 +537,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     <div className="space-y-3">
                        <label className={labelClasses}>Equipo Local</label>
                        {activeTournament.type === 'Internal' ? (
-                          <select className={inputClasses} value={matchForm.home_participant_id} onChange={e => setMatchForm({...matchForm, home_participant_id: e.target.value})}>
+                          <select className={inputClasses} value={matchForm.homeParticipantId} onChange={e => setMatchForm({...matchForm, homeParticipantId: e.target.value})}>
                              <option value="">-- EQUIPO --</option>
                              {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
@@ -555,7 +548,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     <div className="space-y-3">
                        <label className={labelClasses}>Equipo Visitante</label>
                        {activeTournament.type === 'Internal' ? (
-                          <select className={inputClasses} value={matchForm.away_participant_id} onChange={e => setMatchForm({...matchForm, away_participant_id: e.target.value})}>
+                          <select className={inputClasses} value={matchForm.awayParticipantId} onChange={e => setMatchForm({...matchForm, awayParticipantId: e.target.value})}>
                              <option value="">-- EQUIPO --</option>
                              {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
@@ -579,8 +572,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
               <div className="p-8 bg-slate-50 dark:bg-slate-800/40 border-t border-white/5">
                  <button 
                   onClick={async () => {
-                    let hName = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.home_participant_id)?.name : (matchForm.isHome ? clubConfig.name : matchForm.rivalName);
-                    let vName = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.away_participant_id)?.name : (!matchForm.isHome ? clubConfig.name : matchForm.rivalName);
+                    let hName = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.homeParticipantId)?.name : (matchForm.isHome ? clubConfig.name : matchForm.rivalName);
+                    let vName = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.awayParticipantId)?.name : (!matchForm.isHome ? clubConfig.name : matchForm.rivalName);
                     
                     await db.matches.upsert({
                       id: editingMatchId || crypto.randomUUID(),
@@ -589,8 +582,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                       awayTeam: vName || 'Visitante',
                       homeScore: matchForm.myScore,
                       awayScore: matchForm.rivalScore,
-                      home_participant_id: matchForm.home_participant_id,
-                      away_participant_id: matchForm.away_participant_id,
+                      homeParticipantId: matchForm.homeParticipantId,
+                      awayParticipantId: matchForm.awayParticipantId,
                       date: matchForm.date,
                       status: 'Finished',
                       stage: matchForm.stage
