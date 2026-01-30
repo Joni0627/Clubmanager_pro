@@ -7,7 +7,7 @@ import {
   ListOrdered, LayoutGrid, UserPlus, Search, Layout, UserCircle, 
   GitBranch, ArrowRight, Table as TableIcon, Award, ChevronLeft, 
   Settings2, Flag, Shield, UserCheck, Timer, AlertCircle,
-  BadgeCheck
+  BadgeCheck, Home, Plane
 } from 'lucide-react';
 import { db } from '../lib/supabase';
 
@@ -33,6 +33,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [wizardStep, setWizardStep] = useState(1);
   const [viewMode, setViewMode] = useState<'fixture' | 'groups' | 'bracket' | 'participants'>('fixture');
   const [showMatchModal, setShowMatchModal] = useState(false);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
 
   // --- Estados de Formulario ---
   const [tForm, setTForm] = useState<Partial<Tournament>>({
@@ -40,9 +41,16 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   });
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [participantSearch, setParticipantSearch] = useState('');
+  
   const [matchForm, setMatchForm] = useState({
-    home_participant_id: '', away_participant_id: '', rivalName: '',
-    myScore: 0, rivalScore: 0, date: new Date().toISOString().split('T')[0], stage: 'Fase Regular'
+    home_participant_id: '', 
+    away_participant_id: '', 
+    rivalName: '',
+    isHome: true, // Para modo profesional: ¿Soy Local?
+    myScore: 0, 
+    rivalScore: 0, 
+    date: new Date().toISOString().split('T')[0], 
+    stage: 'Fase Regular'
   });
 
   // --- Carga de Datos Resiliente ---
@@ -123,6 +131,47 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       console.error("Error creando torneo:", e);
     }
     setIsLoading(false);
+  };
+
+  const handleDeleteMatch = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('¿Seguro que deseas eliminar este resultado?')) return;
+    try {
+      await db.matches.delete(id);
+      if (activeTournament) {
+        const res = await db.matches.getAll(activeTournament.id);
+        if (res.data) setMatches(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditMatch = (match: Match) => {
+    setEditingMatchId(match.id);
+    setMatchForm({
+      home_participant_id: match.home_participant_id || '',
+      away_participant_id: match.away_participant_id || '',
+      rivalName: activeTournament?.type === 'Professional' 
+        ? (match.homeTeam === clubConfig.name ? match.awayTeam : match.homeTeam) 
+        : '',
+      isHome: match.homeTeam === clubConfig.name,
+      myScore: (match.homeTeam === clubConfig.name ? match.homeScore : match.awayScore) || 0,
+      rivalScore: (match.homeTeam === clubConfig.name ? match.awayScore : match.homeScore) || 0,
+      date: match.date,
+      stage: match.stage || 'Fase Regular'
+    });
+    setShowMatchModal(true);
+  };
+
+  const handleOpenNewMatch = () => {
+    setEditingMatchId(null);
+    setMatchForm({
+      home_participant_id: '', away_participant_id: '', rivalName: '',
+      isHome: true, myScore: 0, rivalScore: 0, 
+      date: new Date().toISOString().split('T')[0], stage: 'Fase Regular'
+    });
+    setShowMatchModal(true);
   };
 
   const StepIndicator = () => (
@@ -224,7 +273,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                           <h3 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mt-3">Fixture de Temporada</h3>
                         </div>
                         <button 
-                          onClick={() => setShowMatchModal(true)}
+                          onClick={handleOpenNewMatch}
                           className="bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-2xl flex items-center gap-3"
                         >
                           <Plus size={18} /> Cargar Partido
@@ -233,7 +282,11 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
 
                      <div className="grid grid-cols-1 gap-4">
                         {matches.map(m => (
-                          <div key={m.id} className="bg-white dark:bg-[#0f1219]/60 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 flex items-center justify-between gap-10 group hover:border-primary-600/30 transition-all">
+                          <div 
+                            key={m.id} 
+                            onClick={() => handleEditMatch(m)}
+                            className="bg-white dark:bg-[#0f1219]/60 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 flex items-center justify-between gap-10 group hover:border-primary-600/30 transition-all cursor-pointer relative"
+                          >
                               <div className="flex-1 text-right">
                                  <p className="text-lg font-black uppercase italic text-slate-800 dark:text-white">{m.homeTeam}</p>
                                  <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">Local</p>
@@ -251,6 +304,15 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                               <div className="flex-1 text-left">
                                  <p className="text-lg font-black uppercase italic text-slate-800 dark:text-white">{m.awayTeam}</p>
                                  <p className="text-[8px] font-bold text-slate-400 uppercase mt-1">Visitante</p>
+                              </div>
+                              
+                              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); handleEditMatch(m); }} className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg text-primary-600 border border-slate-100 dark:border-white/5 hover:scale-110 transition-transform">
+                                  <Edit3 size={16} />
+                                </button>
+                                <button onClick={(e) => handleDeleteMatch(m.id, e)} className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg text-red-500 border border-slate-100 dark:border-white/5 hover:scale-110 transition-transform">
+                                  <Trash2 size={16} />
+                                </button>
                               </div>
                           </div>
                         ))}
@@ -308,7 +370,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       </div>
 
       {showWizard && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[600] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-4xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
             <div className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
                <div className="flex items-center gap-4">
@@ -452,7 +514,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                       <div className="py-24 text-center space-y-8 animate-fade-in flex flex-col items-center">
                          <div className="w-24 h-24 bg-primary-600/10 rounded-full flex items-center justify-center text-primary-600"><Flag size={48} /></div>
                          <div className="max-w-md">
-                            <h4 className="text-2xl font-black uppercase italic dark:text-white">Formato de Liga Clubes</h4>
+                            <h4 className="text-2xl font-black uppercase italic dark:text-white">Formato de Liga Profesional</h4>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 leading-relaxed">En las ligas de clubes, los participantes externos se registran directamente al cargar los partidos en el fixture.</p>
                          </div>
                       </div>
@@ -527,47 +589,72 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       )}
 
       {showMatchModal && activeTournament && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[600] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[600] flex items-center justify-center p-4 animate-fade-in">
            <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
               <div className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter dark:text-white">Carga de Resultados</h3>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter dark:text-white">
+                  {editingMatchId ? 'Editar Resultado' : 'Carga de Resultados'}
+                </h3>
                 <button onClick={() => setShowMatchModal(false)} className="p-3 bg-white dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all shadow-sm"><X size={24} /></button>
               </div>
               
               <div className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
+                 {/* Selector Localía Profesional */}
+                 {activeTournament.type === 'Professional' && (
+                    <div className="space-y-4">
+                       <label className={labelClasses}>Definir Condición de mi Club</label>
+                       <div className="grid grid-cols-2 gap-4 p-2 bg-slate-100 dark:bg-slate-800/60 rounded-[2rem] border border-slate-200 dark:border-white/5">
+                          <button 
+                            onClick={() => setMatchForm({...matchForm, isHome: true})} 
+                            className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${matchForm.isHome ? 'bg-primary-600 text-white shadow-xl scale-[1.02]' : 'text-slate-400'}`}
+                          >
+                             <Home size={16} /> Soy Local
+                          </button>
+                          <button 
+                            onClick={() => setMatchForm({...matchForm, isHome: false})} 
+                            className={`flex items-center justify-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${!matchForm.isHome ? 'bg-primary-600 text-white shadow-xl scale-[1.02]' : 'text-slate-400'}`}
+                          >
+                             <Plane size={16} /> Soy Visitante
+                          </button>
+                       </div>
+                    </div>
+                 )}
+
+                 {/* Selección de Rivales */}
                  <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-3">
-                       <label className={labelClasses}>Local</label>
+                       <label className={labelClasses}>Equipo Local</label>
                        {activeTournament.type === 'Internal' ? (
-                          <select className={inputClasses} onChange={e => setMatchForm({...matchForm, home_participant_id: e.target.value})}>
+                          <select className={inputClasses} value={matchForm.home_participant_id} onChange={e => setMatchForm({...matchForm, home_participant_id: e.target.value})}>
                              <option value="">-- EQUIPO --</option>
                              {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                        ) : (
-                          <input className={inputClasses} value={clubConfig.name} readOnly />
+                          <input className={inputClasses} value={matchForm.isHome ? clubConfig.name : matchForm.rivalName} readOnly={matchForm.isHome} onChange={e => !matchForm.isHome && setMatchForm({...matchForm, rivalName: e.target.value.toUpperCase()})} placeholder={matchForm.isHome ? "" : "NOMBRE RIVAL"} />
                        )}
                     </div>
                     <div className="space-y-3">
-                       <label className={labelClasses}>Visitante</label>
+                       <label className={labelClasses}>Equipo Visitante</label>
                        {activeTournament.type === 'Internal' ? (
-                          <select className={inputClasses} onChange={e => setMatchForm({...matchForm, away_participant_id: e.target.value})}>
+                          <select className={inputClasses} value={matchForm.away_participant_id} onChange={e => setMatchForm({...matchForm, away_participant_id: e.target.value})}>
                              <option value="">-- EQUIPO --</option>
                              {participants.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                        ) : (
-                          <input className={inputClasses} placeholder="NOMBRE DEL RIVAL" onChange={e => setMatchForm({...matchForm, rivalName: e.target.value.toUpperCase()})} />
+                          <input className={inputClasses} value={!matchForm.isHome ? clubConfig.name : matchForm.rivalName} readOnly={!matchForm.isHome} onChange={e => matchForm.isHome && setMatchForm({...matchForm, rivalName: e.target.value.toUpperCase()})} placeholder={!matchForm.isHome ? "" : "NOMBRE RIVAL"} />
                        )}
                     </div>
                  </div>
 
+                 {/* Marcador Adaptativo */}
                  <div className="flex items-center justify-center gap-12 bg-slate-50 dark:bg-white/5 p-12 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner">
                     <div className="space-y-3 text-center">
-                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Goles L</span>
+                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Goles Local</span>
                        <input type="number" value={matchForm.myScore} onChange={e => setMatchForm({...matchForm, myScore: parseInt(e.target.value) || 0})} className="w-24 text-center font-black text-5xl bg-white dark:bg-slate-800 rounded-2xl py-6 shadow-xl border-2 border-primary-600/20 dark:text-white" />
                     </div>
                     <div className="text-3xl font-black text-slate-300 italic opacity-40">VS</div>
                     <div className="space-y-3 text-center">
-                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Goles V</span>
+                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Goles Visit.</span>
                        <input type="number" value={matchForm.rivalScore} onChange={e => setMatchForm({...matchForm, rivalScore: parseInt(e.target.value) || 0})} className="w-24 text-center font-black text-5xl bg-white dark:bg-slate-800 rounded-2xl py-6 shadow-xl border-2 border-primary-600/20 dark:text-white" />
                     </div>
                  </div>
@@ -587,17 +674,27 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
               <div className="p-8 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
                  <button 
                   onClick={async () => {
-                    let homeTeam = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.home_participant_id)?.name || 'Local' : clubConfig.name;
-                    let awayTeam = activeTournament.type === 'Internal' ? participants.find(p => p.id === matchForm.away_participant_id)?.name || 'Visitante' : matchForm.rivalName;
+                    let homeTeam = '';
+                    let awayTeam = '';
+                    
+                    if (activeTournament.type === 'Internal') {
+                      homeTeam = participants.find(p => p.id === matchForm.home_participant_id)?.name || 'Local';
+                      awayTeam = participants.find(p => p.id === matchForm.away_participant_id)?.name || 'Visitante';
+                    } else {
+                      homeTeam = matchForm.isHome ? clubConfig.name : matchForm.rivalName;
+                      awayTeam = !matchForm.isHome ? clubConfig.name : matchForm.rivalName;
+                    }
 
                     try {
                       await db.matches.upsert({
-                        id: crypto.randomUUID(),
-                        tournamentId: activeTournament.id, // tournamentId (CamelCase)
+                        id: editingMatchId || crypto.randomUUID(),
+                        tournamentId: activeTournament.id,
                         homeTeam,
                         awayTeam,
                         homeScore: matchForm.myScore,
                         awayScore: matchForm.rivalScore,
+                        home_participant_id: matchForm.home_participant_id,
+                        away_participant_id: matchForm.away_participant_id,
                         date: matchForm.date,
                         status: 'Finished',
                         stage: matchForm.stage
@@ -605,11 +702,12 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                       const res = await db.matches.getAll(activeTournament.id);
                       if (res.data) setMatches(res.data);
                       setShowMatchModal(false);
+                      setEditingMatchId(null);
                     } catch (e) { console.error(e); }
                   }} 
                   className="w-full py-6 bg-primary-600 text-white rounded-[2rem] font-black uppercase text-[12px] tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"
                  >
-                   Confirmar y Publicar Resultado
+                   {editingMatchId ? 'Actualizar Resultado' : 'Confirmar y Publicar Resultado'}
                  </button>
               </div>
            </div>
