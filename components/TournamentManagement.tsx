@@ -33,35 +33,32 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [viewMode, setViewMode] = useState<'fixture' | 'groups' | 'bracket' | 'participants'>('fixture');
 
-  // Form states
-  const [tournamentForm, setTournamentForm] = useState<Partial<Tournament>>({
-    name: '', type: 'Professional', settings: { hasGroups: false, groupsCount: 1, advancingPerGroup: 2, hasPlayoffs: false, playoffStart: 'F' }
-  });
-  const [participantForm, setParticipantForm] = useState<{name: string, members: string[]}>({ name: '', members: [] });
-  const [matchForm, setMatchForm] = useState<any>({
-    rivalName: '', condition: 'Local', date: new Date().toISOString().split('T')[0],
-    status: 'Scheduled', myScore: 0, rivalScore: 0, group: 'A', stage: 'Fase Regular',
-    home_participant_id: '', away_participant_id: ''
-  });
-
   const loadBaseData = async () => {
-    if (!category) return;
     setIsLoading(true);
     try {
       const [tourRes, memRes] = await Promise.all([
-        db.tournaments.getAll(discipline.id),
+        db.tournaments.getAll(),
         db.members.getAll()
       ]);
       
       if (tourRes.data) {
-        // FLEXIBILIZACIÓN DE FILTRO: Buscamos coincidencia de disciplina y categoría
-        // Si en la DB no hay género o categoría, el filtro podría estar matando los resultados.
+        // FILTRADO ROBUSTO: Si el disciplineId no coincide, intentamos por nombre de disciplina como respaldo
         const filtered = tourRes.data.filter((t: any) => {
-          const discMatch = (t.disciplineId === discipline.id || t.discipline_id === discipline.id);
-          const catMatch = !category || (t.categoryId === category.id || t.category_id === category.id);
+          const tournamentDiscId = t.disciplineId || t.discipline_id;
+          const tournamentCatId = t.categoryId || t.category_id;
+          
+          // Coincidencia por ID (Prioridad)
+          const idMatch = tournamentDiscId === discipline.id;
+          
+          // Coincidencia por Nombre (Respaldo si hubo cambios en la config)
+          // Esto asegura que si el usuario recreó las disciplinas, los torneos viejos sigan apareciendo
+          const nameMatch = t.discipline_name === discipline.name || t.name?.toLowerCase().includes(discipline.name.toLowerCase());
+
+          // Filtro de categoría y género
+          const catMatch = !category || (tournamentCatId === category.id);
           const genderMatch = !gender || (t.gender === gender);
           
-          return discMatch && catMatch && genderMatch;
+          return (idMatch || nameMatch) && catMatch && genderMatch;
         });
         
         setTournaments(filtered);
@@ -72,7 +69,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     setIsLoading(false);
   };
 
-  useEffect(() => { loadBaseData(); }, [category, gender]);
+  useEffect(() => { loadBaseData(); }, [category, gender, discipline.id]);
 
   useEffect(() => {
     if (activeTournament) {
@@ -84,7 +81,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
   const handleSaveTournament = async () => {
     if (!tournamentForm.name || !category) return;
     try {
-      const newT: Tournament = {
+      const newT: any = {
         id: crypto.randomUUID(),
         name: tournamentForm.name,
         type: tournamentForm.type || 'Professional',
@@ -115,21 +112,22 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     }
 
     try {
-      // CORRECCIÓN CLAVE: Usamos tournamentid y memberids como se ve en tu captura de Supabase
-      const { error } = await db.participants.upsert({
+      // USAMOS LAS CLAVES EXACTAS DE TU CAPTURA DE SUPABASE: tournamentid, memberids
+      const payload: any = {
         id: crypto.randomUUID(),
         tournamentid: activeTournament.id,
         name: participantForm.name.toUpperCase().trim(),
         memberids: participantForm.members
-      });
+      };
+
+      const { error } = await db.participants.upsert(payload);
 
       if (error) {
-        console.error("Error en Supabase:", error);
+        console.error("Error Supabase:", error);
         alert(`Error al guardar: ${error.message}`);
         return;
       }
 
-      // Refresco de lista
       const { data } = await db.participants.getAll(activeTournament.id);
       if (data) setParticipants(data);
       
@@ -137,7 +135,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       setParticipantForm({ name: '', members: [] });
       setMemberSearch('');
     } catch (e) { 
-      console.error("Error fatal guardando participante:", e); 
+      console.error("Error fatal:", e); 
     }
   };
 
@@ -171,6 +169,17 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       setShowMatchModal(false);
     } catch (e) { console.error("Error partido:", e); }
   };
+
+  // State del formulario (interno)
+  const [tournamentForm, setTournamentForm] = useState<Partial<Tournament>>({
+    name: '', type: 'Professional', settings: { hasGroups: false, groupsCount: 1, advancingPerGroup: 2, hasPlayoffs: false, playoffStart: 'F' }
+  });
+  const [participantForm, setParticipantForm] = useState<{name: string, members: string[]}>({ name: '', members: [] });
+  const [matchForm, setMatchForm] = useState<any>({
+    rivalName: '', condition: 'Local', date: new Date().toISOString().split('T')[0],
+    status: 'Scheduled', myScore: 0, rivalScore: 0, group: 'A', stage: 'Fase Regular',
+    home_participant_id: '', away_participant_id: ''
+  });
 
   const inputClasses = "w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-sm outline-none border border-transparent dark:border-white/5 focus:border-primary-600 shadow-inner dark:text-white transition-all";
   const labelClasses = "text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block";
@@ -308,7 +317,76 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       </div>
 
-      {/* MODAL: INSCRIBIR SOCIO/EQUIPO */}
+      {/* WIZARD TORNEO */}
+      {showTournamentWizard && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+               <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white text-xs font-black italic">{wizardStep}</div>
+                  <h3 className="text-lg font-black uppercase italic tracking-tighter">Creador de Torneos</h3>
+               </div>
+               <button onClick={() => setShowTournamentWizard(false)} className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-full hover:bg-red-500 hover:text-white transition-all"><X size={16} /></button>
+            </div>
+            
+            <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
+               {wizardStep === 1 && (
+                 <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-4">
+                       <label className={labelClasses}>Nombre de la Competición</label>
+                       <input value={tournamentForm.name} onChange={e => setTournamentForm({...tournamentForm, name: e.target.value.toUpperCase()})} placeholder="EJ: CLAUSURA 2026" className={inputClasses} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <button onClick={() => setTournamentForm({...tournamentForm, type: 'Internal'})} className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${tournamentForm.type === 'Internal' ? 'border-primary-600 bg-primary-600/5' : 'border-transparent bg-slate-50 dark:bg-white/5 opacity-50'}`}>
+                          <Users size={24} className="text-primary-600" />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Local</span>
+                       </button>
+                       <button onClick={() => setTournamentForm({...tournamentForm, type: 'Professional'})} className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${tournamentForm.type === 'Professional' ? 'border-primary-600 bg-primary-600/5' : 'border-transparent bg-slate-50 dark:bg-white/5 opacity-50'}`}>
+                          <Shield size={24} className="text-primary-600" />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Profesional</span>
+                       </button>
+                    </div>
+                 </div>
+               )}
+               {wizardStep === 2 && (
+                 <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                       <div className="flex items-center gap-4">
+                          <TableIcon size={18}/>
+                          <p className="text-xs font-black uppercase italic dark:text-white">Fase de Grupos</p>
+                       </div>
+                       <input type="checkbox" checked={tournamentForm.settings?.hasGroups} onChange={e => setTournamentForm({...tournamentForm, settings: {...tournamentForm.settings!, hasGroups: e.target.checked}})} className="w-6 h-6 rounded accent-primary-600" />
+                    </div>
+                    <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                       <div className="flex items-center gap-4">
+                          <GitBranch size={18}/>
+                          <p className="text-xs font-black uppercase italic dark:text-white">Playoffs</p>
+                       </div>
+                       <input type="checkbox" checked={tournamentForm.settings?.hasPlayoffs} onChange={e => setTournamentForm({...tournamentForm, settings: {...tournamentForm.settings!, hasPlayoffs: e.target.checked}})} className="w-6 h-6 rounded accent-primary-600" />
+                    </div>
+                 </div>
+               )}
+               {wizardStep === 3 && (
+                 <div className="py-10 text-center flex flex-col items-center">
+                    <Award size={40} className="text-primary-600 mb-4 animate-bounce" />
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Todo listo para guardar</p>
+                 </div>
+               )}
+            </div>
+
+            <div className="p-6 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 flex justify-between shrink-0">
+               <button onClick={() => setWizardStep(prev => Math.max(1, prev - 1))} disabled={wizardStep === 1} className="px-6 py-4 rounded-xl font-black uppercase text-[10px] text-slate-400 disabled:opacity-0 transition-all flex items-center gap-2">Atrás</button>
+               {wizardStep < 3 ? (
+                 <button onClick={() => setWizardStep(prev => prev + 1)} className="bg-primary-600 text-white px-10 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Siguiente</button>
+               ) : (
+                 <button onClick={handleSaveTournament} className="bg-emerald-600 text-white px-10 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Finalizar</button>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INSCRIBIR */}
       {showParticipantModal && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -319,19 +397,10 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
             <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                <div className="space-y-2">
                   <label className={labelClasses}>Nombre del Equipo / Pareja <span className="text-red-500">*</span></label>
-                  <input 
-                    value={participantForm.name} 
-                    onChange={e => setParticipantForm({...participantForm, name: e.target.value.toUpperCase()})} 
-                    placeholder="EJ: LOS GALÁCTICOS" 
-                    className={inputClasses} 
-                  />
-                  {!participantForm.name && <p className="text-[7px] text-red-400 font-bold uppercase tracking-widest ml-2 italic">Campo obligatorio</p>}
+                  <input value={participantForm.name} onChange={e => setParticipantForm({...participantForm, name: e.target.value.toUpperCase()})} placeholder="EJ: LOS GALÁCTICOS" className={inputClasses} />
                </div>
                <div className="space-y-4">
-                  <div className="flex justify-between items-end mb-2">
-                    <label className={labelClasses}>Seleccionar Socios ({participantForm.members.length}) <span className="text-red-500">*</span></label>
-                    {participantForm.members.length === 0 && <p className="text-[7px] text-red-400 font-bold uppercase tracking-widest italic mb-1">Seleccione al menos uno</p>}
-                  </div>
+                  <label className={labelClasses}>Seleccionar Socios ({participantForm.members.length})</label>
                   <div className="relative mb-4">
                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                      <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="BUSCAR POR NOMBRE..." className={inputClasses + " pl-10 py-2.5"} />
@@ -351,12 +420,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                </div>
             </div>
             <div className="p-6 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
-               <button 
-                onClick={handleSaveParticipant} 
-                className="w-full py-4 bg-primary-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-[1.02] transition-all disabled:grayscale disabled:opacity-50"
-               >
-                 Confirmar Registro
-               </button>
+               <button onClick={handleSaveParticipant} className="w-full py-4 bg-primary-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg">Confirmar Registro</button>
             </div>
           </div>
         </div>

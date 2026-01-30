@@ -49,7 +49,11 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
       const categoryName = activeBranch.categories.find(c => c.id === selectedCategoryId)?.name;
       const { data } = await db.players.getAll();
       if (data) {
-        const filtered = data.filter(p => p.discipline === discipline.name && p.category === categoryName);
+        const filtered = data.filter(p => {
+          const matchesDisc = p.discipline === discipline.name;
+          const matchesCat = p.category === categoryName;
+          return matchesDisc && matchesCat;
+        });
         setPersistedPlayers(filtered);
       }
     } catch (err) {
@@ -61,11 +65,22 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
   useEffect(() => {
     fetchPlayersData();
-  }, [selectedCategoryId, discipline.name]);
+  }, [selectedCategoryId, discipline.name, selectedGender]);
 
   const displayPlayers = useMemo(() => {
     if (!selectedCategoryId) return [];
-    const assignedMembers = members.filter(m => m.assignments.some(a => a.discipline_id === discipline.id && a.category_id === selectedCategoryId && a.role === 'PLAYER'));
+    
+    const assignedMembers = members.filter(m => {
+      if (!m.assignments) return false;
+      return m.assignments.some((a: any) => {
+        // Robustez: Comprobamos IDs con y sin guiones bajos
+        const aDiscId = a.discipline_id || a.disciplineId;
+        const aCatId = a.category_id || a.categoryId;
+        
+        return aDiscId === discipline.id && aCatId === selectedCategoryId && a.role === 'PLAYER';
+      });
+    });
+
     return assignedMembers.map(m => {
       const savedData = persistedPlayers.find(p => p.dni === m.dni || p.id === m.id);
       const categoryName = activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name || '';
@@ -158,7 +173,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
           </div>
         </div>
 
-        {/* REPOSICIONADO: Se ajustó el bottom para integrarlo mejor al borde del header */}
         <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 z-[200]">
           <button 
             onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)} 
@@ -171,20 +185,6 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#080a0f] p-4 md:p-8 custom-scrollbar">
         <div className="max-w-7xl mx-auto">
-          {isHeaderCollapsed && (
-            <div className="mb-6 animate-fade-in flex items-center gap-3 text-slate-400 font-black uppercase text-[8px] tracking-[0.2em] bg-white/50 dark:bg-white/5 px-4 py-2 rounded-xl border border-dashed border-slate-200 dark:border-white/10">
-               <div className="flex items-center gap-1.5">
-                  <User size={10} className={selectedGender === 'Masculino' ? 'text-blue-500' : 'text-pink-500'} />
-                  {selectedGender}
-               </div>
-               <span className="opacity-20">•</span>
-               <div className="flex items-center gap-1.5">
-                  <TrendingUp size={10} className="text-primary-600" />
-                  {activeBranch?.categories.find(c => c.id === selectedCategoryId)?.name}
-               </div>
-            </div>
-          )}
-
           {isLoadingPlayers ? (
             <div className="flex flex-col items-center justify-center py-10">
               <Loader2 className="animate-spin text-primary-600 mb-2" size={24} />
@@ -205,6 +205,13 @@ const DisciplineConsole: React.FC<DisciplineConsoleProps> = ({ discipline, clubC
                         <p className="text-[7px] font-black text-primary-600 mt-1 uppercase">{athlete.position} #{athlete.number}</p>
                     </div>
                   ))}
+                  {displayPlayers.length === 0 && (
+                     <div className="col-span-full py-20 text-center opacity-30 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-[3rem]">
+                        <Users size={48} className="mx-auto mb-4" />
+                        <p className="text-[9px] font-black uppercase tracking-widest">No hay atletas asignados a esta división</p>
+                        <p className="text-[8px] font-bold uppercase mt-2">Verifica el rol JUGADOR en Miembros</p>
+                     </div>
+                  )}
                 </div>
               )}
               {activeSubTab === 'attendance' && <AttendanceTracker players={displayPlayers} clubConfig={clubConfig} forceSelectedDisc={discipline.name} />}

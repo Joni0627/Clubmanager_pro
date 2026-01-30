@@ -6,6 +6,18 @@ const supabaseKey = process.env.SUPABASE_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Helper para manejar nombres de columnas inconsistentes entre entornos
+const getPermissiveQuery = (query: any, filters: Record<string, string | undefined>) => {
+  let q = query;
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      // Intentamos filtrar por la clave tal cual, pero el front manejará el filtrado fino si falla
+      q = q.eq(key, value);
+    }
+  });
+  return q;
+};
+
 export const db = {
   config: {
     get: () => supabase
@@ -65,7 +77,8 @@ export const db = {
   tournaments: {
     getAll: (disciplineId?: string) => {
       let query = supabase.from('tournaments').select('*');
-      if (disciplineId) query = query.eq('disciplineId', disciplineId);
+      // No filtramos en el servidor si no estamos seguros del nombre de la columna, 
+      // dejamos que el componente filtre para mayor seguridad
       return query.order('created_at', { ascending: false });
     },
     upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
@@ -75,7 +88,7 @@ export const db = {
     getAll: (tournamentid: string) => supabase
       .from('tournament_participants')
       .select('*')
-      .eq('tournamentid', tournamentid), // Ajustado según captura
+      .or(`tournamentid.eq.${tournamentid},tournament_id.eq.${tournamentid}`),
     upsert: (participant: any) => supabase.from('tournament_participants').upsert(participant),
     delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
   },
@@ -92,7 +105,7 @@ export const db = {
           notes
         )
       `)
-      .eq('tournamentId', tournamentId)
+      .or(`tournamentId.eq.${tournamentId},tournament_id.eq.${tournamentId}`)
       .order('date', { ascending: true }),
     
     upsert: async (match: any) => {
