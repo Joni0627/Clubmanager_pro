@@ -33,6 +33,79 @@ export const db = {
       .delete()
       .eq('id', id)
   },
+  tournaments: {
+    getAll: () => supabase
+      .from('tournaments')
+      .select('*')
+      .order('createdAt', { ascending: false }),
+    
+    upsert: (tournament: any) => supabase
+      .from('tournaments')
+      .upsert(tournament),
+      
+    delete: (id: string) => supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', id)
+  },
+  participants: {
+    getAll: (tournamentId: string) => supabase
+      .from('tournament_participants')
+      .select('*')
+      .eq('tournamentid', tournamentId),
+    
+    upsert: (participant: any) => supabase
+      .from('tournament_participants')
+      .upsert(participant),
+      
+    delete: (id: string) => supabase
+      .from('tournament_participants')
+      .delete()
+      .eq('id', id)
+  },
+  matches: {
+    getAll: (tournamentId: string) => supabase
+      .from('matches')
+      .select(`
+        *,
+        events:match_events (
+          id,
+          playerId,
+          type,
+          minute,
+          notes
+        )
+      `)
+      .eq('tournamentid', tournamentId)
+      .order('date', { ascending: true }),
+    
+    upsert: async (match: any) => {
+      const { incidents, ...matchData } = match;
+      const { data: mData, error: mErr } = await supabase
+        .from('matches')
+        .upsert(matchData)
+        .select()
+        .single();
+      
+      if (mErr) throw mErr;
+
+      if (incidents && incidents.length > 0) {
+        await supabase.from('match_events').delete().eq('match_id', mData.id);
+        const eventsToSave = incidents.map((inc: any) => ({
+          match_id: mData.id,
+          playerId: inc.playerId,
+          type: inc.type,
+          minute: parseInt(inc.minute) || 0,
+          notes: inc.notes || ''
+        }));
+        await supabase.from('match_events').insert(eventsToSave);
+      }
+      
+      return { data: mData };
+    },
+    
+    delete: (id: string) => supabase.from('matches').delete().eq('id', id)
+  },
   players: {
     getAll: () => supabase
       .from('players')
@@ -61,66 +134,5 @@ export const db = {
       .from('fees')
       .delete()
       .eq('id', id)
-  },
-  tournaments: {
-    getAll: () => supabase
-      .from('tournaments')
-      .select('*')
-      .order('created_at', { ascending: false }),
-    upsert: (tournament: any) => supabase.from('tournaments').upsert(tournament),
-    delete: (id: string) => supabase.from('tournaments').delete().eq('id', id)
-  },
-  participants: {
-    getAll: (tournamentid: string) => supabase
-      .from('tournament_participants')
-      .select('*')
-      .or(`tournamentid.eq.${tournamentid},tournament_id.eq.${tournamentid}`),
-    upsert: (participant: any) => supabase.from('tournament_participants').upsert(participant),
-    delete: (id: string) => supabase.from('tournament_participants').delete().eq('id', id)
-  },
-  matches: {
-    getAll: (tournamentId: string) => supabase
-      .from('matches')
-      .select(`
-        *,
-        events:match_events (
-          id,
-          playerId,
-          type,
-          minute,
-          notes
-        )
-      `)
-      .or(`tournamentId.eq.${tournamentId},tournament_id.eq.${tournamentId}`)
-      .order('date', { ascending: true }),
-    
-    upsert: async (match: any) => {
-      const { incidents, ...matchData } = match;
-      const { data: mData, error: mErr } = await supabase
-        .from('matches')
-        .upsert(matchData)
-        .select()
-        .single();
-      
-      if (mErr) throw mErr;
-
-      await supabase.from('match_events').delete().eq('match_id', mData.id);
-
-      if (incidents && incidents.length > 0) {
-        const eventsToSave = incidents.map((inc: any) => ({
-          match_id: mData.id,
-          playerId: inc.playerId,
-          type: inc.type,
-          minute: parseInt(inc.minute) || 0,
-          notes: inc.notes || ''
-        }));
-        const { error: eErr } = await supabase.from('match_events').insert(eventsToSave);
-        if (eErr) throw eErr;
-      }
-      
-      return { data: mData };
-    },
-    
-    delete: (id: string) => supabase.from('matches').delete().eq('id', id)
   }
 };
