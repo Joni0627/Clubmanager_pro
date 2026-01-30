@@ -55,7 +55,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       ]);
       
       if (tourRes.data) {
-        // FILTRADO ROBUSTO: Coincidencia por ID o Nombre de disciplina (Fallback)
         const filtered = tourRes.data.filter((t: any) => {
           const discMatch = t.disciplineId === discipline.id || t.discipline_name === discipline.name;
           const catMatch = !category || (t.categoryId === category.id || t.category_name === category.name);
@@ -64,7 +63,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         });
         
         setTournaments(filtered);
-        // Si hay torneos y ninguno está activo, activamos el primero
         if (filtered.length > 0 && !activeTournament) {
           setActiveTournament(filtered[0]);
         }
@@ -86,14 +84,11 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     }
   }, [activeTournament]);
 
-  // --- Guardado Wizard ---
   const handleFinalizeTournament = async () => {
     if (!tForm.name || !category) return;
     setIsLoading(true);
     try {
       const tournamentId = crypto.randomUUID();
-      
-      // 1. Guardar Torneo (Campos CamelCase según captura Supabase)
       const newTournament: any = {
         id: tournamentId,
         name: tForm.name.toUpperCase(),
@@ -107,15 +102,14 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
       };
       await db.tournaments.upsert(newTournament);
 
-      // 2. Guardar Participantes (Campos minúsculas según captura Supabase)
       if (tForm.type === 'Internal' && selectedMembers.length > 0) {
         const promises = selectedMembers.map(mid => {
           const member = allMembers.find(m => m.id === mid);
           return db.participants.upsert({
             id: crypto.randomUUID(),
-            tournamentid: tournamentId, // Todo minúsculas según captura
+            tournamentid: tournamentId,
             name: member?.name.toUpperCase() || 'JUGADOR',
-            memberids: [mid] // Todo minúsculas según captura
+            memberids: [mid]
           });
         });
         await Promise.all(promises);
@@ -131,7 +125,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
     setIsLoading(false);
   };
 
-  // --- UI Helpers ---
   const StepIndicator = () => (
     <div className="flex justify-between items-center mb-16 px-12 relative">
       <div className="absolute top-1/2 left-12 right-12 h-1 bg-slate-100 dark:bg-white/5 -translate-y-1/2 -z-10"></div>
@@ -155,7 +148,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
 
   return (
     <div className="space-y-8 animate-fade-in pb-20">
-      {/* Header Principal */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic flex items-center gap-4">
@@ -172,9 +164,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </button>
       </header>
 
-      {/* Grid Principal: Listado + Contenido */}
       <div className="flex flex-col lg:flex-row gap-10">
-        {/* Panel Lateral: Listado de Torneos */}
         <aside className="w-full lg:w-80 shrink-0 space-y-6">
           <div className="bg-white dark:bg-[#0f1219]/60 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm">
              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-3">
@@ -223,7 +213,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
           )}
         </aside>
 
-        {/* Contenido Principal */}
         <div className="flex-1 min-w-0">
            {activeTournament ? (
              <div className="space-y-8 animate-fade-in">
@@ -318,11 +307,9 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       </div>
 
-      {/* --- WIZARD: NUEVO TORNEO (LINEA DE TIEMPO) --- */}
       {showWizard && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[600] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-[#0f121a] w-full max-w-4xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
-            {/* Header del Wizard */}
             <div className="p-10 border-b border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
                <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white shadow-xl shadow-primary-600/20"><Plus size={28} /></div>
@@ -335,10 +322,8 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
             </div>
             
             <div className="p-10 flex-1 overflow-y-auto custom-scrollbar">
-               {/* Línea de Tiempo */}
                <StepIndicator />
 
-               {/* PASO 1: Identidad */}
                {wizardStep === 1 && (
                  <div className="space-y-8 animate-fade-in">
                     <div className="bg-primary-600/10 p-6 rounded-3xl border-l-4 border-primary-600 flex items-start gap-4">
@@ -381,7 +366,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                  </div>
                )}
 
-               {/* PASO 2: Formato */}
                {wizardStep === 2 && (
                  <div className="space-y-8 animate-fade-in">
                     <div className="bg-primary-600/10 p-6 rounded-3xl border-l-4 border-primary-600 flex items-start gap-4">
@@ -421,7 +405,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                  </div>
                )}
 
-               {/* PASO 3: Participantes */}
                {wizardStep === 3 && (
                  <div className="space-y-8 animate-fade-in">
                     {tForm.type === 'Internal' ? (
@@ -455,7 +438,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                                          <img src={m.photoUrl || 'https://via.placeholder.com/64'} className="w-full h-full object-cover" />
                                       </div>
                                       <div className="text-left flex-1 min-w-0">
-                                        <span className="text-xs font-black uppercase tracking-tight truncate block">{m.name}</span>
+                                        <span className="text-xs font-black uppercase tracking-tight block">{m.name}</span>
                                         <span className={`text-[8px] font-bold uppercase ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>DNI: {m.dni}</span>
                                       </div>
                                       {isSelected && <CheckCircle2 size={16} />}
@@ -469,7 +452,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                       <div className="py-24 text-center space-y-8 animate-fade-in flex flex-col items-center">
                          <div className="w-24 h-24 bg-primary-600/10 rounded-full flex items-center justify-center text-primary-600"><Flag size={48} /></div>
                          <div className="max-w-md">
-                            <h4 className="text-2xl font-black uppercase italic dark:text-white">Formato de Liga Profesional</h4>
+                            <h4 className="text-2xl font-black uppercase italic dark:text-white">Formato de Liga Clubes</h4>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 leading-relaxed">En las ligas de clubes, los participantes externos se registran directamente al cargar los partidos en el fixture.</p>
                          </div>
                       </div>
@@ -477,7 +460,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                  </div>
                )}
 
-               {/* PASO 4: Resumen Final */}
                {wizardStep === 4 && (
                  <div className="space-y-10 animate-fade-in">
                     <div className="flex items-center gap-3 mb-6">
@@ -514,7 +496,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                )}
             </div>
 
-            {/* Footer del Wizard */}
             <div className="p-10 border-t border-white/5 bg-slate-50/50 dark:bg-slate-800/40 flex justify-between shrink-0">
                <button 
                  onClick={() => setWizardStep(prev => Math.max(1, prev - 1))}
@@ -545,7 +526,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
         </div>
       )}
 
-      {/* MODAL: CARGAR PARTIDO (RESULTADOS) */}
       {showMatchModal && activeTournament && (
         <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[600] flex items-center justify-center p-4 animate-fade-in">
            <div className="bg-white dark:bg-[#0f121a] w-full max-w-2xl max-h-[90vh] rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden flex flex-col">
@@ -555,7 +535,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
               </div>
               
               <div className="p-8 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
-                 {/* Selección de Rivales */}
                  <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-3">
                        <label className={labelClasses}>Local</label>
@@ -581,7 +560,6 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     </div>
                  </div>
 
-                 {/* Marcador */}
                  <div className="flex items-center justify-center gap-12 bg-slate-50 dark:bg-white/5 p-12 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner">
                     <div className="space-y-3 text-center">
                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Goles L</span>
@@ -615,7 +593,7 @@ const TournamentManagement: React.FC<TournamentManagementProps> = ({ discipline,
                     try {
                       await db.matches.upsert({
                         id: crypto.randomUUID(),
-                        tournamentid: activeTournament.id, // Minúsculas según captura
+                        tournamentId: activeTournament.id, // tournamentId (CamelCase)
                         homeTeam,
                         awayTeam,
                         homeScore: matchForm.myScore,
